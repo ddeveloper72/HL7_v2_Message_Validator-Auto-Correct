@@ -1,0 +1,28 @@
+
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Environment variables - DO NOT COMMIT
+.env
+
+# Flask
+instance/
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads
+uploads/
+
+# Test files
+test_*.py
+verify_*.py

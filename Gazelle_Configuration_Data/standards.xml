@@ -1,0 +1,927 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<standards>
+    <standard>
+        <keyword>LDAPv3</keyword>
+        <name>RFC 2251 - Lightweight Directory Access Protocol (v3)</name>
+        <version></version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>XHTML_1.0</keyword>
+        <name>XHTML 1.0 The Extensible HyperText Markup Language (Second Edition).A Reformulation
+of HTML 4 in XML 1.0. W3C Recommendation 26 January 2000, revised 1 August 2002.</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.w3.org/TR/xhtml1</url>
+        <transactions>
+            <transactionKeyword>ITI-32</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>DICOM_CMR</keyword>
+        <name>DICOM 2011 PS 3.16: Content Mapping Resource</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_PRINT</keyword>
+        <name>DICOM 2011 PS 3.4: Print Management Service Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>PDF_A</keyword>
+        <name>PDF/A ISO 19005-1 Document management - Electronic document file format for long-term preservation - Part1</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_X_DOSE</keyword>
+        <name>DICOM 2011 PS 3.3: A.35.8 X-Ray Radiation Dose SR IOD</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>ISO17090</keyword>
+        <name>ISO/TS 17090 directory standard for healthcare identity management</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HTTP</keyword>
+        <name>IETF RFC2616 HyperText Transfer Protocol HTTP/1.1</name>
+        <version>1.1</version>
+        <networkCommunicationType>HTTP</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>FHIR</keyword>
+        <name>Fast Health Interoperability Resources </name>
+        <version>DSTU 2</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>https://www.hl7.org/fhir/terminologies-v3.html</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_SR</keyword>
+        <name>DICOM 2011 PS 3.4: Structured Reporting Storage SOP Classes</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>E.123</keyword>
+        <name>E.123: Notation for national and international telephone numbers</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SAMLTokenProfile10</keyword>
+        <name>WSS:SAMLTokenProfile1.0 OASIS Standard, “Web Services Security: SAML Token Profile”, December 2004</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.0.pdf</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC2829</keyword>
+        <name>RFC 2829 Authentication Methods for LDAP</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC2253</keyword>
+        <name>RFC 2253 - Lightweight Directory Access Protocol (v3): UTF-8 String Representation of Distinguished Names</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>MTOM</keyword>
+        <name>MTOM SOAP Message Transmission Optimization Mechanism</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.w3.org/TR/soap12-mtom/</url>
+        <transactions>
+            <transactionKeyword>ITI-41</transactionKeyword>
+            <transactionKeyword>ITI-43</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>DNS</keyword>
+        <name>RFC-2181 Clarifications to the DNS Specification</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_FILE_FORMAT</keyword>
+        <name>DICOM PS 3.10 Media Storage and File Format for Data Interchange (DICOM file format)</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://dicom.nema.org/</url>
+        <transactions>
+            <transactionKeyword>ITI-32</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>DICOM_PS3.15</keyword>
+        <name>DICOM PS 3.15-2011: Security Profiles. Annex B1: The Basic TLS Secure Transport Connection Profile.</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://dicom.nema.org/</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC2798</keyword>
+        <name>RFC 2798 - Definition of the inetOrgPerson LDAP Object Class</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC3881</keyword>
+        <name>Security Audit and Access Accountability Message XML Data Definiions for Healthcare Applications (RFC 3881)</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_QR</keyword>
+        <name>DICOM 2011 PS 3.4: Query/Retrieve Service Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HL7v2.5</keyword>
+        <name>HL7 Version 2.5.1</name>
+        <version>2.5</version>
+        <networkCommunicationType>HL7v2</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>WADO</keyword>
+        <name>DICOM 2011 PS 3.18: Web Access to DICOM Persistent Objects (WADO)</name>
+        <version></version>
+        <networkCommunicationType>WEBSERVICE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_LUT</keyword>
+        <name>DICOM 2011 PS 3.4: Presentation LUT SOP Class</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_TID</keyword>
+        <name>DICOM 2011 PS 3.16: TID 2010, CID 7011</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_SIO</keyword>
+        <name>DICOM 2011 PS 3.3 SOP Information Objects, Common Module Attribute</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>E2147-01</keyword>
+        <name>E2147-01 Standard Specification for Audit and Disclosure Logs for Use in Health Information Systems.</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>OASIS_WS_BaseFault</keyword>
+        <name>WS-BaseFaults</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_GSPS</keyword>
+        <name>DICOM 2011 PS 3.4: Grayscale Softcopy Presentation State Storage</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SAMLCore</keyword>
+        <name>SAMLCore SAML V2.0 Core standard</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.oasis-open.org/committees/security/</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SAMLTokenProfile11</keyword>
+        <name>WSS:SAMLTokenProfile1. 1 OASIS Standard, “Web Services Security: SAML Token Profile 1.1”, February 2006</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.oasis-open.org/committees/download.php/16768/wss-v1.1-spec-os-SAMLTokenProfile.pdf</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>ebRIM</keyword>
+        <name>OASIS/ebXML Registry Information Model v3.0</name>
+        <version>3.0</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions>
+            <transactionKeyword>ITI-42</transactionKeyword>
+            <transactionKeyword>ITI-61</transactionKeyword>
+            <transactionKeyword>ITI-41</transactionKeyword>
+            <transactionKeyword>ITI-80</transactionKeyword>
+            <transactionKeyword>ITI-43</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>DICOM_GSDF</keyword>
+        <name>DICOM 2011 PS 3.14: Grayscale Standard Display Function</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_MEDIA_FORMAT</keyword>
+        <name>DICOM PS 3.12 Media Formats and Physical Media for Data Interchange</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://dicom.nema.org/</url>
+        <transactions>
+            <transactionKeyword>ITI-32</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>TIMESTAMPS</keyword>
+        <name>Date and Time on the Internet: Timestamps</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>https://tools.ietf.org/html/rfc3339</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_COMMIT</keyword>
+        <name>DICOM 2011 PS 3.4: Storage Commitment Push Model SOP Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HTTP_STATUS_CODES</keyword>
+        <name>IETF 6585 Additional HTTP Status Codes</name>
+        <version></version>
+        <networkCommunicationType>HTTP</networkCommunicationType>
+        <url>https://tools.ietf.org/html/rfc6585</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_IAN</keyword>
+        <name>DICOM 2011 PS 3.4: Instance Availability Notification Service Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DNS_SRV</keyword>
+        <name>RFC-2782 A DNS RR for specifying the location of services (DNS SRV)</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_MPPS</keyword>
+        <name>DICOM 2011 PS 3.4: Modality Performed Procedure Step SOP Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HL7v2.3.1</keyword>
+        <name>HL7 Version 2.3.1</name>
+        <version>2.3.1</version>
+        <networkCommunicationType>HL7v2</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>XSPA-SAML</keyword>
+        <name>XSPA-SAMLv1.0 OASIS Standard, “Cross-Enterprise Security and Privacy Authorization (XSPA) Profile of the Security Assertion Markup Language (SAML)  or Healthcare v1.0” , November 2009</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>CRU</keyword>
+        <name>Projet de schémas d’annuaires et de schémas de registres de resources numériques interopérables pour les administrations Document technique – v1, novembre 2002</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DNS_ALIASES</keyword>
+        <name>RFC-2219 Use of DNS Aliases for Network Services</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DSMLv2</keyword>
+        <name>DSMLv2</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>URL</keyword>
+        <name>IETF RFC1738, Uniform Resource Locators (URL)</name>
+        <version>December 1994</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.faqs.org/rfcs/rfc1738.html</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_KOS</keyword>
+        <name>DICOM 2011 PS 3.4: Key Object Selection Document Storage SOP Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_Suppl67</keyword>
+        <name>DICOM Supplement 67 – Configuration Management, January 14, 2004</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SP_800-92</keyword>
+        <name>SP 800-92 Guide to Computer Security Log Management</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_IOD</keyword>
+        <name>DICOM 2011 PS 3.3: Information Object Definitions</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>ISO/TS21091</keyword>
+        <name>Health Informatics - Directory services for health care providers, subjects of care, and other entities (ISO/TS 21091)</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>WSS10</keyword>
+        <name>WSS10 OASIS Standard, "OASIS Web Services Security: SOAP Message Security 1.0 (WS-Security 2004)", March 2004.</name>
+        <version>1.0</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0.pdf</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>FTP_TLS</keyword>
+        <name>IETF RFC-4217 Securing FTP with TLS</name>
+        <version></version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_Suppl122</keyword>
+        <name>Supplement 122: Specimen Identification and Revised Pathology SOP Classes Revision: 12 – 2007/05/05</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_STORAGE</keyword>
+        <name>DICOM 2011 PS 3.4: Storage Service Class.</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_KIN</keyword>
+        <name>DICOM 2011 PS 3.4: Key Image Note Storage SOP Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_GPPPS</keyword>
+        <name>DICOM 2011 PS 3.4: General Purpose Performed Procedure Step SOP Clas</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>XOP</keyword>
+        <name>XOP XML-binary Optimized Packaging</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.w3.org/TR/2005/REC-xop10-20050125/</url>
+        <transactions>
+            <transactionKeyword>ITI-41</transactionKeyword>
+            <transactionKeyword>ITI-43</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>MDN</keyword>
+        <name>MDN: RFC 3798 Message Disposition Notification</name>
+        <version></version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url>http://www.rfc-editor.org/rfc/rfc3798.txt</url>
+        <transactions>
+            <transactionKeyword>ITI-32</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>DICOM_CT_DOSE_TPL</keyword>
+        <name>DICOM 2011 PS 3.16: CT Radiation Dose SR IOD Templates</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>ITI_TF3</keyword>
+        <name>Metadata used in Document Sharing profiles</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions>
+            <transactionKeyword>ITI-32</transactionKeyword>
+            <transactionKeyword>ITI-42</transactionKeyword>
+            <transactionKeyword>ITI-61</transactionKeyword>
+            <transactionKeyword>ITI-41</transactionKeyword>
+            <transactionKeyword>ITI-43</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>HL7v2.6</keyword>
+        <name>HL7 Version 2.6</name>
+        <version>2.6</version>
+        <networkCommunicationType>HL7v2</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC3377</keyword>
+        <name>RFC 3377 - Lightweight Directory Access Protocol (v3): Technical Specification</name>
+        <version></version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SNTP</keyword>
+        <name>Simple Network Time Protocol (SNTP) RFC4330</name>
+        <version></version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HL7v2.4</keyword>
+        <name>HL7 Version 2.4</name>
+        <version>2.4</version>
+        <networkCommunicationType>HL7v2</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>CCOW</keyword>
+        <name>HL7 Context Management “CCOW”</name>
+        <version>1.4</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>ebRS</keyword>
+        <name>OASIS/ebXML Registry Services Specifications v3.0</name>
+        <version>3.0</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions>
+            <transactionKeyword>ITI-18</transactionKeyword>
+            <transactionKeyword>ITI-42</transactionKeyword>
+            <transactionKeyword>ITI-61</transactionKeyword>
+            <transactionKeyword>ITI-41</transactionKeyword>
+            <transactionKeyword>ITI-43</transactionKeyword>
+            <transactionKeyword>ITI-80</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>OASIS_WS_Topics</keyword>
+        <name>WS-Topics 1.3 OASIS Standard</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://docs.oasis-open.org/wsn/wsn-ws_topics-1.3-spec-os.pdf</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC2256</keyword>
+        <name>RFC 2256 - A Summary of the X.500(96) User Schema for use with LDAPv3</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SAMLProfile20</keyword>
+        <name>SAML 2.0 Profile For XACML 2.0 OASIS Standard, February 2005</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>XForms</keyword>
+        <name>XForms 1.1, W3C Working Draft.</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.w3.org/TR/2004/WD-xforms11-20041115/</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>IHE_WS</keyword>
+        <name>ITI TF-2x: Appendix V: Web Services for IHE Transactions.</name>
+        <version></version>
+        <networkCommunicationType>WEBSERVICE</networkCommunicationType>
+        <url></url>
+        <transactions>
+            <transactionKeyword>ITI-42</transactionKeyword>
+            <transactionKeyword>ITI-61</transactionKeyword>
+            <transactionKeyword>ITI-41</transactionKeyword>
+            <transactionKeyword>ITI-43</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>DICOM_Suppl80</keyword>
+        <name>DICOM Supplement 80 (final text): DVD Media Application Profiles</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HL7v2.5.1</keyword>
+        <name>HL7 Version 2.5.1</name>
+        <version>2.5.1</version>
+        <networkCommunicationType>HL7v2</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>POSIX_1003.2</keyword>
+        <name>POSIX 1003.2 : IEEE Std 1003.2 IEEE Standard for Information Technology — Portable Operating System Interface (POSIX®) — Part 2: Shell and Utilities — Amendment 1: Batch Environment -Description</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC1766</keyword>
+        <name>RFC 1766 Tags for the Identification of Languages</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>OASIS_WS_BaseNotif</keyword>
+        <name>WS-BaseNotification 1.3 OASIS Standard</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://docs.oasis-open.org/wsn/wsn-ws_base_notification-1.3-spec-os.pdf</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>OASIS_WS_Notif</keyword>
+        <name>OASIS Web Services Notification Family of Standards</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.oasis-open.org/committees/tc_home.php?wg_abbrev=wsn</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SYSLOG_TLS</keyword>
+        <name>Transmission of Syslog Messages over TLS (RFC 5425)</name>
+        <version></version>
+        <networkCommunicationType>SYSLOG</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>S/MIME</keyword>
+        <name>RFC-3851 Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.1 Message Specification</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HTTP2</keyword>
+        <name>IETF 7540 HyperText Transfer Protocol HTTP/2</name>
+        <version>2</version>
+        <networkCommunicationType>HTTP</networkCommunicationType>
+        <url>https://tools.ietf.org/html/rfc7540</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>XML</keyword>
+        <name>Extensible Markup Language (XML) 1.0 (Second Edition). W3C Recommendation 6 October 2000</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.w3.org/TR/REC-xml</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_MEDIA_STORAGE_PROFILE</keyword>
+        <name>DICOM 2011 PS 3.11: Media Storage Application Profiles</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_MWL</keyword>
+        <name>DICOM 2011 PS 3.4 Modality Worklist SOP Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>JSON</keyword>
+        <name>IETF 4627 The application/json Media Type for JavaScript Object Notation (JSON)</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>https://tools.ietf.org/html/rfc4627</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>ITU-T</keyword>
+        <name>ITU-T: Recommendation X.509 (03/00). “Information technology - Open Systems Interconnection - The directory: Public-key and attribute certificate frameworks"</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HL7v3</keyword>
+        <name>HL7 Version 3 Edition 2008</name>
+        <version></version>
+        <networkCommunicationType>WEBSERVICE</networkCommunicationType>
+        <url>http://www.hl7.org/memonly/downloads/v3edition.cfm#V32008</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SYSLOG</keyword>
+        <name>The Syslog Protocol. (RFC 5424)</name>
+        <version></version>
+        <networkCommunicationType>SYSLOG</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>ebMS</keyword>
+        <name>OASIS/ebXML Messaging Services Specifications v3.0</name>
+        <version>3.0</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions>
+            <transactionKeyword>ITI-80</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>HL7_DT</keyword>
+        <name>HL7v2 datatypes</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions>
+            <transactionKeyword>ITI-42</transactionKeyword>
+            <transactionKeyword>ITI-61</transactionKeyword>
+        </transactions>
+    </standard>
+    <standard>
+        <keyword>DICOM_GPSPS</keyword>
+        <name>DICOM 2011 PS 3.4: General Purpose Scheduled Procedure Step SOP Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC2830</keyword>
+        <name>RFC 2830 LDAPv3: Extension for Transport Layer Security</name>
+        <version></version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>WSDL</keyword>
+        <name>Web Services Description Language (WSDL) 1.1. W3C Note 15 March 2001</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.w3.org/TR/wsdl</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>WSS11</keyword>
+        <name>WSS11 OASIS Standard, "OASIS Web Services Security: SOAP Message Security 1.1 (WS-Security 2004)", February 2006.</name>
+        <version>1.1</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://www.oasis-open.org/committees/download.php/16790/wss-v1.1-spec-os-SOAPMessageSecurity.pdf</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>FHIR3</keyword>
+        <name>Fast Health Interoperability Resources </name>
+        <version>STU 3</version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://hl7.org/fhir/STU3/</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>OASIS_WS_BrokeredNotif</keyword>
+        <name>WS-BrokeredNotification 1.3 OASIS Standard</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>http://docs.oasis-open.org/wsn/wsn-ws_brokered_notification-1.3-spec-os.pdf</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>TLS</keyword>
+        <name>IETF: Transport Layer Security (TLS) 1.0 (RFC 2246)</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>NTP</keyword>
+        <name>Network Time Protocol Version 3. RFC1305</name>
+        <version>3</version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>HL7_CDA</keyword>
+        <name>HL7 CDA Release 2.0</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_BALCP</keyword>
+        <name>DICOM 2011 PS 3.15: Basic Application Level Confidentiality Profile.</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_DCMR</keyword>
+        <name>DICOM 2011 PS 3.16: DCMR Context Groups (Normative)</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC1510</keyword>
+        <name>RFC1510 The Kerberos Network Authentication Service (V5)</name>
+        <version>5</version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>POCT1-A</keyword>
+        <name>POCT1-A: Device Message Layer (DML) defined in Appendix B of POCT1-A standard. </name>
+        <version></version>
+        <networkCommunicationType>OTHER</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>SYSLOG_UDP</keyword>
+        <name>Transmission of Syslog Messages over UDP (RFC 5426)</name>
+        <version></version>
+        <networkCommunicationType>SYSLOG</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_X_DOSE_TPL</keyword>
+        <name>DICOM 2011 PS 3.16: X-Ray Radiation Dose SR IOD Templates</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_GPWL</keyword>
+        <name>DICOM 2011 PS 3.4: General Purpose Worklist SOP Class</name>
+        <version></version>
+        <networkCommunicationType>DICOM</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>OASIS_WS_addressing</keyword>
+        <name>WS-Addressing OASIS Standard</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>URI</keyword>
+        <name>IETF 3986 Uniform Resource Identifier (URI): Generic Syntax</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url>https://tools.ietf.org/html/rfc3986</url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>DICOM_DOSE_UC</keyword>
+        <name>DICOM 2011 PS 3.17: Annex AA: Radiation Dose Reporting Use Cases</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+    <standard>
+        <keyword>RFC2252</keyword>
+        <name>RFC 2252 - Lightweight Directory Access Protocol (v3): Attribute Syntax Definitions</name>
+        <version></version>
+        <networkCommunicationType>NONE</networkCommunicationType>
+        <url></url>
+        <transactions/>
+    </standard>
+</standards>

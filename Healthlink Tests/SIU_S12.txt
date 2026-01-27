@@ -1,0 +1,203 @@
+<SIU_S12 xmlns="urn:hl7-org:v2xml">
+  <MSH>
+    <MSH.1>|</MSH.1>
+    <MSH.2>^~\&amp;</MSH.2>
+    <MSH.3>
+      <HD.1>TOREX.HEALTHLINK.8</HD.1>
+      <HD.2></HD.2>
+      <HD.3></HD.3>
+    </MSH.3>
+    <MSH.4>
+      <HD.1>AMNCH</HD.1>
+      <HD.2>1049</HD.2>
+      <HD.3>L</HD.3>
+    </MSH.4>
+    <MSH.6>
+      <HD.1>DR LIAM STRONG</HD.1>
+      <HD.2>09999</HD.2>
+      <HD.3>L</HD.3>
+    </MSH.6>
+    <MSH.7>
+      <TS.1>201301260352</TS.1>
+    </MSH.7>
+    <MSH.9>
+      <MSG.1>SIU</MSG.1>
+      <MSG.2>S12</MSG.2>
+    </MSH.9>
+    <MSH.10>3988215</MSH.10>
+    <MSH.11>
+      <PT.1>P</PT.1>
+    </MSH.11>
+    <MSH.12>
+      <VID.1>2.4</VID.1>
+    </MSH.12>
+  </MSH>
+  <SCH>
+    <SCH.2>
+      <EI.1>74043860</EI.1>
+      <EI.2>AMNCH</EI.2>
+      <EI.3>1049</EI.3>
+      <EI.4>HIPEHOS</EI.4>
+    </SCH.2>
+    <SCH.6>
+      <CE.1>D.N.A.</CE.1>
+      <CE.2>D.N.A.</CE.2>
+      <CE.3></CE.3>
+    </SCH.6>
+    <SCH.7>
+      <CE.1></CE.1>
+      <CE.2></CE.2>
+      <CE.3></CE.3>
+    </SCH.7>
+    <SCH.11>
+      <TQ.4>
+        <TS.1>201301250850</TS.1>
+      </TQ.4>
+      <TQ.6></TQ.6>
+    </SCH.11>
+    <SCH.16>
+      <XCN.1></XCN.1>
+      <XCN.2>
+        <FN.1 />
+      </XCN.2>
+      <XCN.3></XCN.3>
+      <XCN.4></XCN.4>
+      <XCN.5></XCN.5>
+      <XCN.6></XCN.6>
+    </SCH.16>
+    <SCH.20>
+      <XCN.1></XCN.1>
+      <XCN.2>
+        <FN.1 />
+      </XCN.2>
+      <XCN.3></XCN.3>
+      <XCN.4></XCN.4>
+      <XCN.5></XCN.5>
+      <XCN.6></XCN.6>
+    </SCH.20>
+    <SCH.25>
+      <CE.1>Cancelled</CE.1>
+      <CE.2>The indicated appointment was stopped from occurring (cancelled prior to starting)</CE.2>
+      <CE.3>HL70278</CE.3>
+    </SCH.25>
+  </SCH>
+  <NTE>
+    <NTE.1 />
+    <NTE.2 />
+    <NTE.3 />
+  </NTE>
+  <SIU_S12.PATIENT>
+    <PID>
+      <PID.3>
+        <CX.1>1234567</CX.1>
+        <CX.2></CX.2>
+        <CX.3></CX.3>
+        <CX.4>
+          <HD.1>AMNCH</HD.1>
+          <HD.2 />
+          <HD.3 />
+        </CX.4>
+        <CX.5>MRN</CX.5>
+      </PID.3>
+      <PID.5>
+        <XPN.1>
+          <FN.1>BLOGGS</FN.1>
+        </XPN.1>
+        <XPN.2>JOE</XPN.2>
+        <XPN.3></XPN.3>
+        <XPN.4></XPN.4>
+        <XPN.5>MR</XPN.5>
+        <XPN.6></XPN.6>
+        <XPN.7>L</XPN.7>
+      </PID.5>
+      <PID.7>
+        <TS.1>19590521</TS.1>
+      </PID.7>
+      <PID.8>M</PID.8>
+      <PID.11>
+        <XAD.1>
+          <SAD.1>MAIN ROAD</SAD.1>
+        </XAD.1>
+        <XAD.2>MAINTOWN</XAD.2>
+        <XAD.3>DUBLIN 7</XAD.3>
+        <XAD.4 />
+        <XAD.5 />
+      </PID.11>
+      <PID.13>
+        <XTN.1 />
+        <XTN.4 />
+        <XTN.6 />
+        <XTN.7 />
+      </PID.13>
+      <PID.29>
+        <TS.1 />
+      </PID.29>
+      <PID.30>N</PID.30>
+    </PID>
+    <PV1>
+      <PV1.2>O</PV1.2>
+      <PV1.3>
+        <PL.1></PL.1>
+        <PL.2></PL.2>
+        <PL.3></PL.3>
+        <PL.4>
+          <HD.1></HD.1>
+          <HD.2 />
+          <HD.3 />
+        </PL.4>
+        <PL.5></PL.5>
+        <PL.6></PL.6>
+        <PL.7></PL.7>
+        <PL.8></PL.8>
+        <PL.9>MR P. O BRIEN GLAUCOMA CLINIC</PL.9>
+      </PV1.3>
+      <PV1.7>
+        <XCN.1 />
+        <XCN.2>
+          <FN.1 />
+        </XCN.2>
+        <XCN.3 />
+        <XCN.4 />
+        <XCN.5 />
+        <XCN.6 />
+      </PV1.7>
+      <PV1.9>
+        <XCN.1>1812</XCN.1>
+        <XCN.2>
+          <FN.1>O BRIEN</FN.1>
+        </XCN.2>
+        <XCN.3>PETE</XCN.3>
+        <XCN.4></XCN.4>
+        <XCN.5></XCN.5>
+        <XCN.6>PROF.</XCN.6>
+      </PV1.9>
+      <PV1.14 />
+      <PV1.15 />
+      <PV1.19>
+        <CX.1 />
+      </PV1.19>
+      <PV1.36 />
+      <PV1.37>
+        <DLD.1></DLD.1>
+      </PV1.37>
+      <PV1.44>
+        <TS.1 />
+      </PV1.44>
+      <PV1.45>
+        <TS.1 />
+      </PV1.45>
+      <PV1.51>V</PV1.51>
+    </PV1>
+  </SIU_S12.PATIENT>
+  <SIU_S12.RESOURCE>
+    <RGS>
+      <RGS.1 />
+      <RGS.2 />
+      <RGS.3>
+        <CE.1 />
+        <CE.2 />
+        <CE.3 />
+      </RGS.3>
+    </RGS>
+  </SIU_S12.RESOURCE>
+</SIU_S12>

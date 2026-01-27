@@ -1,0 +1,2214 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<hl7MessageProfiles>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.10</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>EHI</keyword>
+            <name>eHealthIreland</name>
+            <description>Domain that holds all the eHealthIreland defined profiles</description>
+            <id>22</id>
+        </Domain>
+        <Actor>
+            <keyword>PDC_USE_CASE_ACTOR</keyword>
+            <name>Patient Demographics Consumer Use case actor</name>
+            <description>An example of this use case actor could be the Cross-Border National Contact or a National Patient Portal.</description>
+            <id>1285</id>
+        </Actor>
+        <Transaction>
+            <keyword>EHI-3</keyword>
+            <name>Query for an IHI Number based on demographics data</name>
+            <description></description>
+            <id>394</id>
+            <transactionStatusType>
+                <keyword>TI</keyword>
+                <name>Trial Implementation</name>
+                <description></description>
+            </transactionStatusType>
+        </Transaction>
+        <TriggerEvent>QBP^Q22^QBP_Q21</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>EHI</keyword>
+            <labelToDisplay>eHealthIreland</labelToDisplay>
+            <description>eHealthIreland</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.11</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>EHI</keyword>
+            <name>eHealthIreland</name>
+            <description>Domain that holds all the eHealthIreland defined profiles</description>
+            <id>22</id>
+        </Domain>
+        <Actor>
+            <keyword>PAT_ID_DEMOGRAPHICS_MANAGER</keyword>
+            <name>Patient Identifiers and Demographics Manager</name>
+            <description>An example of this use case actor is the IHI Index and registry. </description>
+            <id>1286</id>
+        </Actor>
+        <Transaction>
+            <keyword>EHI-3</keyword>
+            <name>Query for an IHI Number based on demographics data</name>
+            <description></description>
+            <id>394</id>
+            <transactionStatusType>
+                <keyword>TI</keyword>
+                <name>Trial Implementation</name>
+                <description></description>
+            </transactionStatusType>
+        </Transaction>
+        <TriggerEvent>RSP^K22^RSP_K21</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>EHI</keyword>
+            <labelToDisplay>eHealthIreland</labelToDisplay>
+            <description>eHealthIreland</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.12</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-12</keyword>
+            <name>Laboratory result, Radiology result</name>
+            <description></description>
+            <id>402</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ORU^R01^ORU_R01</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.16</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-11</keyword>
+            <name> Lab Order Acknowledgement</name>
+            <description></description>
+            <id>404</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ORL^O22^ORL_O22</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.19</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-16</keyword>
+            <name> Vaccination Reports</name>
+            <description></description>
+            <id>406</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>VXU^V04^VXU_V04</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.20</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-3</keyword>
+            <name>Discharge Summary Report</name>
+            <description></description>
+            <id>407</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>REF^I12^REF_I12</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.21</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-8</keyword>
+            <name>Appointment Notification</name>
+            <description></description>
+            <id>409</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>SIU^S12^SIU_S12</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.22</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-13</keyword>
+            <name>Laboratory Order</name>
+            <description></description>
+            <id>408</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>OML^O21^OML_O21</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.23</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-9</keyword>
+            <name>Referral Acknowledgement</name>
+            <description></description>
+            <id>403</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>RRI^R12^RRI_R12</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.24</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-2</keyword>
+            <name>Acknowledgment Message</name>
+            <description></description>
+            <id>420</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ACK</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.7</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-1</keyword>
+            <name>Admit Notification</name>
+            <description></description>
+            <id>400</id>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>HIS</keyword>
+                    <name>Hospital Information System</name>
+                    <description></description>
+                    <id>1292</id>
+                </fromActor>
+                <toActor>
+                    <keyword>GPSYS</keyword>
+                    <name>GP system</name>
+                    <description></description>
+                    <id>1293</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A01^ADT_A01</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.1.12559.11.35.10.1.9</Oid>
+        <Hl7Version>2.4</Hl7Version>
+        <Domain>
+            <keyword>HEALTHLINK</keyword>
+            <name>HealthLink</name>
+            <description>The national healthlink project</description>
+            <id>23</id>
+        </Domain>
+        <Actor>
+            <keyword>HIS</keyword>
+            <name>Hospital Information System</name>
+            <description></description>
+            <id>1292</id>
+        </Actor>
+        <Transaction>
+            <keyword>HL-5</keyword>
+            <name>Discharge notification</name>
+            <description></description>
+            <id>401</id>
+        </Transaction>
+        <TriggerEvent>ADT^A03^ADT_A03</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>HL</keyword>
+            <labelToDisplay>HealthLink</labelToDisplay>
+            <description>HealthLink</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.148</Oid>
+        <Hl7Version>2.3.1</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+            <name>Patient Identity Cross-reference Manager</name>
+            <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+            <id>1204</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-8</keyword>
+            <name>Patient Identity Feed</name>
+            <description>Allows a Patient Identity Source Actor to notify a Patient Identity Cross-Referencing Actor of all events related to patient identification (creation, update, merge, etc.).</description>
+            <id>325</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>DOC_REGISTRY</keyword>
+                    <name>Document Registry</name>
+                    <description>The Document Registry Actor maintains metadata about each registered document in a document entry. This includes a link to the Document in the Repository where it is stored. The Document Registry responds to queries from Document Consumer actors about documents meeting specific criteria. It also enforces some healthcare specific technical policies at the time of document registration.</description>
+                    <id>1209</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ACK^A04^ACK</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.149</Oid>
+        <Hl7Version>2.3.1</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+            <name>Patient Identity Cross-reference Manager</name>
+            <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+            <id>1204</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-8</keyword>
+            <name>Patient Identity Feed</name>
+            <description>Allows a Patient Identity Source Actor to notify a Patient Identity Cross-Referencing Actor of all events related to patient identification (creation, update, merge, etc.).</description>
+            <id>325</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>DOC_REGISTRY</keyword>
+                    <name>Document Registry</name>
+                    <description>The Document Registry Actor maintains metadata about each registered document in a document entry. This includes a link to the Document in the Repository where it is stored. The Document Registry responds to queries from Document Consumer actors about documents meeting specific criteria. It also enforces some healthcare specific technical policies at the time of document registration.</description>
+                    <id>1209</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ACK^A05^ACK</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.151</Oid>
+        <Hl7Version>2.3.1</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+            <name>Patient Identity Cross-reference Manager</name>
+            <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+            <id>1204</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-8</keyword>
+            <name>Patient Identity Feed</name>
+            <description>Allows a Patient Identity Source Actor to notify a Patient Identity Cross-Referencing Actor of all events related to patient identification (creation, update, merge, etc.).</description>
+            <id>325</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>DOC_REGISTRY</keyword>
+                    <name>Document Registry</name>
+                    <description>The Document Registry Actor maintains metadata about each registered document in a document entry. This includes a link to the Document in the Repository where it is stored. The Document Registry responds to queries from Document Consumer actors about documents meeting specific criteria. It also enforces some healthcare specific technical policies at the time of document registration.</description>
+                    <id>1209</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ACK^A40^ACK</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.192</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-21</keyword>
+            <name>Patient Demographics Query</name>
+            <description>Look up and return patient demographic information in a single patient demographics source, based upon matches with full or partial demographic information entered by the user.</description>
+            <id>321</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PATIENT_SUMMARIES_CONSUMER</keyword>
+                    <name>Patient Summaries consumer</name>
+                    <description>Queries and Retrieves Patient Summary documents.</description>
+                    <id>1278</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_ID_DEMOGRAPHICS_MANAGER</keyword>
+                    <name>Patient Identifiers and Demographics Manager</name>
+                    <description>An example of this use case actor is the IHI Index and registry. </description>
+                    <id>1286</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>EPRESCRIPTION_SOURCE</keyword>
+                    <name>ePrescription Source</name>
+                    <description>Responsible for the creation of ePrescription and publishing them to the Shared Document Repository.</description>
+                    <id>1282</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_ID_DEMOGRAPHICS_MANAGER</keyword>
+                    <name>Patient Identifiers and Demographics Manager</name>
+                    <description>An example of this use case actor is the IHI Index and registry. </description>
+                    <id>1286</id>
+                </fromActor>
+                <toActor>
+                    <keyword>EPRESCRIPTION_CONSUMER</keyword>
+                    <name>ePrescription Consumer</name>
+                    <description>Consumes ePrescription documents.</description>
+                    <id>1283</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>EPRESCRIPTION_CONSUMER</keyword>
+                    <name>ePrescription Consumer</name>
+                    <description>Consumes ePrescription documents.</description>
+                    <id>1283</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_ID_DEMOGRAPHICS_MANAGER</keyword>
+                    <name>Patient Identifiers and Demographics Manager</name>
+                    <description>An example of this use case actor is the IHI Index and registry. </description>
+                    <id>1286</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>IMPORTER</keyword>
+                    <name>Importer</name>
+                    <description>A system that imports evidence documents such as images, presentation states, Key Image Notes or Evidence Documents from hardcopy or digital media.</description>
+                    <id>1191</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ACK^J01^ACK</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.193</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-22</keyword>
+            <name>Patient Demographics and Visit Query </name>
+            <description>Look up and return patient demographic and visit information in a single patient demographics source, based upon matches with full or partial demographic/visit information entered by the user.</description>
+            <id>322</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ACK^J01^ACK</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.25</Oid>
+        <Hl7Version>2.3.1</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PAT_IDENTITY_SRC</keyword>
+            <name>Patient Identity Source</name>
+            <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+            <id>1208</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-8</keyword>
+            <name>Patient Identity Feed</name>
+            <description>Allows a Patient Identity Source Actor to notify a Patient Identity Cross-Referencing Actor of all events related to patient identification (creation, update, merge, etc.).</description>
+            <id>325</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>DOC_REGISTRY</keyword>
+                    <name>Document Registry</name>
+                    <description>The Document Registry Actor maintains metadata about each registered document in a document entry. This includes a link to the Document in the Repository where it is stored. The Document Registry responds to queries from Document Consumer actors about documents meeting specific criteria. It also enforces some healthcare specific technical policies at the time of document registration.</description>
+                    <id>1209</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A04^ADT_A01</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.26</Oid>
+        <Hl7Version>2.3.1</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PAT_IDENTITY_SRC</keyword>
+            <name>Patient Identity Source</name>
+            <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+            <id>1208</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-8</keyword>
+            <name>Patient Identity Feed</name>
+            <description>Allows a Patient Identity Source Actor to notify a Patient Identity Cross-Referencing Actor of all events related to patient identification (creation, update, merge, etc.).</description>
+            <id>325</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>DOC_REGISTRY</keyword>
+                    <name>Document Registry</name>
+                    <description>The Document Registry Actor maintains metadata about each registered document in a document entry. This includes a link to the Document in the Repository where it is stored. The Document Registry responds to queries from Document Consumer actors about documents meeting specific criteria. It also enforces some healthcare specific technical policies at the time of document registration.</description>
+                    <id>1209</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A40^ADT_A39</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.27</Oid>
+        <Hl7Version>2.3.1</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PAT_IDENTITY_SRC</keyword>
+            <name>Patient Identity Source</name>
+            <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+            <id>1208</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-8</keyword>
+            <name>Patient Identity Feed</name>
+            <description>Allows a Patient Identity Source Actor to notify a Patient Identity Cross-Referencing Actor of all events related to patient identification (creation, update, merge, etc.).</description>
+            <id>325</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>DOC_REGISTRY</keyword>
+                    <name>Document Registry</name>
+                    <description>The Document Registry Actor maintains metadata about each registered document in a document entry. This includes a link to the Document in the Repository where it is stored. The Document Registry responds to queries from Document Consumer actors about documents meeting specific criteria. It also enforces some healthcare specific technical policies at the time of document registration.</description>
+                    <id>1209</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A05^ADT_A01</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.28</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+            <name>Patient Identity Cross-reference Manager</name>
+            <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+            <id>1204</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-10</keyword>
+            <name>PIX Update Notification</name>
+            <description>Allows a Patient Identity Consumer to be notified by the Patient Identity Cross-reference Manager Actor of changes to the identification of a patient in Patient Identification Domains the Consumer is interested in.</description>
+            <id>320</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_CONSUMER</keyword>
+                    <name>Patient Identifier Cross-reference Consumer</name>
+                    <description>This actor allows a system in a Patient Identification Domain to find out the identification of a patient in a different Patient Identification Domain by using the services of a Patient Identity Cross-Reference Manager Actor. </description>
+                    <id>1203</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A31^ADT_A05</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.32</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDC</keyword>
+            <name>Patient Demographics Consumer</name>
+            <description>This actor allows a user to associate information with a patient at the point of care.</description>
+            <id>1205</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-21</keyword>
+            <name>Patient Demographics Query</name>
+            <description>Look up and return patient demographic information in a single patient demographics source, based upon matches with full or partial demographic information entered by the user.</description>
+            <id>321</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PATIENT_SUMMARIES_CONSUMER</keyword>
+                    <name>Patient Summaries consumer</name>
+                    <description>Queries and Retrieves Patient Summary documents.</description>
+                    <id>1278</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_ID_DEMOGRAPHICS_MANAGER</keyword>
+                    <name>Patient Identifiers and Demographics Manager</name>
+                    <description>An example of this use case actor is the IHI Index and registry. </description>
+                    <id>1286</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>EPRESCRIPTION_SOURCE</keyword>
+                    <name>ePrescription Source</name>
+                    <description>Responsible for the creation of ePrescription and publishing them to the Shared Document Repository.</description>
+                    <id>1282</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_ID_DEMOGRAPHICS_MANAGER</keyword>
+                    <name>Patient Identifiers and Demographics Manager</name>
+                    <description>An example of this use case actor is the IHI Index and registry. </description>
+                    <id>1286</id>
+                </fromActor>
+                <toActor>
+                    <keyword>EPRESCRIPTION_CONSUMER</keyword>
+                    <name>ePrescription Consumer</name>
+                    <description>Consumes ePrescription documents.</description>
+                    <id>1283</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>EPRESCRIPTION_CONSUMER</keyword>
+                    <name>ePrescription Consumer</name>
+                    <description>Consumes ePrescription documents.</description>
+                    <id>1283</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_ID_DEMOGRAPHICS_MANAGER</keyword>
+                    <name>Patient Identifiers and Demographics Manager</name>
+                    <description>An example of this use case actor is the IHI Index and registry. </description>
+                    <id>1286</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>IMPORTER</keyword>
+                    <name>Importer</name>
+                    <description>A system that imports evidence documents such as images, presentation states, Key Image Notes or Evidence Documents from hardcopy or digital media.</description>
+                    <id>1191</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>QCN^J01^QCN_J01</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.34</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDC</keyword>
+            <name>Patient Demographics Consumer</name>
+            <description>This actor allows a user to associate information with a patient at the point of care.</description>
+            <id>1205</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-22</keyword>
+            <name>Patient Demographics and Visit Query </name>
+            <description>Look up and return patient demographic and visit information in a single patient demographics source, based upon matches with full or partial demographic/visit information entered by the user.</description>
+            <id>322</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>QBP^ZV1^QBP_Q21</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.36</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A28^ADT_A05</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.37</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A37^ADT_A37</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.38</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A47^ADT_A30</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.40</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A40^ADT_A39</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.41</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A24^ADT_A24</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.42</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-22</keyword>
+            <name>Patient Demographics and Visit Query </name>
+            <description>Look up and return patient demographic and visit information in a single patient demographics source, based upon matches with full or partial demographic/visit information entered by the user.</description>
+            <id>322</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>RSP^ZV2^RSP_ZV2</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>1.3.6.1.4.12559.11.1.1.43</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDC</keyword>
+            <name>Patient Demographics Consumer</name>
+            <description>This actor allows a user to associate information with a patient at the point of care.</description>
+            <id>1205</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-22</keyword>
+            <name>Patient Demographics and Visit Query </name>
+            <description>Look up and return patient demographic and visit information in a single patient demographics source, based upon matches with full or partial demographic/visit information entered by the user.</description>
+            <id>322</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>QCN^J01^QCN_J01</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>2.16.840.1.113883.2.6.9.55</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A31^ADT_A05</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>2.16.840.1.113883.2.6.9.56</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A47^ADT_A30</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>2.16.840.1.113883.2.6.9.61</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A24^ADT_A24</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>2.16.840.1.113883.2.6.9.73</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A40^ADT_A39</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+    <HL7MessageProfile>
+        <Oid>2.16.840.1.113883.2.6.9.79</Oid>
+        <Hl7Version>2.5</Hl7Version>
+        <Domain>
+            <keyword>ITI</keyword>
+            <name>IT-Infrastructure</name>
+            <description>The IT Infrastructure Domain supplies infrastructure for sharing healthcare information. An infrastructure interoperability component represents a common IT function that is used as a building block for a variety of use cases... a necessary ingredient, but rarely visible to the end user!! These components may be embedded in an application, but are often deployed as a shared resource within a RHIO or Health Information Exchange.</description>
+            <id>16</id>
+        </Domain>
+        <Actor>
+            <keyword>PDS</keyword>
+            <name>Patient Demographics Supplier</name>
+            <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+            <id>1206</id>
+        </Actor>
+        <Transaction>
+            <keyword>ITI-30</keyword>
+            <name>Patient Identity Management</name>
+            <description>The Patient Demographics Supplier registers or updates a patient and forwards the demographic information (i.e. all information directly related to the patient, such as ID, address, next of kin, to other systems implementing Patient Demographics Consumer.</description>
+            <id>326</id>
+            <transactionStatusType>
+                <keyword>FT</keyword>
+                <name>Final Text</name>
+                <description></description>
+            </transactionStatusType>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PAT_IDENTITY_X_REF_MGR</keyword>
+                    <name>Patient Identity Cross-reference Manager</name>
+                    <description>Serves a well-defined set of Patient Identification Domains. Based on information provided by in each Patient Identification Domain by a Patient Identification Source Actor, it manages the cross-referencing of patient identifiers across Patient Identification Domains.</description>
+                    <id>1204</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PDS</keyword>
+                    <name>Patient Demographics Supplier</name>
+                    <description>A repository of patient information that can be searched on demographic or visit-related fields.</description>
+                    <id>1206</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PDC</keyword>
+                    <name>Patient Demographics Consumer</name>
+                    <description>This actor allows a user to associate information with a patient at the point of care.</description>
+                    <id>1205</id>
+                </toActor>
+            </transactionLinks>
+            <transactionLinks>
+                <fromActor>
+                    <keyword>PAT_IDENTITY_SRC</keyword>
+                    <name>Patient Identity Source</name>
+                    <description>The Patient Identity Source is the producer and publisher of patient identity data.</description>
+                    <id>1208</id>
+                </fromActor>
+                <toActor>
+                    <keyword>PIX_MANAGER</keyword>
+                    <name>Patient Identifier Cross-reference Manager</name>
+                    <description>The Patient Identifier Cross-reference Manager manages patient identity data from different domains and cross-references patient identity data from different domains for the same patient.</description>
+                    <id>1295</id>
+                </toActor>
+            </transactionLinks>
+        </Transaction>
+        <TriggerEvent>ADT^A37^ADT_A37</TriggerEvent>
+        <MessageOrderControlCode></MessageOrderControlCode>
+        <AffinityDomains>
+            <keyword>IHE</keyword>
+            <labelToDisplay>IHE</labelToDisplay>
+            <description>IHE</description>
+        </AffinityDomains>
+    </HL7MessageProfile>
+</hl7MessageProfiles>

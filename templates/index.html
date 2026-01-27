@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gazelle HL7 v2 Validator</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h1 class="display-4 mb-3">
+                    <i class="bi bi-shield-check text-primary"></i>
+                    Gazelle HL7 v2 Validator
+                </h1>
+                <p class="lead text-muted">
+                    Validate HL7 v2 Healthlink files before submission to the Healthlink system
+                </p>
+            </div>
+        </div>
+
+        <!-- Upload Card -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-earmark-arrow-up"></i>
+                            Upload HL7 v2 XML File
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="fileInput" class="form-label">Select XML File</label>
+                                <input class="form-control form-control-lg" type="file" id="fileInput" accept=".xml"
+                                    required>
+                                <div class="form-text">
+                                    Only XML files are accepted (max size: 16MB)
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg" id="validateBtn">
+                                    <i class="bi bi-check-circle"></i>
+                                    Validate File
+                                </button>
+                            </div>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <div class="text-center">
+                            <button type="button" class="btn btn-outline-secondary" id="validateSampleBtn">
+                                <i class="bi bi-file-earmark-text"></i>
+                                Validate Sample File (vin.xml)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="row justify-content-center mb-4" id="loadingSpinner" style="display: none;">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="lead">Validating your file...</p>
+                        <p class="text-muted">This may take a few moments</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Card -->
+        <div class="row justify-content-center" id="resultsContainer" style="display: none;">
+            <div class="col-lg-10">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center" id="resultsHeader">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-earmark-check"></i>
+                            Validation Results
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="closeResults">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- File Info -->
+                        <div class="alert alert-info mb-3" id="fileInfo">
+                            <strong>File:</strong> <span id="fileName"></span>
+                        </div>
+
+                        <!-- Validation Status -->
+                        <div class="mb-3" id="validationStatus"></div>
+
+                        <!-- Report URL -->
+                        <div class="mb-3" id="reportUrlSection" style="display: none;">
+                            <label class="form-label fw-bold">Full Report URL:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="reportUrl" readonly>
+                                <button class="btn btn-outline-secondary" type="button" id="copyUrlBtn">
+                                    <i class="bi bi-clipboard"></i> Copy
+                                </button>
+                                <a class="btn btn-primary" id="openReportBtn" href="#" target="_blank">
+                                    <i class="bi bi-box-arrow-up-right"></i> Open
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Validation Report -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Validation Report:</label>
+                            <div class="card bg-light">
+                                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                                    <pre id="validationReport" class="mb-0"
+                                        style="white-space: pre-wrap; word-wrap: break-word;"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Raw Response (collapsible) -->
+                        <div class="accordion" id="rawResponseAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#rawResponse">
+                                        <i class="bi bi-code-square me-2"></i>
+                                        Raw API Response
+                                    </button>
+                                </h2>
+                                <div id="rawResponse" class="accordion-collapse collapse"
+                                    data-bs-parent="#rawResponseAccordion">
+                                    <div class="accordion-body">
+                                        <pre id="rawResponseContent" class="mb-0"
+                                            style="white-space: pre-wrap; word-wrap: break-word;"></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div class="row justify-content-center" id="errorContainer" style="display: none;">
+            <div class="col-lg-8">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Error
+                    </h5>
+                    <p id="errorMessage"></p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-muted py-4 mt-5">
+        <div class="container">
+            <p class="mb-1">
+                <i class="bi bi-info-circle"></i>
+                Connecting to: <code>https://testing.ehealthireland.ie/evs/rest/validations</code>
+            </p>
+            <p class="small mb-0">
+                Gazelle HL7 v2 Validator - VS Code Integration
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+
+</html>
