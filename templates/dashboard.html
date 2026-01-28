@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gazelle HL7 v2 Validation Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+        }
+
+        body {
+            background-color: #ecf0f1;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .stats-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stats-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+
+        .report-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .report-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-passed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-failed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-action {
+            margin: 5px;
+        }
+
+        .api-key-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .api-key-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .api-key-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .api-key-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-file-medical"></i> Gazelle HL7 v2 Validation Dashboard
+            </span>
+            <div>
+                <a href="{{ url_for('upload_page') }}" class="btn btn-success me-2">
+                    <i class="bi bi-cloud-upload"></i> Upload Files
+                </a>
+                <span class="text-white" id="currentTime">
+                    <i class="bi bi-clock"></i> <span></span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- API Key Section -->
+        <div class="api-key-section">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-3">
+                        <i class="bi bi-key-fill"></i> Gazelle API Configuration
+                    </h5>
+                    {% if has_api_key %}
+                    <span class="api-key-status api-key-active">
+                        <i class="bi bi-check-circle-fill me-2"></i> API Key Active
+                    </span>
+                    {% else %}
+                    <span class="api-key-status api-key-inactive">
+                        <i class="bi bi-x-circle-fill me-2"></i> API Key Not Set
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 text-end">
+                    {% if not has_api_key %}
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#apiKeyModal">
+                        <i class="bi bi-plus-circle"></i> Set API Key
+                    </button>
+                    {% else %}
+                    <button class="btn btn-outline-danger" onclick="clearApiKey()">
+                        <i class="bi bi-trash"></i> Clear API Key
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card stats-card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1">Total Files</h6>
+                                <h2 class="mb-0">{{ total_files }}</h2>
+                            </div>
+                            <i class="bi bi-files stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stats-card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1">Passed</h6>
+                                <h2 class="mb-0">{{ passed_count }}</h2>
+                            </div>
+                            <i class="bi bi-check-circle stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stats-card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1">Failed</h6>
+                                <h2 class="mb-0">{{ failed_count }}</h2>
+                            </div>
+                            <i class="bi bi-x-circle stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search files...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="PASSED">Passed</option>
+                        <option value="FAILED">Failed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="typeFilter">
+                        <option value="">All Message Types</option>
+                        <option value="ORU">ORU^R01</option>
+                        <option value="SIU">SIU^S12</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports List -->
+        <div class="row">
+            <div class="col-12">
+                <h4 class="mb-3">
+                    <i class="bi bi-file-earmark-text"></i> Validation Reports
+                </h4>
+            </div>
+        </div>
+
+        <div class="row" id="reportsContainer">
+            {% for report in reports %}
+            <div class="col-md-6 col-lg-4 report-item" data-filename="{{ report.filename|lower }}"
+                data-status="{{ report.status }}" data-type="{{ report.message_type[:3] }}">
+                <div class="card report-card">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="bi bi-file-medical-fill text-primary"></i>
+                                {{ report.filename }}
+                            </h6>
+                            <span class="status-badge status-{{ report.status|lower }}">
+                                {% if report.status == 'PASSED' %}
+                                <i class="bi bi-check-circle-fill"></i>
+                                {% else %}
+                                <i class="bi bi-x-circle-fill"></i>
+                                {% endif %}
+                                {{ report.status }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <strong>Message Type:</strong>
+                            <span class="badge bg-info">{{ report.message_type }}</span>
+                        </p>
+                        <p class="mb-2">
+                            <strong>Date:</strong>
+                            <small class="text-muted">{{ report.date }}</small>
+                        </p>
+                        <div class="row text-center mt-3">
+                            <div class="col-6">
+                                <div class="p-2 bg-light rounded">
+                                    <small class="text-muted d-block">Errors</small>
+                                    <strong class="text-danger">{{ report.errors }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 bg-light rounded">
+                                    <small class="text-muted d-block">Warnings</small>
+                                    <strong class="text-warning">{{ report.warnings }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex flex-wrap justify-content-center">
+                            <a href="{{ url_for('view_report', report_id=report.id) }}"
+                                class="btn btn-sm btn-primary btn-action">
+                                <i class="bi bi-eye"></i> View Report
+                            </a>
+                            <a href="{{ url_for('export_pdf', report_id=report.id) }}"
+                                class="btn btn-sm btn-outline-danger btn-action">
+                                <i class="bi bi-file-pdf"></i> Export PDF
+                            </a>
+                            {% if report.corrected_path %}
+                            <a href="{{ url_for('download_corrected', report_id=report.id) }}"
+                                class="btn btn-sm btn-success btn-action">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if total_files == 0 %}
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle"></i>
+                    No validation reports available. Upload HL7 files to get started.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- API Key Modal -->
+    <div class="modal fade" id="apiKeyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-key-fill"></i> Set Gazelle API Key
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Your API key is stored only for this session and is never saved permanently.
+                    </div>
+                    <form id="apiKeyForm">
+                        <div class="mb-3">
+                            <label for="apiKeyInput" class="form-label">Gazelle API Key</label>
+                            <input type="password" class="form-control" id="apiKeyInput"
+                                placeholder="Enter your Gazelle API key" required>
+                            <small class="form-text text-muted">
+                                Get your API key from:
+                                <a href="https://testing.ehealthireland.ie" target="_blank">
+                                    testing.ehealthireland.ie
+                                </a>
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="setApiKey()">
+                        <i class="bi bi-check-circle"></i> Set API Key
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.querySelector('#currentTime span').textContent = now.toLocaleString();
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Filter functionality
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const typeFilter = document.getElementById('typeFilter');
+        const reportItems = document.querySelectorAll('.report-item');
+
+        function filterReports() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            const typeValue = typeFilter.value;
+
+            reportItems.forEach(item => {
+                const filename = item.dataset.filename;
+                const status = item.dataset.status;
+                const type = item.dataset.type;
+
+                const matchesSearch = filename.includes(searchTerm);
+                const matchesStatus = !statusValue || status === statusValue;
+                const matchesType = !typeValue || type === typeValue;
+
+                if (matchesSearch && matchesStatus && matchesType) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        searchInput.addEventListener('input', filterReports);
+        statusFilter.addEventListener('change', filterReports);
+        typeFilter.addEventListener('change', filterReports);
+
+        // API Key management
+        function setApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value;
+
+            fetch('/set-api-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `api_key=${encodeURIComponent(apiKey)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+        }
+
+        function clearApiKey() {
+            if (confirm('Are you sure you want to clear your API key?')) {
+                fetch('/clear-api-key', {
+                    method: 'POST'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        location.reload();
+                    });
+            }
+        }
+    </script>
+</body>
+
+</html>

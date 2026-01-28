@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload HL7 Files - Gazelle Validator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            background-color: #ecf0f1;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin: 40px auto;
+            max-width: 800px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #bdc3c7;
+            border-radius: 10px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover {
+            border-color: #3498db;
+            background-color: #e8f4f8;
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--success-color);
+            background-color: #d4edda;
+        }
+
+        .file-list {
+            margin-top: 30px;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: #e9ecef;
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            color: #3498db;
+            margin-right: 15px;
+        }
+
+        .progress-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .processing-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+
+        .status-success {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark">
+        <div class="container-fluid">
+            <a href="/dashboard" class="navbar-brand mb-0 h1">
+                <i class="bi bi-file-medical"></i> Gazelle HL7 v2 Validator
+            </a>
+            <a href="/dashboard" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="upload-container">
+            <h2 class="mb-4">
+                <i class="bi bi-cloud-upload"></i> Upload HL7 Files for Validation
+            </h2>
+
+            {% if not has_api_key %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>API Key Required!</strong> Please set your Gazelle API key before uploading files.
+                <button class="btn btn-sm btn-primary ms-3" data-bs-toggle="modal" data-bs-target="#apiKeyModal">
+                    <i class="bi bi-key-fill"></i> Set API Key
+                </button>
+            </div>
+            {% else %}
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i>
+                <strong>API Key Active</strong> - Ready to process files
+            </div>
+            {% endif %}
+
+            <!-- Drop Zone -->
+            <div class="drop-zone" id="dropZone">
+                <i class="bi bi-cloud-arrow-up" style="font-size: 4rem; color: #3498db;"></i>
+                <h4 class="mt-3">Drag & Drop HL7 Files Here</h4>
+                <p class="text-muted">or click to browse</p>
+                <input type="file" id="fileInput" multiple accept=".txt,.xml" style="display: none;">
+                <button class="btn btn-primary mt-3" onclick="document.getElementById('fileInput').click()">
+                    <i class="bi bi-folder-plus"></i> Browse Files
+                </button>
+            </div>
+
+            <!-- File List -->
+            <div class="file-list" id="fileList"></div>
+
+            <!-- Upload Button -->
+            <div class="text-center mt-4" id="uploadButtonContainer" style="display: none;">
+                <button class="btn btn-success btn-lg" id="uploadButton" {% if not has_api_key %}disabled{% endif %}>
+                    <i class="bi bi-upload"></i> Upload & Validate Files
+                </button>
+                <button class="btn btn-outline-secondary btn-lg ms-2" onclick="clearFiles()">
+                    <i class="bi bi-trash"></i> Clear All
+                </button>
+            </div>
+
+            <!-- Progress Container -->
+            <div class="progress-container" id="progressContainer">
+                <h4 class="mb-3">
+                    <i class="bi bi-hourglass-split"></i> Processing Files...
+                </h4>
+                <div id="processingList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div class="modal fade" id="apiKeyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-key-fill"></i> Set Gazelle API Key
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Your API key is stored only for this session and is never saved permanently.
+                    </div>
+                    <form id="apiKeyForm">
+                        <div class="mb-3">
+                            <label for="apiKeyInput" class="form-label">Gazelle API Key</label>
+                            <input type="password" class="form-control" id="apiKeyInput"
+                                placeholder="Enter your Gazelle API key" required>
+                            <small class="form-text text-muted">
+                                Get your API key from:
+                                <a href="https://testing.ehealthireland.ie" target="_blank">
+                                    testing.ehealthireland.ie
+                                </a>
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="setApiKey()">
+                        <i class="bi bi-check-circle"></i> Set API Key
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedFiles = [];
+
+        // Drop zone functionality
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const uploadButtonContainer = document.getElementById('uploadButtonContainer');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (!selectedFiles.find(f => f.name === file.name)) {
+                    selectedFiles.push(file);
+                }
+            }
+            updateFileList();
+        }
+
+        function updateFileList() {
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '';
+                uploadButtonContainer.style.display = 'none';
+                return;
+            }
+
+            fileList.innerHTML = '<h5 class="mb-3">Selected Files (' + selectedFiles.length + ')</h5>';
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-file-earmark-text file-icon"></i>
+                        <div>
+                            <strong>${file.name}</strong>
+                            <br>
+                            <small class="text-muted">${(file.size / 1024).toFixed(2)} KB</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                        <i class="bi bi-x-circle"></i> Remove
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+
+            uploadButtonContainer.style.display = 'block';
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        function clearFiles() {
+            selectedFiles = [];
+            fileInput.value = '';
+            updateFileList();
+        }
+
+        // Upload and process files
+        document.getElementById('uploadButton').addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            const progressContainer = document.getElementById('progressContainer');
+            const processingList = document.getElementById('processingList');
+
+            progressContainer.style.display = 'block';
+            processingList.innerHTML = '';
+            uploadButtonContainer.style.display = 'none';
+
+            for (const file of selectedFiles) {
+                await processFile(file);
+            }
+
+            // Show completion message
+            setTimeout(() => {
+                alert('All files processed! Redirecting to dashboard...');
+                window.location.href = '/dashboard';
+            }, 2000);
+        });
+
+        async function processFile(file) {
+            const processingList = document.getElementById('processingList');
+            const itemId = 'file-' + Date.now();
+
+            // Create processing item
+            const item = document.createElement('div');
+            item.id = itemId;
+            item.className = 'processing-item';
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${file.name}</h6>
+                        <span class="status-badge status-pending">Uploading...</span>
+                    </div>
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="display: none;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%"></div>
+                </div>
+            `;
+            processingList.appendChild(item);
+
+            // Upload file
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    updateStatus(itemId, 'processing', 'Validating with Gazelle...');
+
+                    // Start validation
+                    const validateResponse = await fetch('/validate/' + result.file_id, {
+                        method: 'POST'
+                    });
+
+                    const validateResult = await validateResponse.json();
+
+                    if (validateResult.success) {
+                        updateStatus(itemId, 'success',
+                            `✓ ${validateResult.status} - ${validateResult.errors} errors, ${validateResult.warnings} warnings`);
+                    } else {
+                        updateStatus(itemId, 'error', 'Validation failed: ' + validateResult.message);
+                    }
+                } else {
+                    updateStatus(itemId, 'error', 'Upload failed: ' + result.message);
+                }
+            } catch (error) {
+                updateStatus(itemId, 'error', 'Error: ' + error.message);
+            }
+        }
+
+        function updateStatus(itemId, status, message) {
+            const item = document.getElementById(itemId);
+            const statusMap = {
+                'pending': 'status-pending',
+                'processing': 'status-processing',
+                'success': 'status-success',
+                'error': 'status-error'
+            };
+
+            const badge = item.querySelector('.status-badge');
+            badge.className = 'status-badge ' + statusMap[status];
+            badge.textContent = message;
+
+            const spinner = item.querySelector('.spinner-border');
+            if (status === 'success' || status === 'error') {
+                spinner.style.display = 'none';
+            }
+        }
+
+        // API Key management
+        function setApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value;
+
+            fetch('/set-api-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `api_key=${encodeURIComponent(apiKey)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+        }
+    </script>
+</body>
+
+</html>

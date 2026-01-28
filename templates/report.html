@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report.filename }} - Validation Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .report-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 1200px;
+        }
+
+        .report-header {
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .report-content {
+            line-height: 1.8;
+        }
+
+        .report-content h1 {
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+
+        .report-content h2 {
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+
+        .report-content h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .report-content code {
+            background-color: #f8f9fa;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+        }
+
+        .report-content pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border-left: 4px solid #3498db;
+        }
+
+        .report-content pre code {
+            background: none;
+            color: #ecf0f1;
+            padding: 0;
+        }
+
+        .report-content table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+
+        .report-content th,
+        .report-content td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .report-content th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        .report-content tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .action-bar {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .metadata-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 5px;
+            display: inline-block;
+        }
+
+        @media print {
+
+            .action-bar,
+            .no-print {
+                display: none !important;
+            }
+
+            .report-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Action Bar -->
+    <div class="action-bar no-print">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button onclick="window.print()" class="btn btn-outline-primary">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                    <a href="{{ url_for('export_pdf', report_id=report.id) }}" class="btn btn-danger">
+                        <i class="bi bi-file-pdf"></i> Export PDF
+                    </a>
+                    {% if report.corrected_path %}
+                    <a href="{{ url_for('download_corrected', report_id=report.id) }}" class="btn btn-success">
+                        <i class="bi bi-download"></i> Download Corrected
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Container -->
+    <div class="report-container">
+        <!-- Report Header -->
+        <div class="report-header">
+            <h1 class="mb-3">
+                <i class="bi bi-file-medical-fill text-primary"></i>
+                HL7 v2 Validation Report
+            </h1>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <strong>File Name:</strong>
+                        <span class="metadata-badge bg-light">{{ report.filename }}</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Message Type:</strong>
+                        <span class="metadata-badge bg-info text-white">{{ report.message_type }}</span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <strong>Validation Date:</strong>
+                        <span class="metadata-badge bg-light">{{ report.date }}</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Status:</strong>
+                        {% if report.status == 'PASSED' %}
+                        <span class="metadata-badge bg-success text-white">
+                            <i class="bi bi-check-circle-fill"></i> PASSED
+                        </span>
+                        {% else %}
+                        <span class="metadata-badge bg-danger text-white">
+                            <i class="bi bi-x-circle-fill"></i> FAILED
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="alert alert-danger mb-0">
+                        <strong><i class="bi bi-exclamation-triangle-fill"></i> Errors:</strong> {{ report.errors }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-warning mb-0">
+                        <strong><i class="bi bi-exclamation-circle-fill"></i> Warnings:</strong> {{ report.warnings }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Content -->
+        <div class="report-content">
+            {{ html_content|safe }}
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-5 pt-4 border-top text-muted">
+            <p class="mb-0">
+                <small>
+                    <i class="bi bi-info-circle"></i>
+                    This report was generated by the Gazelle HL7 v2 Validation Dashboard.
+                    For questions or support, please contact your system administrator.
+                </small>
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
