@@ -240,8 +240,8 @@ class HL7MessageCorrector:
     def _fix_invalid_code(self, content, location, description):
         """Fix invalid code values reported by Gazelle"""
         print(f"DEBUG: _fix_invalid_code called")
-        print(f"DEBUG: location={location}")
-        print(f"DEBUG: description={description}")
+        print(f"DEBUG:   location={location}")
+        print(f"DEBUG:   description={description[:150]}")
         
         # Extract the invalid value from description
         # Example: "The value 'HIPEHOS' at location ... is not member of the value set [HL70301]"
@@ -249,18 +249,15 @@ class HL7MessageCorrector:
         value_match = re.search(r"(?:value|code) '([^']+)'", description)
         table_match = re.search(r'\[HL7(\d+)\]', description)
         
-        print(f"DEBUG: value_match={value_match}")
-        if value_match:
-            print(f"DEBUG: Found invalid value: {value_match.group(1)}")
-        
         if not value_match:
-            print(f"DEBUG: Could not extract invalid value from description")
+            print(f"DEBUG:   Could not extract invalid value from description using regex")
             return content
         
         invalid_value = value_match.group(1)
         table = table_match.group(1) if table_match else 'Unknown'
         
-        print(f"DEBUG: invalid_value='{invalid_value}', table=HL70{table}")
+        print(f"DEBUG:   Found invalid value: '{invalid_value}'")
+        print(f"DEBUG:   Table: HL70{table}")
         
         # Map known invalid values to correct ones
         code_mappings = {
@@ -268,34 +265,38 @@ class HL7MessageCorrector:
             'MCN.HLPracticeID': 'L',  # HL70301 - Universal ID Type
         }
         
+        print(f"DEBUG:   Checking if '{invalid_value}' is in known code_mappings: {list(code_mappings.keys())}")
+        
         # If we have a known mapping, use it
         if invalid_value in code_mappings:
             correct_value = code_mappings[invalid_value]
-            print(f"DEBUG: Found mapping: {invalid_value} -> {correct_value}")
+            print(f"DEBUG:   YES! Found mapping: '{invalid_value}' -> '{correct_value}'")
             # Replace the invalid value
-            if invalid_value in content:
-                print(f"DEBUG: Found '{invalid_value}' in content, replacing with '{correct_value}'")
-                old_content = content
-                content = content.replace(f'>{invalid_value}<', f'>{correct_value}<')
-                if content != old_content:
-                    print(f"DEBUG: Replacement successful!")
-                    self.corrections_made.append({
-                        'type': 'GAZELLE_FIX',
-                        'field': f'Code value at {location}',
-                        'location': location,
-                        'old_value': invalid_value,
-                        'new_value': correct_value,
-                        'table': f'HL70{table}',
-                        'description': f'Corrected invalid code value based on Gazelle error',
-                        'reason': description,
-                        'source': 'Gazelle Error Report'
-                    })
-                else:
-                    print(f"DEBUG: Content not changed - pattern not found")
+            search_pattern = f'>{invalid_value}<'
+            if search_pattern in content:
+                print(f"DEBUG:   Found '{search_pattern}' in content, replacing...")
+                old_len = len(content)
+                content = content.replace(search_pattern, f'>{correct_value}<')
+                new_len = len(content)
+                print(f"DEBUG:   Replacement complete. Content size: {old_len} -> {new_len} bytes")
+                self.corrections_made.append({
+                    'type': 'GAZELLE_FIX',
+                    'field': f'Code value at {location}',
+                    'location': location,
+                    'old_value': invalid_value,
+                    'new_value': correct_value,
+                    'table': f'HL70{table}',
+                    'description': f'Corrected invalid code value based on Gazelle error',
+                    'reason': description,
+                    'source': 'Gazelle Error Report'
+                })
             else:
-                print(f"DEBUG: '{invalid_value}' not found in content as >{invalid_value}<")
+                print(f"DEBUG:   Pattern '{search_pattern}' NOT found in content")
+                print(f"DEBUG:   Content preview: {content[500:700]}")
         else:
-            print(f"DEBUG: No mapping found for '{invalid_value}' - need to add to code_mappings or handle generically")
+            print(f"DEBUG:   NO - '{invalid_value}' is not in code_mappings")
+            print(f"DEBUG:   This unknown code value cannot be auto-corrected without a mapping")
+            print(f"DEBUG:   Need to add '{invalid_value}' to code_mappings or handle it manually")
         
         return content
     

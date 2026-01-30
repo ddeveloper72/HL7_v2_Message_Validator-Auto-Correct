@@ -454,28 +454,48 @@ def retry_auto_correct(report_id):
     detailed_errors = file_info.get('detailed_errors', [])
     
     # DEBUG: Log what errors we have
+    print(f"\n{'='*80}")
     print(f"DEBUG: Auto-correcting {report_id}")
+    print(f"DEBUG: Original filepath: {original_filepath}")
     print(f"DEBUG: Found {len(detailed_errors)} detailed errors from Gazelle")
     if detailed_errors:
-        for i, err in enumerate(detailed_errors[:3]):  # Show first 3
-            print(f"DEBUG: Error {i+1}: {err.get('type')} - {err.get('description')[:100]}")
+        for i, err in enumerate(detailed_errors[:5]):  # Show first 5
+            print(f"DEBUG: Error {i+1}:")
+            print(f"  - Type: {err.get('type')}")
+            print(f"  - Severity: '{err.get('severity')}'")
+            print(f"  - Location: {err.get('location')}")
+            print(f"  - Description: {err.get('description')[:120]}")
+    else:
+        print("DEBUG: NO DETAILED ERRORS STORED! This is the problem!")
+    print(f"{'='*80}\n")
     
     try:
         # Read original file as bytes
+        print(f"DEBUG: Reading original file from {original_filepath}")
         with open(original_filepath, 'rb') as f:
             original_content = f.read()
+        print(f"DEBUG: Read {len(original_content)} bytes from original file")
         
         # Apply corrections with Gazelle error data
+        print(f"DEBUG: Creating HL7MessageCorrector and calling prepare_message()")
         corrector = HL7MessageCorrector()
         corrected_content, corrections_list = corrector.prepare_message(
             original_content, 
             file_info['filename'],
             gazelle_errors=detailed_errors  # Pass Gazelle errors for targeted fixes
         )
+        print(f"DEBUG: prepare_message() returned {len(corrected_content)} bytes")
+        print(f"DEBUG: corrections_list has {len(corrections_list)} items")
+        for i, corr in enumerate(corrections_list[:3]):
+            print(f"DEBUG: Correction {i+1}: {corr.get('type')} - {corr.get('description')[:80]}")
+        
         corrections_summary = corrector.get_corrections_summary()
         correction_report = corrector.get_correction_report()
         
+        print(f"DEBUG: corrections_summary: {corrections_summary}")
+        
         if corrections_summary['total_corrections'] == 0:
+            print(f"DEBUG: No corrections were made! This is why file is identical.")
             return jsonify({
                 'success': False,
                 'message': 'No corrections could be applied automatically. Manual review required.'
@@ -483,8 +503,10 @@ def retry_auto_correct(report_id):
         
         # Save corrected file
         corrected_filepath = original_filepath.replace('.txt', '_CORRECTED.txt').replace('.xml', '_CORRECTED.xml')
+        print(f"DEBUG: Saving corrected file to {corrected_filepath}")
         with open(corrected_filepath, 'wb') as f:
             f.write(corrected_content)
+        print(f"DEBUG: Successfully saved {len(corrected_content)} bytes to corrected file")
         
         # Update processing results
         processing_results[report_id]['corrected_path'] = corrected_filepath
@@ -493,6 +515,7 @@ def retry_auto_correct(report_id):
         
         # Save to temp file so all workers can see the update
         save_processing_results()
+        print(f"DEBUG: Updated processing_results and saved to temp file")
         
         return jsonify({
             'success': True,
@@ -506,6 +529,9 @@ def retry_auto_correct(report_id):
         })
     
     except Exception as e:
+        print(f"DEBUG: Exception in retry_auto_correct: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return jsonify({
             'success': False,
             'message': f'Auto-correction failed: {str(e)}'
