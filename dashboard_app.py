@@ -20,6 +20,7 @@ from xml.etree import ElementTree as ET
 from auto_correct import auto_correct_and_validate
 from hl7_corrector import HL7MessageCorrector
 import time
+import sys
 
 app = Flask(__name__)
 
@@ -537,8 +538,10 @@ def validate_file(file_id):
             env['PYTHONIOENCODING'] = 'utf-8'
             env['PYTHONUTF8'] = '1'  # Force UTF-8 mode on Windows
             
+            python_executable = sys.executable or shutil.which('python') or 'python'
+            script_path = os.path.join(os.getcwd(), 'validate_with_verification.py')
             result = subprocess.run(
-                ['.venv\\Scripts\\python.exe', 'validate_with_verification.py', filepath, '--warnings'],
+                [python_executable, script_path, filepath, '--warnings'],
                 capture_output=True,
                 text=True,
                 timeout=60,
