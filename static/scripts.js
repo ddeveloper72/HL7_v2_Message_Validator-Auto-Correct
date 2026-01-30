@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const status = data.validation_status || 'Unknown';
 
         let statusHTML = '';
-        
+
         if (isPassed) {
             statusHTML = `
                 <div class="alert alert-success">
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p class="mb-0">Status: <strong>${status}</strong></p>
                 </div>
             `;
-            
+
             // Show errors if any
             if (data.errors && data.errors.length > 0) {
                 statusHTML += '<div class="alert alert-warning mt-2"><h6>Errors Found:</h6><ul class="mb-0">';
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             reportText = 'View full report on Gazelle EVS using the link above.';
         }
-        
+
         document.getElementById('validationReport').textContent = reportText;
 
         // Set raw response
@@ -237,11 +237,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function displayCorrectionsOnly(data) {
         if (data.corrections_applied && data.corrections_applied.total_corrections > 0) {
             const correctionsHTML = buildCorrectionsDisplay(data.corrections_applied, data.correction_report);
-            
+
             const tempDiv = document.createElement('div');
             tempDiv.className = 'alert alert-warning mt-3';
             tempDiv.innerHTML = correctionsHTML;
-            
+
             errorContainer.appendChild(tempDiv);
         }
     }

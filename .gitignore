@@ -25,6 +25,21 @@ uploads/
 processed/
 batch_results/
 
+# Development notes and documentation (keep local only)
+dev_notes/
+API_IMPLEMENTATION_STATUS.md
+DEPLOYMENT.md
+ENV_SETUP.md
+GAZELLE_CONFIG_CHECKLIST.md
+HEALTHLINK_VALIDATORS.md
+PROJECT_COMPLETE.md
+SUPPORT_CONTACT_TEMPLATE.md
+WORKSPACE_CLEANUP.md
+BATCH_PROCESSING_*.md
+ENHANCED_BATCH_READY.md
+COMPREHENSIVE_AUTO_CORRECTION_SYSTEM.md
+README_AUTO_CORRECTION.md
+
 # Development and test files
 test_*.py
 verify_*.py
