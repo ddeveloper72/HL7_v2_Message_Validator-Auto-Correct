@@ -450,14 +450,21 @@ def retry_auto_correct(report_id):
     file_info = processing_results[report_id]
     original_filepath = file_info['filepath']
     
+    # Get detailed errors from the validation report
+    detailed_errors = file_info.get('detailed_errors', [])
+    
     try:
         # Read original file as bytes
         with open(original_filepath, 'rb') as f:
             original_content = f.read()
         
-        # Apply corrections
+        # Apply corrections with Gazelle error data
         corrector = HL7MessageCorrector()
-        corrected_content, corrections_list = corrector.prepare_message(original_content, file_info['filename'])
+        corrected_content, corrections_list = corrector.prepare_message(
+            original_content, 
+            file_info['filename'],
+            gazelle_errors=detailed_errors  # Pass Gazelle errors for targeted fixes
+        )
         corrections_summary = corrector.get_corrections_summary()
         correction_report = corrector.get_correction_report()
         
@@ -487,6 +494,7 @@ def retry_auto_correct(report_id):
             'critical_fixes': corrections_summary.get('critical_fixes', 0),
             'code_fixes': corrections_summary.get('code_fixes', 0),
             'field_insertions': corrections_summary.get('field_insertions', 0),
+            'gazelle_fixes': corrections_summary.get('gazelle_fixes', 0),
             'corrected_file': corrected_filepath
         })
     
@@ -732,7 +740,8 @@ def validate_file(file_id):
             report_content += f"**Auto-Corrections Applied:** {corrections_summary['total_corrections']} fixes  \n"
             report_content += f"  - Critical fixes: {corrections_summary.get('critical_fixes', 0)}  \n"
             report_content += f"  - Code corrections: {corrections_summary.get('code_fixes', 0)}  \n"
-            report_content += f"  - Field insertions: {corrections_summary.get('field_insertions', 0)}  \n\n"
+            report_content += f"  - Field insertions: {corrections_summary.get('field_insertions', 0)}  \n"
+            report_content += f"  - Gazelle error fixes: {corrections_summary.get('gazelle_fixes', 0)}  \n\n"
         
         # Calculate passed checks
         total_checks = errors + warnings + 50  # Approximate
@@ -839,7 +848,9 @@ def validate_file(file_id):
             'report_url': report_url,
             'message_type': message_type,
             'validated_at': datetime.now().isoformat(),
-            'corrected_path': None  # No auto-correction on validation
+            'corrected_path': None,  # No auto-correction on validation
+            'detailed_errors': detailed_errors if detailed_errors else [],  # Store Gazelle errors for auto-correction
+            'detailed_warnings': detailed_warnings if detailed_warnings else []  # Store warnings for reference
         })
         
         # Save to temp file so results persist across dyno restarts
