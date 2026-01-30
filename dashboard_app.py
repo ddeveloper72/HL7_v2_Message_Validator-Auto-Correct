@@ -137,6 +137,9 @@ def fetch_and_parse_gazelle_report(oid, api_key):
 
 def get_sample_reports():
     """Get user's validation reports"""
+    # Always reload from temp file to get results from all workers
+    load_processing_results()
+    
     reports = []
     
     # Only show session-uploaded files (user's own validations)
@@ -208,6 +211,9 @@ def clear_api_key():
 @app.route('/report/<report_id>')
 def view_report(report_id):
     """View individual validation report"""
+    # Always reload from temp file to get results from all workers
+    load_processing_results()
+    
     print(f"\nDEBUG view_report: Looking for report_id={report_id}")
     print(f"DEBUG view_report: Session ID: {session.get('session_id', 'NO SESSION')}")
     print(f"DEBUG view_report: Total items in processing_results: {len(processing_results)}")
