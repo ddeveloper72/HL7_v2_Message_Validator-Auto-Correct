@@ -38,9 +38,8 @@ batch_results/
 
 # Sample files
 vin.xml
-*.txt
-!requirements.txt
-!runtime.txt
+oru_validation.txt
+validation_*.txt
 
 # JSON configuration files (not needed at runtime)
 gazelle_api_spec.json
