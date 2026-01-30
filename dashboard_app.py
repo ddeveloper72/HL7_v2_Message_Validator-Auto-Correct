@@ -116,7 +116,10 @@ def get_sample_reports():
     
     # Only show session-uploaded files (user's own validations)
     if 'session_id' in session:
+        print(f"DEBUG: Getting reports for session_id: {session['session_id']}")
+        print(f"DEBUG: Total items in processing_results: {len(processing_results)}")
         for file_id, info in processing_results.items():
+            print(f"DEBUG: Checking file_id={file_id}, session_id={info.get('session_id')}, status={info.get('status')}")
             if info.get('session_id') == session['session_id'] and info.get('status') == 'completed':
                 validated_at = info.get('validated_at', datetime.now().isoformat())
                 if isinstance(validated_at, str):
@@ -135,6 +138,9 @@ def get_sample_reports():
                     'errors': info.get('errors', 0),
                     'warnings': info.get('warnings', 0)
                 })
+        print(f"DEBUG: Found {len(reports)} completed reports for this session")
+    else:
+        print("DEBUG: No session_id in session")
     
     return reports
 
@@ -495,6 +501,9 @@ def validate_file(file_id):
     file_info = processing_results[file_id]
     filepath = file_info['filepath']
     
+    print(f"\nDEBUG: Starting validation for file_id={file_id}, filename={file_info['filename']}")
+    print(f"DEBUG: Session ID: {session.get('session_id')}")
+    
     # Update status
     processing_results[file_id]['status'] = 'validating'
     
@@ -809,6 +818,10 @@ def validate_file(file_id):
             'validated_at': datetime.now().isoformat(),
             'corrected_path': corrected_file_path if corrected_file_path else None
         })
+        
+        print(f"DEBUG: Validation completed for file_id={file_id}")
+        print(f"DEBUG: Status={status}, Errors={errors}, Warnings={warnings}")
+        print(f"DEBUG: processing_results[{file_id}] status is now: {processing_results[file_id]['status']}")
         
         return jsonify({
             'success': True,
