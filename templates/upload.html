@@ -375,7 +375,7 @@
                     if (validateResult.success) {
                         updateStatus(itemId, 'success',
                             `✓ ${validateResult.status} - ${validateResult.errors} errors, ${validateResult.warnings} warnings`);
-                        
+
                         // Redirect to dashboard after 2 seconds to show the results
                         setTimeout(() => {
                             window.location.href = '/dashboard';
