@@ -254,6 +254,9 @@ def view_report(report_id):
 @app.route('/report/<report_id>/pdf')
 def export_pdf(report_id):
     """Export report as PDF using Playwright (browser-based, perfect emoji support)"""
+    # Always reload from temp file to get results from all workers
+    load_processing_results()
+    
     reports = get_sample_reports()
     report = next((r for r in reports if r['id'] == report_id), None)
     
@@ -421,6 +424,9 @@ def export_pdf(report_id):
 @app.route('/download/<report_id>/corrected')
 def download_corrected(report_id):
     """Download corrected file"""
+    # Always reload from temp file to get results from all workers
+    load_processing_results()
+    
     reports = get_sample_reports()
     report = next((r for r in reports if r['id'] == report_id), None)
     
@@ -435,6 +441,9 @@ def download_corrected(report_id):
 @app.route('/auto-correct/<report_id>', methods=['POST'])
 def retry_auto_correct(report_id):
     """Retry auto-correction on a failed validation"""
+    # Always reload from temp file to get results from all workers
+    load_processing_results()
+    
     if report_id not in processing_results:
         return jsonify({'success': False, 'message': 'Report not found'}), 404
     
