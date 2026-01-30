@@ -453,6 +453,13 @@ def retry_auto_correct(report_id):
     # Get detailed errors from the validation report
     detailed_errors = file_info.get('detailed_errors', [])
     
+    # DEBUG: Log what errors we have
+    print(f"DEBUG: Auto-correcting {report_id}")
+    print(f"DEBUG: Found {len(detailed_errors)} detailed errors from Gazelle")
+    if detailed_errors:
+        for i, err in enumerate(detailed_errors[:3]):  # Show first 3
+            print(f"DEBUG: Error {i+1}: {err.get('type')} - {err.get('description')[:100]}")
+    
     try:
         # Read original file as bytes
         with open(original_filepath, 'rb') as f:

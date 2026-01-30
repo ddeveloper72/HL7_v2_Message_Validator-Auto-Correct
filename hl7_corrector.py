@@ -168,16 +168,24 @@ class HL7MessageCorrector:
             str: Content with targeted fixes applied
         """
         if not gazelle_errors:
+            print("DEBUG: No Gazelle errors provided to _apply_gazelle_error_fixes")
             return content
         
-        for error in gazelle_errors:
+        print(f"DEBUG: Processing {len(gazelle_errors)} Gazelle errors")
+        
+        for i, error in enumerate(gazelle_errors):
             error_type = error.get('type', '')
             location = error.get('location', '')
             description = error.get('description', '')
             priority = error.get('priority', '')
+            severity = error.get('severity', '')
+            
+            print(f"DEBUG: Error {i+1}: type={error_type}, severity={severity}, location={location}")
+            print(f"DEBUG: Description: {description[:100]}")
             
             # Skip warnings - only fix errors
-            if error.get('severity') != 'ERROR':
+            if severity != 'ERROR':
+                print(f"DEBUG: Skipping - not an ERROR (severity={severity})")
                 continue
             
             # Fix 1: Missing required fields (Cardinality errors)
