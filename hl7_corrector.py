@@ -183,10 +183,13 @@ class HL7MessageCorrector:
             print(f"DEBUG: Error {i+1}: type={error_type}, severity={severity}, location={location}")
             print(f"DEBUG: Description: {description[:100]}")
             
-            # Skip warnings - only fix errors
-            if severity != 'ERROR':
-                print(f"DEBUG: Skipping - not an ERROR (severity={severity})")
+            # Skip warnings - process errors and items with empty severity (treat as errors)
+            # Empty severity usually means it's an error from the Gazelle report
+            if severity and severity.upper() == 'WARNING':
+                print(f"DEBUG: Skipping - is a WARNING")
                 continue
+            
+            print(f"DEBUG: Processing this error (severity={severity or 'empty/assumed ERROR'})")
             
             # Fix 1: Missing required fields (Cardinality errors)
             if error_type == 'Cardinality' and 'missing' in description.lower():
