@@ -183,9 +183,11 @@ def view_report(report_id):
     if not report:
         return "Report not found", 404
     
-    # Read markdown content
-    with open(report['report_path'], 'r', encoding='utf-8') as f:
-        md_content = f.read()
+    # Get markdown content from memory (stored during validation)
+    if report_id in processing_results and 'report_content' in processing_results[report_id]:
+        md_content = processing_results[report_id]['report_content']
+    else:
+        return "Report content not found", 404
     
     # Convert to HTML
     html_content = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
@@ -204,9 +206,11 @@ def export_pdf(report_id):
     if not report:
         return "Report not found", 404
     
-    # Read markdown content
-    with open(report['report_path'], 'r', encoding='utf-8') as f:
-        md_content = f.read()
+    # Read markdown content from memory (stored during validation)
+    if report_id in processing_results and 'report_content' in processing_results[report_id]:
+        md_content = processing_results[report_id]['report_content']
+    else:
+        return "Report content not found", 404
     
     # Convert to HTML
     html_content = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
@@ -608,10 +612,7 @@ def validate_file(file_id):
         detailed_errors, detailed_warnings, xml_report = fetch_and_parse_gazelle_report(oid, session['api_key']) if oid else (None, None, None)
         
         # Create report markdown with detailed format (matching last night's reports)
-        session_folder = os.path.join(PROCESSED_FOLDER, session['session_id'])
-        os.makedirs(session_folder, exist_ok=True)
-        
-        report_path = os.path.join(session_folder, f"{file_id}_report.md")
+        report_content = ""  # Store content in memory
         
         # Use detected message type from validation output, or try to detect from filename as fallback
         message_type = 'Unknown'
@@ -646,173 +647,163 @@ def validate_file(file_id):
             message_type = 'ADT_A01'
             message_type_display = 'ADT^A01 (Patient Admission)'
         
-        # Generate detailed markdown report
-        with open(report_path, 'w', encoding='utf-8') as f:
-            f.write(f"# {file_info['filename']} - ERROR ANALYSIS AND CORRECTIONS\n\n")
-            
-            status_emoji = "✅" if status == "PASSED" else "❌"
-            f.write(f"**Validation Status:** {status_emoji} {status}  \n")
-            f.write(f"**Message Type:** {message_type_display}  \n")
-            f.write(f"**Validator:** Gazelle HL7v2.x validator (OID: 1.3.6.1.4.1.12559.11.35.10.1.12)  \n")
-            f.write(f"**Validation Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  \n")
-            
-            # Add auto-correction summary if it exists (from manual retry)
-            corrections_summary = processing_results[file_id].get('corrections_applied', {})
-            correction_report = processing_results[file_id].get('correction_report', '')
-            if corrections_summary.get('total_corrections', 0) > 0:
-                f.write(f"**Auto-Corrections Applied:** {corrections_summary['total_corrections']} fixes  \n")
-                f.write(f"  - Critical fixes: {corrections_summary.get('critical_fixes', 0)}  \n")
-                f.write(f"  - Code corrections: {corrections_summary.get('code_fixes', 0)}  \n")
-                f.write(f"  - Field insertions: {corrections_summary.get('field_insertions', 0)}  \n\n")
-            
-            # Calculate passed checks
-            total_checks = errors + warnings + 50  # Approximate
-            passed = total_checks - errors - warnings
-            f.write(f"**Validation Summary:** {errors} Errors, {warnings} Warnings, {passed} Passed\n\n")
-            
-            if report_url:
-                f.write(f"**Full Gazelle Report:** [{report_url}]({report_url})\n\n")
-            
-            f.write("---\n\n")
-            
-            # Add detailed auto-correction report if corrections were applied
-            if corrections_summary.get('total_corrections', 0) > 0:
-                f.write("## 🤖 AUTOMATIC CORRECTIONS APPLIED\n\n")
-                f.write(correction_report)
-                f.write("\n\n---\n\n")
-            
-            # Use detailed errors if available, otherwise parse from output
-            if detailed_errors and len(detailed_errors) > 0:
-                f.write("## 📋 ERRORS FOUND (From Gazelle Validation Report)\n\n")
-                for i, error in enumerate(detailed_errors, 1):
-                    f.write(f"### ❌ ERROR #{i}: {error['type']}\n\n")
-                    f.write(f"**Location:** `{error['location']}`  \n")
-                    f.write(f"**Constraint Description:** {error['description']}  \n")
-                    f.write(f"**Priority:** {error['priority']}  \n")
-                    f.write(f"**Constraint Type:** {error['type']}  \n\n")
-                    f.write("#### Plain Language Explanation\n")
-                    f.write(f"{error['description']}\n\n")
-                    f.write("#### The Fix\n")
-                    f.write("Review the constraint description above and correct the value at the specified location.\n\n")
-                    f.write("---\n\n")
-            elif errors > 0:
-                f.write("## 📋 ERRORS FOUND\n\n")
-                f.write("⚠️ *Detailed error information not available. Please check the full Gazelle report above.*\n\n")
-                lines = output.split('\n')
-                in_error_section = False
-                for i, line in enumerate(lines):
-                    if 'Error #' in line or 'ERROR' in line.upper():
-                        in_error_section = True
-                        f.write(f"\n{line}\n")
-                    elif in_error_section:
-                        if line.strip():
-                            f.write(f"{line}\n")
-                        else:
-                            in_error_section = False
-                f.write("\n---\n\n")
-            
-            # Use detailed warnings if available
-            if detailed_warnings and len(detailed_warnings) > 0:
-                f.write("## ⚠️ WARNINGS FOUND (From Gazelle Validation Report)\n\n")
-                for i, warning in enumerate(detailed_warnings, 1):
-                    f.write(f"### ⚠️ WARNING #{i}: {warning['type']}\n\n")
-                    f.write(f"**Location:** `{warning['location']}`  \n")
-                    f.write(f"**Constraint Description:** {warning['description']}  \n")
-                    f.write(f"**Priority:** {warning['priority']}  \n")
-                    f.write(f"**Constraint Type:** {warning['type']}  \n\n")
-                    f.write("#### Plain Language Explanation\n")
-                    f.write(f"{warning['description']}\n\n")
-                    f.write("This is a recommended improvement but not strictly required.\n\n")
-                    f.write("---\n\n")
-            elif warnings > 0:
-                f.write("## ⚠️ WARNINGS FOUND\n\n")
-                f.write("⚠️ *Detailed warning information not available. Please check the full Gazelle report above.*\n\n")
-                lines = output.split('\n')
-                in_warning_section = False
-                for i, line in enumerate(lines):
-                    if 'Warning #' in line or 'WARNING' in line.upper():
-                        in_warning_section = True
-                        f.write(f"\n{line}\n")
-                    elif in_warning_section:
-                        if line.strip():
-                            f.write(f"{line}\n")
-                        else:
-                            in_warning_section = False
-                f.write("\n---\n\n")
-            
-            # Full validation output section
-            f.write("## 📄 COMPLETE VALIDATION OUTPUT\n\n")
-            f.write("```\n")
-            f.write(output)
-            f.write("\n```\n\n")
-            
-            # If validation failed and we have detailed errors, attempt auto-correction
-            auto_correction_attempted = False
-            corrected_file_path = None
-            
-            if status == "FAILED" and detailed_errors and len(detailed_errors) > 0:
-                f.write("## 🤖 ATTEMPTING AUTOMATIC CORRECTION\n\n")
-                f.write("Analyzing errors and attempting to apply automatic fixes...\n\n")
-                
-                # Attempt auto-correction
-                try:
-                    from auto_correct import auto_correct_and_validate
-                    correction_result = auto_correct_and_validate(filepath, detailed_errors, session['api_key'])
-                    
-                    if correction_result['success']:
-                        auto_correction_attempted = True
-                        corrected_file_path = correction_result['corrected_file']
-                        
-                        f.write("### ✅ Automatic Corrections Applied\n\n")
-                        f.write(correction_result['correction_report'])
-                        f.write("\n\n")
-                        f.write(f"**Corrected file saved to:** `{corrected_file_path}`\n\n")
-                        f.write("**Note:** The corrected file needs to be re-validated. Upload it again to verify it passes.\n\n")
+        # Generate detailed markdown report (stored in memory)
+        report_content += f"# {file_info['filename']} - ERROR ANALYSIS AND CORRECTIONS\n\n"
+        
+        status_emoji = "✅" if status == "PASSED" else "❌"
+        report_content += f"**Validation Status:** {status_emoji} {status}  \n"
+        report_content += f"**Message Type:** {message_type_display}  \n"
+        report_content += f"**Validator:** Gazelle HL7v2.x validator (OID: 1.3.6.1.4.1.12559.11.35.10.1.12)  \n"
+        report_content += f"**Validation Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  \n"
+        
+        # Add auto-correction summary if it exists (from manual retry)
+        corrections_summary = processing_results[file_id].get('corrections_applied', {})
+        correction_report = processing_results[file_id].get('correction_report', '')
+        if corrections_summary.get('total_corrections', 0) > 0:
+            report_content += f"**Auto-Corrections Applied:** {corrections_summary['total_corrections']} fixes  \n"
+            report_content += f"  - Critical fixes: {corrections_summary.get('critical_fixes', 0)}  \n"
+            report_content += f"  - Code corrections: {corrections_summary.get('code_fixes', 0)}  \n"
+            report_content += f"  - Field insertions: {corrections_summary.get('field_insertions', 0)}  \n\n"
+        
+        # Calculate passed checks
+        total_checks = errors + warnings + 50  # Approximate
+        passed = total_checks - errors - warnings
+        report_content += f"**Validation Summary:** {errors} Errors, {warnings} Warnings, {passed} Passed\n\n"
+        
+        if report_url:
+            report_content += f"**Full Gazelle Report:** [{report_url}]({report_url})\n\n"
+        
+        report_content += "---\n\n"
+        
+        # Add detailed auto-correction report if corrections were applied
+        if corrections_summary.get('total_corrections', 0) > 0:
+            report_content += "## 🤖 AUTOMATIC CORRECTIONS APPLIED\n\n"
+            report_content += correction_report
+            report_content += "\n\n---\n\n"
+        
+        # Use detailed errors if available, otherwise parse from output
+        if detailed_errors and len(detailed_errors) > 0:
+            report_content += "## 📋 ERRORS FOUND (From Gazelle Validation Report)\n\n"
+            for i, error in enumerate(detailed_errors, 1):
+                report_content += f"### ❌ ERROR #{i}: {error['type']}\n\n"
+                report_content += f"**Location:** `{error['location']}`  \n"
+                report_content += f"**Constraint Description:** {error['description']}  \n"
+                report_content += f"**Priority:** {error['priority']}  \n"
+                report_content += f"**Constraint Type:** {error['type']}  \n\n"
+                report_content += "#### Plain Language Explanation\n"
+                report_content += f"{error['description']}\n\n"
+                report_content += "#### The Fix\n"
+                report_content += "Review the constraint description above and correct the value at the specified location.\n\n"
+                report_content += "---\n\n"
+        elif errors > 0:
+            report_content += "## 📋 ERRORS FOUND\n\n"
+            report_content += "⚠️ *Detailed error information not available. Please check the full Gazelle report above.*\n\n"
+            lines = output.split('\n')
+            in_error_section = False
+            for i, line in enumerate(lines):
+                if 'Error #' in line or 'ERROR' in line.upper():
+                    in_error_section = True
+                    report_content += f"\n{line}\n"
+                elif in_error_section:
+                    if line.strip():
+                        report_content += f"{line}\n"
                     else:
-                        f.write("### ⚠️ Automatic Correction Not Possible\n\n")
-                        f.write(f"Reason: {correction_result.get('error', 'Unknown error')}\n\n")
-                        f.write("Manual correction required. Please review the errors above.\n\n")
-                
-                except Exception as e:
-                    f.write(f"### ❌ Auto-Correction Error\n\n")
-                    f.write(f"Error: {str(e)}\n\n")
-                
-                f.write("---\n\n")
+                        in_error_section = False
+            report_content += "\n---\n\n"
+        
+        # Use detailed warnings if available
+        if detailed_warnings and len(detailed_warnings) > 0:
+            report_content += "## ⚠️ WARNINGS FOUND (From Gazelle Validation Report)\n\n"
+            for i, warning in enumerate(detailed_warnings, 1):
+                report_content += f"### ⚠️ WARNING #{i}: {warning['type']}\n\n"
+                report_content += f"**Location:** `{warning['location']}`  \n"
+                report_content += f"**Constraint Description:** {warning['description']}  \n"
+                report_content += f"**Priority:** {warning['priority']}  \n"
+                report_content += f"**Constraint Type:** {warning['type']}  \n\n"
+                report_content += "#### Plain Language Explanation\n"
+                report_content += f"{warning['description']}\n\n"
+                report_content += "This is a recommended improvement but not strictly required.\n\n"
+                report_content += "---\n\n"
+        elif warnings > 0:
+            report_content += "## ⚠️ WARNINGS FOUND\n\n"
+            report_content += "⚠️ *Detailed warning information not available. Please check the full Gazelle report above.*\n\n"
+            lines = output.split('\n')
+            in_warning_section = False
+            for i, line in enumerate(lines):
+                if 'Warning #' in line or 'WARNING' in line.upper():
+                    in_warning_section = True
+                    report_content += f"\n{line}\n"
+                elif in_warning_section:
+                    if line.strip():
+                        report_content += f"{line}\n"
+                    else:
+                        in_warning_section = False
+            report_content += "\n---\n\n"
+        
+        # Full validation output section
+        report_content += "## 📄 COMPLETE VALIDATION OUTPUT\n\n"
+        report_content += "```\n"
+        report_content += output
+        report_content += "\n```\n\n"
+        
+        # If validation failed and we have detailed errors, attempt auto-correction
+        auto_correction_attempted = False
+        corrected_file_path = None
+        
+        if status == "FAILED" and detailed_errors and len(detailed_errors) > 0:
+            report_content += "## 🤖 ATTEMPTING AUTOMATIC CORRECTION\n\n"
+            report_content += "Analyzing errors and attempting to apply automatic fixes...\n\n"
             
-            if status == "PASSED":
-                f.write("## ✅ VALIDATION SUCCESSFUL\n\n")
-                f.write("This message has passed all mandatory validation checks and is ready for submission.\n\n")
-            else:
-                f.write("## 🔧 NEXT STEPS\n\n")
-                if auto_correction_attempted:
-                    f.write("1. Download the auto-corrected file below\n")
-                    f.write("2. Re-upload and validate the corrected file\n")
-                    f.write("3. If errors persist, manually review and correct\n\n")
+            # Attempt auto-correction
+            try:
+                from auto_correct import auto_correct_and_validate
+                correction_result = auto_correct_and_validate(filepath, detailed_errors, session['api_key'])
+                
+                if correction_result['success']:
+                    auto_correction_attempted = True
+                    corrected_file_path = correction_result['corrected_file']
+                    
+                    report_content += "### ✅ Automatic Corrections Applied\n\n"
+                    report_content += correction_result['correction_report']
+                    report_content += "\n\n"
+                    report_content += f"**Corrected file saved to:** `{corrected_file_path}`\n\n"
+                    report_content += "**Note:** The corrected file needs to be re-validated. Upload it again to verify it passes.\n\n"
                 else:
-                    f.write("1. Review each error above\n")
-                    f.write("2. Correct the issues in your HL7 message\n")
-                    f.write("3. Re-upload and validate the corrected message\n")
-                    f.write("4. Download the corrected version once validation passes\n\n")
+                    report_content += "### ⚠️ Automatic Correction Not Possible\n\n"
+                    report_content += f"Reason: {correction_result.get('error', 'Unknown error')}\n\n"
+                    report_content += "Manual correction required. Please review the errors above.\n\n"
             
-            f.write("---\n\n")
-            f.write(f"*Report generated by Gazelle HL7 Validator Dashboard on {datetime.now().strftime('%Y-%m-%d at %H:%M:%S')}*\n")
+            except Exception as e:
+                report_content += f"### ❌ Auto-Correction Error\n\n"
+                report_content += f"Error: {str(e)}\n\n"
+            
+            report_content += "---\n\n"
         
-        # Detect message type from filename
-        message_type = 'Unknown'
-        if 'SIU' in file_info['filename']:
-            message_type = 'SIU_S12'
-        elif 'ORU' in file_info['filename']:
-            message_type = 'ORU_R01'
-        elif 'ADT' in file_info['filename']:
-            message_type = 'ADT_A01'
+        if status == "PASSED":
+            report_content += "## ✅ VALIDATION SUCCESSFUL\n\n"
+            report_content += "This message has passed all mandatory validation checks and is ready for submission.\n\n"
+        else:
+            report_content += "## 🔧 NEXT STEPS\n\n"
+            if auto_correction_attempted:
+                report_content += "1. Download the auto-corrected file below\n"
+                report_content += "2. Re-upload and validate the corrected file\n"
+                report_content += "3. If errors persist, manually review and correct\n\n"
+            else:
+                report_content += "1. Review each error above\n"
+                report_content += "2. Correct the issues in your HL7 message\n"
+                report_content += "3. Re-upload and validate the corrected message\n"
+                report_content += "4. Download the corrected version once validation passes\n\n"
         
-        # Update processing results
+        report_content += "---\n\n"
+        report_content += f"*Report generated by Gazelle HL7 Validator Dashboard on {datetime.now().strftime('%Y-%m-%d at %H:%M:%S')}*\n"
+        
+        # Update processing results - store report content in memory instead of disk
         processing_results[file_id].update({
             'status': 'completed',
             'validation_status': status,
             'errors': errors,
             'warnings': warnings,
-            'report_path': report_path,
+            'report_content': report_content,  # Store markdown content in memory
             'report_url': report_url,
             'message_type': message_type,
             'validated_at': datetime.now().isoformat(),
@@ -829,11 +820,9 @@ def validate_file(file_id):
         
     except subprocess.TimeoutExpired:
         processing_results[file_id]['status'] = 'timeout'
-        save_processing_results()
         return jsonify({'success': False, 'message': 'Validation timeout'}), 500
     except Exception as e:
         processing_results[file_id]['status'] = 'error'
-        save_processing_results()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':
