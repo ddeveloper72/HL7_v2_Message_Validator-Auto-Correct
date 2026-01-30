@@ -208,16 +208,33 @@ def clear_api_key():
 @app.route('/report/<report_id>')
 def view_report(report_id):
     """View individual validation report"""
+    print(f"\nDEBUG view_report: Looking for report_id={report_id}")
+    print(f"DEBUG view_report: Session ID: {session.get('session_id', 'NO SESSION')}")
+    print(f"DEBUG view_report: Total items in processing_results: {len(processing_results)}")
+    print(f"DEBUG view_report: Keys in processing_results: {list(processing_results.keys())}")
+    
     reports = get_sample_reports()
+    print(f"DEBUG view_report: get_sample_reports() returned {len(reports)} reports")
+    for r in reports:
+        print(f"  - Report ID: {r['id']}, filename: {r['filename']}")
+    
     report = next((r for r in reports if r['id'] == report_id), None)
     
     if not report:
+        print(f"DEBUG view_report: Report {report_id} NOT FOUND in reports list")
         return "Report not found", 404
+    
+    print(f"DEBUG view_report: Found report: {report['filename']}")
     
     # Get markdown content from memory (stored during validation)
     if report_id in processing_results and 'report_content' in processing_results[report_id]:
         md_content = processing_results[report_id]['report_content']
+        print(f"DEBUG view_report: Found report_content (length: {len(md_content)})")
     else:
+        print(f"DEBUG view_report: report_content NOT FOUND for {report_id}")
+        print(f"  - report_id in processing_results: {report_id in processing_results}")
+        if report_id in processing_results:
+            print(f"  - Keys in processing_results[{report_id}]: {list(processing_results[report_id].keys())}")
         return "Report content not found", 404
     
     # Convert to HTML
