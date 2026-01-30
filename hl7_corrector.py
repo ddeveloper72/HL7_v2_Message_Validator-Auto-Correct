@@ -124,6 +124,20 @@ class HL7MessageCorrector:
                 'reason': 'HIPEHOS is not a valid HL7 v2.2 Table 0301 code'
             })
         
+        # Fix 3: XXX → OTH (HL70070 specimen source code, OBR-15.1)
+        if '>XXX<' in content:
+            content = content.replace('>XXX<', '>OTH<')
+            self.corrections_made.append({
+                'type': 'CODE_FIX',
+                'field': 'Specimen Source Code (CE.1)',
+                'location': 'OBR-15.1',
+                'old_value': 'XXX',
+                'new_value': 'OTH',
+                'table': 'HL70070',
+                'description': 'Invalid specimen source code corrected to Other (OTH)',
+                'reason': 'XXX is not a valid HL70070 specimen source code'
+            })
+        
         return content
     
     def _fix_empty_required_fields(self, content):
