@@ -1,0 +1,76 @@
+# Heroku Slugignore - Files to exclude from deployment slug
+# This reduces slug size and deployment time
+
+# Test and development files
+test_*.py
+*_test.py
+verify_*.py
+diagnose_*.py
+debug_*.py
+batch_*.py
+fix_*.py
+check_*.py
+compare_*.py
+deep_*.py
+direct_*.py
+recreate_*.py
+generate_*.py
+find_*.py
+auto_*.py
+add_*.py
+remove_*.py
+xml_to_er7_converter.py
+validate_against_schema.py
+ERROR_ANALYSIS.py
+
+# Old simple app (not needed - using dashboard_app.py)
+app.py
+
+# Documentation and markdown files (except README)
+*.md
+!README.md
+
+# Test data and schemas
+Healthlink Tests/
+HL7_v2_Schemas/
+Gazelle_Configuration_Data/
+batch_results/
+
+# Sample files
+vin.xml
+*.txt
+!requirements.txt
+!runtime.txt
+
+# JSON configuration files (not needed at runtime)
+gazelle_api_spec.json
+validation_*.json
+
+# XML report files
+*_report.xml
+siu_s12_corrected_report.xml
+
+# Log files
+*.log
+
+# Git files
+.git/
+.github/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment (handled by Heroku config vars)
+.env
+
+# Virtual environment
+.venv/
+venv/
+env/

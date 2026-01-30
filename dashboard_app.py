@@ -9,11 +9,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 from io import BytesIO
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from playwright.sync_api import sync_playwright
 import uuid
 import shutil
 from werkzeug.utils import secure_filename
@@ -21,6 +17,9 @@ import subprocess
 import threading
 import requests
 from xml.etree import ElementTree as ET
+from auto_correct import auto_correct_and_validate
+from hl7_corrector import HL7MessageCorrector
+import time
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # For session management
@@ -195,7 +194,7 @@ def view_report(report_id):
 
 @app.route('/report/<report_id>/pdf')
 def export_pdf(report_id):
-    """Export report as PDF using ReportLab"""
+    """Export report as PDF using Playwright (browser-based, perfect emoji support)"""
     reports = get_sample_reports()
     report = next((r for r in reports if r['id'] == report_id), None)
     
@@ -206,80 +205,151 @@ def export_pdf(report_id):
     with open(report['report_path'], 'r', encoding='utf-8') as f:
         md_content = f.read()
     
-    # Create PDF in memory
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                           rightMargin=72, leftMargin=72,
-                           topMargin=72, bottomMargin=18)
+    # Convert to HTML
+    html_content = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
     
-    # Container for PDF elements
-    elements = []
+    # Create styled HTML template (same as browser view)
+    status_color = '#27ae60' if report['status'] == 'PASSED' else '#e74c3c'
+    status_emoji = '✅' if report['status'] == 'PASSED' else '❌'
     
-    # Define styles
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=24,
-        textColor='#2c3e50',
-        spaceAfter=30,
-        alignment=TA_CENTER
-    )
+    html_template = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @page {{
+                margin: 2cm;
+                size: A4;
+            }}
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                font-size: 11pt;
+                line-height: 1.6;
+                color: #2c3e50;
+                margin: 0;
+                padding: 20px;
+            }}
+            h1 {{
+                color: #2c3e50;
+                font-size: 20pt;
+                border-bottom: 3px solid #3498db;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }}
+            h2 {{
+                color: #34495e;
+                font-size: 16pt;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                border-bottom: 2px solid #ecf0f1;
+                padding-bottom: 5px;
+            }}
+            h3 {{
+                color: #7f8c8d;
+                font-size: 14pt;
+                margin-top: 15px;
+            }}
+            h4 {{
+                color: #95a5a6;
+                font-size: 12pt;
+            }}
+            .metadata {{
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+                border-left: 4px solid #3498db;
+            }}
+            .metadata p {{
+                margin: 5px 0;
+            }}
+            .status {{
+                color: {status_color};
+                font-weight: bold;
+            }}
+            code {{
+                background: #f4f4f4;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: 'Courier New', Consolas, monospace;
+                font-size: 10pt;
+                color: #e74c3c;
+            }}
+            pre {{
+                background: #2c3e50;
+                color: #ecf0f1;
+                padding: 15px;
+                border-radius: 5px;
+                overflow-x: auto;
+                border-left: 4px solid #3498db;
+                font-size: 9pt;
+            }}
+            pre code {{
+                background: none;
+                color: #ecf0f1;
+                padding: 0;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 15px 0;
+            }}
+            th, td {{
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }}
+            th {{
+                background-color: #3498db;
+                color: white;
+            }}
+            hr {{
+                border: none;
+                border-top: 2px solid #ecf0f1;
+                margin: 20px 0;
+            }}
+            .footer {{
+                margin-top: 30px;
+                padding-top: 15px;
+                border-top: 1px solid #ddd;
+                font-size: 9pt;
+                color: #7f8c8d;
+                text-align: center;
+            }}
+        </style>
+    </head>
+    <body>
+        <h1>HL7 v2 Validation Report</h1>
+        
+        <div class="metadata">
+            <p><strong>File:</strong> {report['filename']}</p>
+            <p><strong>Message Type:</strong> {report['message_type']}</p>
+            <p><strong>Date:</strong> {report['date']}</p>
+            <p><strong>Status:</strong> <span class="status">{status_emoji} {report['status']}</span></p>
+            <p><strong>Errors:</strong> {report['errors']}</p>
+            <p><strong>Warnings:</strong> {report['warnings']}</p>
+        </div>
+        
+        {html_content}
+        
+        <div class="footer">
+            Generated by Gazelle HL7 v2 Validation Dashboard on {datetime.now().strftime('%Y-%m-%d at %H:%M:%S')}
+        </div>
+    </body>
+    </html>
+    """
     
-    heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
-        fontSize=16,
-        textColor='#34495e',
-        spaceAfter=12,
-        spaceBefore=12
-    )
+    # Generate PDF using Playwright (headless browser)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.set_content(html_template)
+        pdf_bytes = page.pdf(format='A4', print_background=True)
+        browser.close()
     
-    body_style = ParagraphStyle(
-        'CustomBody',
-        parent=styles['BodyText'],
-        fontSize=11,
-        leading=14
-    )
-    
-    # Add title
-    elements.append(Paragraph("HL7 v2 Validation Report", title_style))
-    elements.append(Spacer(1, 12))
-    
-    # Add metadata
-    elements.append(Paragraph(f"<b>File:</b> {report['filename']}", body_style))
-    elements.append(Paragraph(f"<b>Message Type:</b> {report['message_type']}", body_style))
-    elements.append(Paragraph(f"<b>Date:</b> {report['date']}", body_style))
-    elements.append(Paragraph(f"<b>Status:</b> {report['status']}", body_style))
-    elements.append(Paragraph(f"<b>Errors:</b> {report['errors']}", body_style))
-    elements.append(Paragraph(f"<b>Warnings:</b> {report['warnings']}", body_style))
-    elements.append(Spacer(1, 20))
-    
-    # Add report content (simplified - just the text)
-    for line in md_content.split('\n'):
-        if line.strip():
-            if line.startswith('# '):
-                elements.append(Paragraph(line[2:], heading_style))
-            elif line.startswith('## '):
-                elements.append(Paragraph(line[3:], heading_style))
-            elif line.startswith('```'):
-                continue  # Skip code fences
-            else:
-                # Clean up markdown syntax
-                clean_line = line.replace('**', '<b>').replace('`', '<i>')
-                try:
-                    elements.append(Paragraph(clean_line, body_style))
-                except:
-                    pass  # Skip problematic lines
-            elements.append(Spacer(1, 6))
-    
-    # Add footer
-    elements.append(Spacer(1, 30))
-    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=9, textColor='#7f8c8d')
-    elements.append(Paragraph(f"Generated by Gazelle HL7 v2 Validation Dashboard on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", footer_style))
-    
-    # Build PDF
-    doc.build(elements)
+    # Create response
+    buffer = BytesIO(pdf_bytes)
     buffer.seek(0)
     
     return send_file(buffer,
@@ -300,6 +370,59 @@ def download_corrected(report_id):
                     as_attachment=True,
                     download_name=f"{report['filename'].replace('.txt', '_CORRECTED.txt')}",
                     mimetype='text/plain')
+
+@app.route('/auto-correct/<report_id>', methods=['POST'])
+def retry_auto_correct(report_id):
+    """Retry auto-correction on a failed validation"""
+    if report_id not in processing_results:
+        return jsonify({'success': False, 'message': 'Report not found'}), 404
+    
+    file_info = processing_results[report_id]
+    original_filepath = file_info['filepath']
+    
+    try:
+        # Read original file as bytes
+        with open(original_filepath, 'rb') as f:
+            original_content = f.read()
+        
+        # Apply corrections
+        corrector = HL7MessageCorrector()
+        corrected_content, corrections_list = corrector.prepare_message(original_content, file_info['filename'])
+        corrections_summary = corrector.get_corrections_summary()
+        correction_report = corrector.get_correction_report()
+        
+        if corrections_summary['total_corrections'] == 0:
+            return jsonify({
+                'success': False,
+                'message': 'No corrections could be applied automatically. Manual review required.'
+            })
+        
+        # Save corrected file
+        corrected_filepath = original_filepath.replace('.txt', '_CORRECTED.txt').replace('.xml', '_CORRECTED.xml')
+        with open(corrected_filepath, 'wb') as f:
+            f.write(corrected_content)
+        
+        # Update processing results
+        processing_results[report_id]['corrected_path'] = corrected_filepath
+        processing_results[report_id]['corrections_applied'] = corrections_summary
+        processing_results[report_id]['correction_report'] = correction_report
+        save_processing_results()
+        
+        return jsonify({
+            'success': True,
+            'message': f"Successfully applied {corrections_summary['total_corrections']} corrections.",
+            'corrections_applied': corrections_summary['total_corrections'],
+            'critical_fixes': corrections_summary.get('critical_fixes', 0),
+            'code_fixes': corrections_summary.get('code_fixes', 0),
+            'field_insertions': corrections_summary.get('field_insertions', 0),
+            'corrected_file': corrected_filepath
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Auto-correction failed: {str(e)}'
+        }), 500
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -356,7 +479,7 @@ def upload_file():
 
 @app.route('/validate/<file_id>', methods=['POST'])
 def validate_file(file_id):
-    """Validate uploaded file"""
+    """Validate uploaded file (without automatic correction)"""
     if file_id not in processing_results:
         return jsonify({'success': False, 'message': 'File not found'}), 404
     
@@ -390,6 +513,7 @@ def validate_file(file_id):
             # Run validation script with UTF-8 encoding to handle emojis
             env = os.environ.copy()
             env['PYTHONIOENCODING'] = 'utf-8'
+            env['PYTHONUTF8'] = '1'  # Force UTF-8 mode on Windows
             
             result = subprocess.run(
                 ['.venv\\Scripts\\python.exe', 'validate_with_verification.py', filepath, '--warnings'],
@@ -433,6 +557,7 @@ def validate_file(file_id):
         warnings = 0
         report_url = ''
         oid = ''
+        detected_message_type = None
         
         for line in validation_output.split('\n'):
             if 'Status:' in line:
@@ -448,6 +573,9 @@ def validate_file(file_id):
                 status = 'PASSED'
             elif 'VALIDATION FAILED' in line.upper():
                 status = 'FAILED'
+            elif 'Message Type:' in line:
+                # Extract message type from validation output
+                detected_message_type = line.split('Message Type:')[1].strip()
             elif 'Errors:' in line and 'MANDATORY:' in line:
                 try:
                     errors = int(line.split('MANDATORY:')[1].split(')')[0].strip())
@@ -481,15 +609,35 @@ def validate_file(file_id):
         
         report_path = os.path.join(session_folder, f"{file_id}_report.md")
         
-        # Detect message type from filename
+        # Use detected message type from validation output, or try to detect from filename as fallback
         message_type = 'Unknown'
         message_type_display = 'Unknown'
-        if 'SIU' in file_info['filename']:
+        
+        if detected_message_type:
+            message_type = detected_message_type.replace('^', '_')
+            # Map to friendly display names
+            if detected_message_type == 'ADT^A01':
+                message_type_display = 'ADT^A01 (Patient Admission)'
+            elif detected_message_type == 'ADT^A03':
+                message_type_display = 'ADT^A03 (Patient Discharge)'
+            elif detected_message_type == 'SIU^S12':
+                message_type_display = 'SIU^S12 (Appointment Notification)'
+            elif detected_message_type == 'SIU^S13':
+                message_type_display = 'SIU^S13 (Appointment Rescheduling)'
+            elif detected_message_type == 'REF^I12':
+                message_type_display = 'REF^I12 (Patient Referral)'
+            elif detected_message_type == 'RRI^I12':
+                message_type_display = 'RRI^I12 (Referral Response)'
+            elif detected_message_type == 'ORU^R01':
+                message_type_display = 'ORU^R01 (Laboratory Results)'
+            else:
+                message_type_display = detected_message_type
+        elif 'SIU' in file_info['filename']:
             message_type = 'SIU_S12'
             message_type_display = 'SIU^S12 (Appointment Notification)'
         elif 'ORU' in file_info['filename']:
             message_type = 'ORU_R01'
-            message_type_display = 'ORU^R01 (Laboratory Results - HL-12)'
+            message_type_display = 'ORU^R01 (Laboratory Results)'
         elif 'ADT' in file_info['filename']:
             message_type = 'ADT_A01'
             message_type_display = 'ADT^A01 (Patient Admission)'
@@ -504,6 +652,15 @@ def validate_file(file_id):
             f.write(f"**Validator:** Gazelle HL7v2.x validator (OID: 1.3.6.1.4.1.12559.11.35.10.1.12)  \n")
             f.write(f"**Validation Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  \n")
             
+            # Add auto-correction summary if it exists (from manual retry)
+            corrections_summary = processing_results[file_id].get('corrections_applied', {})
+            correction_report = processing_results[file_id].get('correction_report', '')
+            if corrections_summary.get('total_corrections', 0) > 0:
+                f.write(f"**Auto-Corrections Applied:** {corrections_summary['total_corrections']} fixes  \n")
+                f.write(f"  - Critical fixes: {corrections_summary.get('critical_fixes', 0)}  \n")
+                f.write(f"  - Code corrections: {corrections_summary.get('code_fixes', 0)}  \n")
+                f.write(f"  - Field insertions: {corrections_summary.get('field_insertions', 0)}  \n\n")
+            
             # Calculate passed checks
             total_checks = errors + warnings + 50  # Approximate
             passed = total_checks - errors - warnings
@@ -513,6 +670,12 @@ def validate_file(file_id):
                 f.write(f"**Full Gazelle Report:** [{report_url}]({report_url})\n\n")
             
             f.write("---\n\n")
+            
+            # Add detailed auto-correction report if corrections were applied
+            if corrections_summary.get('total_corrections', 0) > 0:
+                f.write("## 🤖 AUTOMATIC CORRECTIONS APPLIED\n\n")
+                f.write(correction_report)
+                f.write("\n\n---\n\n")
             
             # Use detailed errors if available, otherwise parse from output
             if detailed_errors and len(detailed_errors) > 0:
@@ -579,15 +742,53 @@ def validate_file(file_id):
             f.write(output)
             f.write("\n```\n\n")
             
+            # If validation failed and we have detailed errors, attempt auto-correction
+            auto_correction_attempted = False
+            corrected_file_path = None
+            
+            if status == "FAILED" and detailed_errors and len(detailed_errors) > 0:
+                f.write("## 🤖 ATTEMPTING AUTOMATIC CORRECTION\n\n")
+                f.write("Analyzing errors and attempting to apply automatic fixes...\n\n")
+                
+                # Attempt auto-correction
+                try:
+                    from auto_correct import auto_correct_and_validate
+                    correction_result = auto_correct_and_validate(filepath, detailed_errors, session['api_key'])
+                    
+                    if correction_result['success']:
+                        auto_correction_attempted = True
+                        corrected_file_path = correction_result['corrected_file']
+                        
+                        f.write("### ✅ Automatic Corrections Applied\n\n")
+                        f.write(correction_result['correction_report'])
+                        f.write("\n\n")
+                        f.write(f"**Corrected file saved to:** `{corrected_file_path}`\n\n")
+                        f.write("**Note:** The corrected file needs to be re-validated. Upload it again to verify it passes.\n\n")
+                    else:
+                        f.write("### ⚠️ Automatic Correction Not Possible\n\n")
+                        f.write(f"Reason: {correction_result.get('error', 'Unknown error')}\n\n")
+                        f.write("Manual correction required. Please review the errors above.\n\n")
+                
+                except Exception as e:
+                    f.write(f"### ❌ Auto-Correction Error\n\n")
+                    f.write(f"Error: {str(e)}\n\n")
+                
+                f.write("---\n\n")
+            
             if status == "PASSED":
                 f.write("## ✅ VALIDATION SUCCESSFUL\n\n")
                 f.write("This message has passed all mandatory validation checks and is ready for submission.\n\n")
             else:
                 f.write("## 🔧 NEXT STEPS\n\n")
-                f.write("1. Review each error above\n")
-                f.write("2. Correct the issues in your HL7 message\n")
-                f.write("3. Re-upload and validate the corrected message\n")
-                f.write("4. Download the corrected version once validation passes\n\n")
+                if auto_correction_attempted:
+                    f.write("1. Download the auto-corrected file below\n")
+                    f.write("2. Re-upload and validate the corrected file\n")
+                    f.write("3. If errors persist, manually review and correct\n\n")
+                else:
+                    f.write("1. Review each error above\n")
+                    f.write("2. Correct the issues in your HL7 message\n")
+                    f.write("3. Re-upload and validate the corrected message\n")
+                    f.write("4. Download the corrected version once validation passes\n\n")
             
             f.write("---\n\n")
             f.write(f"*Report generated by Gazelle HL7 Validator Dashboard on {datetime.now().strftime('%Y-%m-%d at %H:%M:%S')}*\n")
@@ -610,7 +811,8 @@ def validate_file(file_id):
             'report_path': report_path,
             'report_url': report_url,
             'message_type': message_type,
-            'validated_at': datetime.now().isoformat()
+            'validated_at': datetime.now().isoformat(),
+            'corrected_path': corrected_file_path if corrected_file_path else None
         })
         save_processing_results()
         

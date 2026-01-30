@@ -20,9 +20,40 @@ instance/
 .vscode/
 .idea/
 
-# Uploads
+# Runtime generated folders
 uploads/
+processed/
+batch_results/
 
-# Test files
+# Development and test files
 test_*.py
 verify_*.py
+diagnose_*.py
+debug_*.py
+batch_*.py
+fix_*.py
+check_*.py
+compare_*.py
+deep_*.py
+direct_*.py
+recreate_*.py
+generate_*.py
+find_*.py
+auto_*.py
+add_*.py
+remove_*.py
+ERROR_ANALYSIS.py
+
+# Log files
+*.log
+batch_output.log
+batch_enhanced_output.log
+
+# Temporary validation files
+validation_*.json
+validation_*.txt
+validation_*.xml
+*_report.xml
+
+# Old simple app (superseded by dashboard_app.py)
+app.py

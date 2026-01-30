@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ report.filename }} - Validation Report</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -144,6 +145,11 @@
                     </a>
                 </div>
                 <div class="col-md-6 text-end">
+                    {% if report.status == 'FAILED' or report.status == 'UNDEFINED' %}
+                    <button onclick="retryAutoCorrect('{{ report.id }}')" class="btn btn-warning" id="autoCorrectBtn">
+                        <i class="bi bi-magic"></i> Try Auto-Correct
+                    </button>
+                    {% endif %}
                     <button onclick="window.print()" class="btn btn-outline-primary">
                         <i class="bi bi-printer"></i> Print
                     </button>
@@ -232,6 +238,57 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function retryAutoCorrect(reportId) {
+            const btn = document.getElementById('autoCorrectBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Auto-Correcting...';
+            
+            fetch(`/auto-correct/${reportId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+                    alertDiv.innerHTML = `
+                        <strong><i class="bi bi-check-circle"></i> Auto-Correction Complete!</strong>
+                        <p class="mb-2">${data.message}</p>
+                        <p class="mb-0"><strong>Corrections Applied:</strong> ${data.corrections_applied}</p>
+                        <button type="button" class="btn btn-sm btn-success mt-2" onclick="window.location.reload()">
+                            <i class="bi bi-arrow-clockwise"></i> Reload to See Updated Report
+                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.querySelector('.report-header').insertAdjacentElement('afterend', alertDiv);
+                    btn.innerHTML = '<i class="bi bi-check"></i> Correction Applied';
+                } else {
+                    // Show error message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                    alertDiv.innerHTML = `
+                        <strong><i class="bi bi-exclamation-triangle"></i> Auto-Correction Failed</strong>
+                        <p class="mb-0">${data.message}</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.querySelector('.report-header').insertAdjacentElement('afterend', alertDiv);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-magic"></i> Try Auto-Correct';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during auto-correction. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-magic"></i> Try Auto-Correct';
+            });
+        }
+    </script>
 </body>
 
 </html>

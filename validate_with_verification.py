@@ -3,6 +3,7 @@ HL7 Validation Workflow with Verification
 Only confirms corrections after receiving DONE_PASSED from validator
 """
 import os
+import sys
 import base64
 import requests
 import json
@@ -11,6 +12,12 @@ import webbrowser
 from dotenv import load_dotenv
 from xml.etree import ElementTree as ET
 
+# Force UTF-8 encoding for output (fixes emoji display in subprocess)
+if sys.stdout.encoding != 'utf-8':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 load_dotenv()
 
 BASE_URL = "https://testing.ehealthireland.ie"
@@ -18,19 +25,41 @@ API_ENDPOINT = f"{BASE_URL}/evs/rest/validations"
 API_KEY = os.getenv("GAZELLE_API_KEY")
 
 VALIDATORS = {
-    "ORU^R01": "1.3.6.1.4.1.12559.11.35.10.1.12",
-    "SIU^S12": "1.3.6.1.4.1.12559.11.35.10.1.21",
-    "REF^I12": "1.3.6.1.4.1.12559.11.35.10.1.20"
+    "ORU^R01": "1.3.6.1.4.1.12559.11.35.10.1.12",  # HL-12: Laboratory Results
+    "SIU^S12": "1.3.6.1.4.1.12559.11.35.10.1.21",  # HL-8: Appointment Notification
+    "REF^I12": "1.3.6.1.4.1.12559.11.35.10.1.20",  # HL-3: Discharge Summary
+    "ADT^A01": "1.3.6.1.4.1.12559.11.35.10.1.7",   # HL-1: Patient Admission (CORRECTED)
+    "ADT^A03": "1.3.6.1.4.1.12559.11.35.10.1.9",   # HL-5: Patient Discharge (CORRECTED)
+    "ADT^A04": "1.3.6.1.4.1.12559.11.35.10.1.4",   # Patient Registration
+    "ADT^A08": "1.3.6.1.4.1.12559.11.35.10.1.8",   # Patient Update
+    "ORU^R03": "1.3.6.1.4.1.12559.11.35.10.1.14",  # Unsolicited Observation
+    "RRI^I12": None,  # NO VALIDATOR AVAILABLE - Need to create on Gazelle
+    "OML^O21": "1.3.6.1.4.1.12559.11.35.10.1.22",  # HL-13: Laboratory Order
+    "ORL^O22": "1.3.6.1.4.1.12559.11.35.10.1.16",  # HL-11: Lab Order Response
+    "VXU^V04": "1.3.6.1.4.1.12559.11.35.10.1.19",  # HL-16: Vaccination Update
+    "RRI^R12": "1.3.6.1.4.1.12559.11.35.10.1.23",  # HL-9: Radiology Results (Note: R12 not I12)
+    "ACK^GENERIC": "1.3.6.1.4.1.12559.11.35.10.1.24"  # HL-2: General Acknowledgement
 }
 
 def detect_message_type(content):
     """Detect HL7 message type from XML content"""
-    if "ORU_R01" in content:
-        return "ORU^R01"
-    elif "SIU_S12" in content:
-        return "SIU^S12"
-    elif "REF_I12" in content:
-        return "REF^I12"
+    # Try to detect from XML root element or content
+    detect_patterns = {
+        "ORU_R01": "ORU^R01",
+        "SIU_S12": "SIU^S12",
+        "REF_I12": "REF^I12",
+        "ADT_A01": "ADT^A01",
+        "ADT_A03": "ADT^A03",
+        "ADT_A04": "ADT^A04",
+        "ADT_A08": "ADT^A08",
+        "ORU_R03": "ORU^R03",
+        "RRI_I12": "RRI^I12"
+    }
+    
+    for pattern, msg_type in detect_patterns.items():
+        if pattern in content:
+            return msg_type
+    
     return None
 
 def submit_validation(file_path):
@@ -43,6 +72,8 @@ def submit_validation(file_path):
         return None, "Could not detect message type"
     
     validator_oid = VALIDATORS.get(msg_type)
+    if validator_oid is None:
+        return None, f"No validator configured for {msg_type} - needs to be created on Gazelle"
     if not validator_oid:
         return None, f"No validator for {msg_type}"
     
