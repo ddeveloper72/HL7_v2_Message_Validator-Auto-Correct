@@ -1,16 +1,15 @@
 # Gazelle HL7 v2 Validator Project
 
 ## Overview
-This application assists developers in validating HL7 v2 Healthlink files before submission to the Healthlink system.
-The aim of this project is to determine if an API can be configured so that developers can work from Visual Studio Code to validate HL7 v2 files on Gazelle EVS and get the results back in VS Code.
+This application assists developers in validating HL7 v2 Healthlink files before submission.
+The application provides a web interface for validating HL7 v2 files using Gazelle EVS API.
 
 ## Technical Requirements
 
 ### Python Environment
 - Work with a Python `.venv` virtual environment (with dot prefix)
-- Install Python packages using trusted host flags required by company security policy: `--trusted-host pypi.org --trusted-host files.pythonhosted.org`
-- Install all required dependencies for working with Healthlink HL7 v2 messages
-- Use a `requirements.txt` file to manage dependencies
+- Install Python packages using pip from requirements.txt
+- Use environment variables for configuration (stored in .env file)
 
 ### Web Framework & Frontend
 - Use **Flask** as the web framework
@@ -21,12 +20,10 @@ The aim of this project is to determine if an API can be configured so that deve
 
 ### Gazelle EVS API Integration
 
-**Base URL:** `https://testing.ehealthireland.ie`
-
-**Key Endpoints:**
-- Home: `/evs/home.seam`
-- Validator: `/evs/default/validator.seam`
-- **REST API Endpoint:** `/evs/rest/validations` (POST)
+**Configuration via Environment Variables:**
+- `GAZELLE_BASE_URL` - Base URL for Gazelle EVS instance
+- `GAZELLE_API_KEY` - (Optional) API key for local development
+- `VERIFY_SSL` - SSL verification setting
 
 **API Workflow (from EVS Client documentation):**
 
@@ -34,7 +31,7 @@ The aim of this project is to determine if an API can be configured so that deve
    - Encode the HL7 v2 XML message in Base64
 
 2. **Submit validation request:**
-   - Send a POST request to `https://testing.ehealthireland.ie/evs/rest/validations`
+   - Send a POST request to the REST API validation endpoint
    - Include the Base64-encoded message in the request body
    - The response will include:
      - Global validation status
@@ -54,9 +51,11 @@ Gazelle/
 │   └── scripts.js
 ├── templates/
 │   └── index.html
-├── app.py
+├── dashboard_app.py
+├── hl7_corrector.py
+├── validate_with_verification.py
 ├── requirements.txt
-└── vin.xml (sample HL7 v2 file)
+└── .env (local only - not committed)
 ```
 
 ## Implementation Notes
@@ -64,3 +63,4 @@ Gazelle/
 - Files should be validated against Gazelle EVS API
 - Results should be displayed in a user-friendly format
 - Error handling should be robust for API failures and invalid files
+- Each user provides their own API key (stored in session)

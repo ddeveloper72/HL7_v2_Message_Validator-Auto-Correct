@@ -1,34 +1,17 @@
 # Gazelle HL7 v2 Validator
 
-A web application for validating HL7 v2 Healthlink XML files using the Gazelle EVS API before submission to the Healthlink system.
+A web application for validating HL7 v2 Healthlink XML files using the Gazelle EVS API.
 
 ## Features
 
 - 🔍 **File Upload & Validation**: Upload HL7 v2 XML files for validation
-- 📋 **Sample Validation**: Test with the included sample file (vin.xml)
-- 📊 **Detailed Reports**: View comprehensive validation reports
-- 🎨 **Modern UI**: Clean Bootstrap-based interface
-- 🔗 **Direct Links**: Access full validation reports on Gazelle EVS
+- 🤖 **Auto-Correction**: Automatically fixes common HL7 message errors
+- 📊 **Detailed Reports**: View comprehensive validation reports with error analysis
+- 📄 **PDF Export**: Export validation reports as PDF with emoji support
+- 🔐 **User API Keys**: Each user provides their own Gazelle API key
+- 🎨 **Modern UI**: Clean Bootstrap-based dashboard interface
 
-## Project Structure
-
-```
-Gazelle/
-├── .github/
-│   └── copilot-instructions.md
-├── .venv/
-├── static/
-│   ├── styles.css
-│   └── scripts.js
-├── templates/
-│   └── index.html
-├── app.py
-├── requirements.txt
-├── vin.xml
-└── README.md
-```
-
-## Installation
+## Quick Start
 
 ### 1. Create Python Virtual Environment
 
@@ -38,148 +21,118 @@ python -m venv .venv
 
 ### 2. Install Dependencies
 
-Install using trusted host flags (required by company security policy):
-
 ```bash
-.venv\Scripts\pip.exe install --trusted-host pypi.org --trusted-host files.pythonhosted.org Flask Werkzeug requests
+pip install -r requirements.txt
 ```
 
-Or install from requirements.txt:
-```bash
-.venv\Scripts\pip.exe install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+### 3. Configure Environment
+
+Create a `.env` file in the project root:
+
+```env
+# Gazelle EVS API Configuration
+GAZELLE_API_KEY=your_api_key_here
+GAZELLE_BASE_URL=https://your-gazelle-instance
+VERIFY_SSL=True
 ```
 
-## Usage
-
-### Starting the Application
-
-Run the Flask application:
+### 4. Run the Application
 
 ```bash
-.venv\Scripts\python.exe app.py
+python dashboard_app.py
 ```
 
 The application will start on `http://127.0.0.1:5000`
 
-### Using the Web Interface
+## Usage
 
-1. Open your web browser and navigate to `http://127.0.0.1:5000`
-2. Choose one of two options:
-   - **Upload File**: Select an HL7 v2 XML file from your computer
-   - **Validate Sample**: Test with the included vin.xml sample file
-3. Click the validation button
-4. View the results:
-   - Validation status (Success/Error/Warning)
-   - Full validation report
-   - Link to detailed report on Gazelle EVS
-   - Raw API response (expandable)
+### Web Interface
 
-## API Endpoints
+1. Open your browser to `http://127.0.0.1:5000`
+2. Enter your Gazelle API key (stored in your session only)
+3. Upload HL7 v2 XML files via drag-and-drop or file browser
+4. View validation results with detailed error reports
+5. Use auto-correction for failed validations
+6. Export reports as PDF
 
-### POST /validate
-Validates an uploaded HL7 v2 XML file.
+### API Key
 
-**Request:**
-- Method: POST
-- Content-Type: multipart/form-data
-- Body: file (XML file)
-
-**Response:**
-```json
-{
-  "success": true,
-  "filename": "example.xml",
-  "validation_status": "PASSED",
-  "report_url": "https://...",
-  "report": "...",
-  "initial_response": {...}
-}
-```
-
-### POST /validate-sample
-Validates the sample vin.xml file.
-
-**Request:**
-- Method: POST
-
-**Response:** Same as /validate endpoint
-
-## How It Works
-
-The application implements the Gazelle EVS API workflow:
-
-1. **Encode**: The XML file is encoded in Base64
-2. **Submit**: POST request to `https://testing.ehealthireland.ie/evs/rest/validations`
-3. **Response**: Receives validation status and report URL
-4. **Retrieve**: GET request to fetch the full validation report
-5. **Display**: Shows results in a user-friendly format
+Each user must provide their own Gazelle API key:
+- Keys are stored in encrypted Flask sessions (not persisted)
+- API key identifies you to the Gazelle validation service
+- Obtain your API key from your Gazelle account profile
 
 ## Configuration
 
-### Gazelle EVS Settings
-- **Base URL**: `https://testing.ehealthireland.ie`
-- **Validation Endpoint**: `/evs/rest/validations`
+All configuration is managed through environment variables in `.env`:
 
-### Application Settings
-- **Host**: 127.0.0.1
-- **Port**: 5000
-- **Debug Mode**: Enabled (development)
-- **Max File Size**: 16MB
+- `GAZELLE_BASE_URL` - Base URL for your Gazelle EVS instance
+- `GAZELLE_API_KEY` - (Optional) Your personal API key for local development
+- `VERIFY_SSL` - Enable/disable SSL verification (default: True)
+
+**Note**: The `.env` file is excluded from version control for security.
 
 ## Development
 
 ### Technology Stack
-- **Backend**: Flask (Python web framework)
-- **Frontend**: Bootstrap 5.3.2
-- **Icons**: Bootstrap Icons 1.11.3
-- **HTTP Client**: requests library
+- **Backend**: Flask, Python 3.12
+- **Frontend**: Bootstrap 5.3, JavaScript
+- **PDF Generation**: Playwright (headless browser)
+- **Validation**: Gazelle EVS REST API
 
-### File Structure
-- `app.py`: Flask application with validation logic
-- `templates/index.html`: Main web interface
-- `static/styles.css`: Custom styling
-- `static/scripts.js`: Client-side JavaScript
-- `requirements.txt`: Python dependencies
-
-## Security Notes
-
-As per company policy, when reinstalling packages use trusted host flags:
-```bash
-.venv\Scripts\pip.exe install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+### Project Structure
+```
+Gazelle/
+├── dashboard_app.py          # Main application
+├── hl7_corrector.py          # Auto-correction module
+├── validate_with_verification.py  # Validation script
+├── templates/                # HTML templates
+├── static/                   # CSS, JS, images
+├── requirements.txt          # Python dependencies
+├── Procfile                  # Heroku deployment
+├── runtime.txt               # Python version
+└── .env                      # Environment config (local only)
 ```
 
-## Troubleshooting
+## Deployment
 
-### Common Issues
+### Heroku
 
-**Port Already in Use**
-```bash
-# Change port in app.py:
-app.run(debug=True, host='127.0.0.1', port=5001)
-```
+1. Create a new Heroku app
+2. Add buildpacks:
+   ```bash
+   heroku buildpacks:add https://github.com/mxschmitt/heroku-playwright-buildpack.git
+   heroku buildpacks:add heroku/python
+   ```
+3. Set stack to heroku-22:
+   ```bash
+   heroku stack:set heroku-22
+   ```
+4. Deploy via GitHub integration or:
+   ```bash
+   git push heroku main
+   ```
 
-**Module Not Found**
-```bash
-# Ensure virtual environment is activated and packages are installed
-pip install -r requirements.txt
-```
+**Note**: No `GAZELLE_API_KEY` environment variable needed - users provide their own keys.
 
-**CORS/Network Errors**
-- Verify internet connection
-- Check Gazelle EVS endpoint availability
-- Confirm firewall settings allow outbound HTTPS
+## Security
 
-## Sample File
+- ✅ User API keys stored in encrypted sessions only
+- ✅ No credentials committed to version control
+- ✅ SSL verification enabled by default
+- ✅ Environment variables for configuration
+- ✅ `.gitignore` prevents sensitive file commits
 
-The included `vin.xml` file is a sample HL7 v2 REF_I12 message that can be used for testing the validation workflow.
+## Auto-Correction Features
+
+The application automatically corrects common HL7 v2 errors:
+
+1. **BOM Removal** - Strips UTF-8 byte order marks
+2. **XML Declaration** - Adds proper XML headers
+3. **Code Corrections** - Fixes invalid HL7 table codes
+4. **Field Insertions** - Fills required empty fields
 
 ## License
 
-Internal development tool for Healthlink HL7 v2 validation.
+Internal development tool for HL7 v2 validation.
 
-## Support
-
-For issues with:
-- **Application**: Check error messages in the browser console and terminal
-- **Gazelle EVS API**: Visit https://testing.ehealthireland.ie/evs/home.seam
-- **HL7 v2 Standards**: Refer to HL7 v2.4 documentation
