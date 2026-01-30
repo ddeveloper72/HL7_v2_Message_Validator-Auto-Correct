@@ -253,20 +253,22 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Show success message
+                        // Show success message and auto-reload after 2 seconds
                         const alertDiv = document.createElement('div');
                         alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
                         alertDiv.innerHTML = `
                         <strong><i class="bi bi-check-circle"></i> Auto-Correction Complete!</strong>
                         <p class="mb-2">${data.message}</p>
                         <p class="mb-0"><strong>Corrections Applied:</strong> ${data.corrections_applied}</p>
-                        <button type="button" class="btn btn-sm btn-success mt-2" onclick="window.location.reload()">
-                            <i class="bi bi-arrow-clockwise"></i> Reload to See Updated Report
-                        </button>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <p class="mb-0 mt-2"><i class="bi bi-arrow-clockwise"></i> Reloading page...</p>
                     `;
                         document.querySelector('.report-header').insertAdjacentElement('afterend', alertDiv);
                         btn.innerHTML = '<i class="bi bi-check"></i> Correction Applied';
+                        
+                        // Auto-reload after 2 seconds to show download button
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
                     } else {
                         // Show error message
                         const alertDiv = document.createElement('div');

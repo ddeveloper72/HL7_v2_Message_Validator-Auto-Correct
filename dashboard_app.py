@@ -477,6 +477,9 @@ def retry_auto_correct(report_id):
         processing_results[report_id]['corrections_applied'] = corrections_summary
         processing_results[report_id]['correction_report'] = correction_report
         
+        # Save to temp file so all workers can see the update
+        save_processing_results()
+        
         return jsonify({
             'success': True,
             'message': f"Successfully applied {corrections_summary['total_corrections']} corrections.",
