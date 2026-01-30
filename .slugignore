@@ -16,7 +16,6 @@ direct_*.py
 recreate_*.py
 generate_*.py
 find_*.py
-auto_*.py
 add_*.py
 remove_*.py
 xml_to_er7_converter.py
