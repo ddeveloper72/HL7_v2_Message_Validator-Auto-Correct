@@ -41,11 +41,14 @@ heroku create your-app-name
 # Example: heroku create hl7-gazelle-validator
 ```
 
-### 4. Set Environment Variables
+### 4. Set Environment Variables (Optional)
 ```bash
-heroku config:set GAZELLE_API_KEY=your_api_key_here
+# No API key needed! Users provide their own API keys in the app
+# Optional: Set this if you want to disable SSL verification
 heroku config:set VERIFY_SSL=True
 ```
+
+**Note**: Each user provides their own Gazelle API key through the web interface. The key is stored in their session and identifies them to Gazelle. No centralized API key is needed.
 
 ### 5. Install Playwright Browser (Post-deployment)
 Playwright needs to download Chromium browser after deployment. Add this to your deployment:
@@ -86,9 +89,10 @@ python-3.12.4
 ```
 - Matches your local development environment
 
-### Environment Variables Required
-- `GAZELLE_API_KEY` - Your Gazelle EVS API key
-- `VERIFY_SSL` - SSL verification (default: True)
+### Environment Variables
+- `VERIFY_SSL` - SSL verification (default: True) - **Optional**
+
+**Note**: No `GAZELLE_API_KEY` environment variable is needed. Users provide their own API keys when using the application.
 
 ## 📊 Expected Deployment Size
 - **With .slugignore**: ~50-100 MB (lean deployment)
@@ -204,7 +208,7 @@ Heroku will automatically:
 - [x] Environment variables documented
 - [ ] Heroku app created
 - [ ] Playwright buildpack added
-- [ ] Environment variables set on Heroku
+- [ ] (Optional) Environment variables set on Heroku
 - [ ] App deployed and tested
 - [ ] PDF export with emojis tested in production
 

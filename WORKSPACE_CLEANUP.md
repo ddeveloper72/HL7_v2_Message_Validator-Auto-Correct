@@ -146,12 +146,21 @@ git commit -m "Clean up old test files"
 | With .slugignore | ~50-100 MB | 1-2 min |
 | **Reduction** | **~80%** | **~60%** |
 
-## 🔒 Security Checklist
+## 🔒 Security & User Authentication
 
-- [x] `.env` file excluded from git (contains API key)
+### How User API Keys Work
+- ✅ **User-provided API keys**: Each user enters their own Gazelle API key
+- ✅ **Session storage**: Keys stored in encrypted Flask sessions (not database)
+- ✅ **Gazelle authentication**: API key identifies user to Gazelle
+- ✅ **No central key**: No shared API key needed for deployment
+- ✅ **`.env` for local dev only**: Developers can use .env for local testing
+
+### Security Checklist
+
+- [x] `.env` file excluded from git
 - [x] `.gitignore` prevents committing sensitive files
-- [x] Environment variables documented in DEPLOYMENT.md
-- [x] API key will be set via Heroku config vars
+- [x] User API keys stored in sessions (temporary, encrypted)
+- [x] No database storing API keys
 - [x] No credentials in committed code
 
 ## 📝 Next Steps
@@ -167,9 +176,11 @@ git commit -m "Clean up old test files"
    heroku create your-app-name
    ```
 
-3. **Set Environment Variables**
+3. **Set Environment Variables (Optional)**
    ```bash
-   heroku config:set GAZELLE_API_KEY=your_key_here
+   # No API key needed - users provide their own!
+   # Only set this if you want to configure SSL verification
+   heroku config:set VERIFY_SSL=True
    ```
 
 4. **Add Playwright Buildpack**
