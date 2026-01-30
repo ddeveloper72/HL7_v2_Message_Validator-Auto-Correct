@@ -55,10 +55,35 @@ ALLOWED_EXTENSIONS = {'txt', 'xml'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
-# Store processing results in memory only (Heroku-compatible)
-# Note: Results are per-worker and session-based. They persist for the duration
-# of the session (7 days) but are not saved to disk (Heroku ephemeral filesystem)
+# Store processing results in memory + temp file (Heroku-compatible)
+# Results are stored in /tmp so they persist for the dyno lifetime
 processing_results = {}
+RESULTS_TEMP_FILE = '/tmp/processing_results.json'
+
+def load_processing_results():
+    """Load processing results from temp file"""
+    global processing_results
+    if os.path.exists(RESULTS_TEMP_FILE):
+        try:
+            with open(RESULTS_TEMP_FILE, 'r') as f:
+                processing_results = json.load(f)
+                print(f"DEBUG: Loaded {len(processing_results)} results from temp file")
+        except Exception as e:
+            print(f"DEBUG: Error loading results from temp file: {e}")
+            processing_results = {}
+    else:
+        print("DEBUG: No temp file found, starting with empty results")
+
+def save_processing_results():
+    """Save processing results to temp file"""
+    try:
+        with open(RESULTS_TEMP_FILE, 'w') as f:
+            json.dump(processing_results, f)
+    except Exception as e:
+        print(f"DEBUG: Error saving results to temp file: {e}")
+
+# Load existing results on startup
+load_processing_results()
 
 def fetch_and_parse_gazelle_report(oid, api_key):
     """Fetch XML report from Gazelle and parse detailed errors/warnings"""
@@ -819,6 +844,9 @@ def validate_file(file_id):
             'corrected_path': corrected_file_path if corrected_file_path else None
         })
         
+        # Save to temp file so results persist across dyno restarts
+        save_processing_results()
+        
         print(f"DEBUG: Validation completed for file_id={file_id}")
         print(f"DEBUG: Status={status}, Errors={errors}, Warnings={warnings}")
         print(f"DEBUG: processing_results[{file_id}] status is now: {processing_results[file_id]['status']}")
@@ -833,9 +861,11 @@ def validate_file(file_id):
         
     except subprocess.TimeoutExpired:
         processing_results[file_id]['status'] = 'timeout'
+        save_processing_results()
         return jsonify({'success': False, 'message': 'Validation timeout'}), 500
     except Exception as e:
         processing_results[file_id]['status'] = 'error'
+        save_processing_results()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':
