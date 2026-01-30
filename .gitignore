@@ -69,6 +69,14 @@ validation_*.json
 validation_*.txt
 validation_*.xml
 *_report.xml
+vin.xml
+oru_validation.txt
+siu_s12_corrected_report.xml
+gazelle_api_spec.json
+
+# Test data folders and files
+Gazelle_Configuration_Data/
+Healthlink Tests/
 
 # Old simple app (superseded by dashboard_app.py)
 app.py
