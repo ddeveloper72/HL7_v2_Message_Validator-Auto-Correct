@@ -55,30 +55,10 @@ ALLOWED_EXTENSIONS = {'txt', 'xml'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
-# Store processing results in memory (in production, use a database)
+# Store processing results in memory only (Heroku-compatible)
+# Note: Results are per-worker and session-based. They persist for the duration
+# of the session (7 days) but are not saved to disk (Heroku ephemeral filesystem)
 processing_results = {}
-
-def load_processing_results():
-    """Load processing results from disk"""
-    global processing_results
-    results_file = os.path.join(PROCESSED_FOLDER, 'results.json')
-    if os.path.exists(results_file):
-        try:
-            with open(results_file, 'r') as f:
-                processing_results = json.load(f)
-        except:
-            processing_results = {}
-    else:
-        processing_results = {}
-
-def save_processing_results():
-    """Save processing results to disk"""
-    results_file = os.path.join(PROCESSED_FOLDER, 'results.json')
-    with open(results_file, 'w') as f:
-        json.dump(processing_results, f, indent=2)
-
-# Load existing results on startup
-load_processing_results()
 
 def fetch_and_parse_gazelle_report(oid, api_key):
     """Fetch XML report from Gazelle and parse detailed errors/warnings"""
@@ -429,7 +409,6 @@ def retry_auto_correct(report_id):
         processing_results[report_id]['corrected_path'] = corrected_filepath
         processing_results[report_id]['corrections_applied'] = corrections_summary
         processing_results[report_id]['correction_report'] = correction_report
-        save_processing_results()
         
         return jsonify({
             'success': True,
@@ -839,7 +818,6 @@ def validate_file(file_id):
             'validated_at': datetime.now().isoformat(),
             'corrected_path': corrected_file_path if corrected_file_path else None
         })
-        save_processing_results()
         
         return jsonify({
             'success': True,
