@@ -22,7 +22,28 @@ from hl7_corrector import HL7MessageCorrector
 import time
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # For session management
+
+# Session configuration - use environment variable or fallback for development
+session_secret = os.environ.get('SESSION_SECRET_KEY')
+if not session_secret:
+    # For local development only - generate a persistent key
+    if os.path.exists('.session_secret'):
+        with open('.session_secret', 'r') as f:
+            session_secret = f.read().strip()
+    else:
+        session_secret = os.urandom(24).hex()
+        # Don't save for Heroku - it needs to be set as an environment variable
+        if not os.environ.get('DYNO'):  # Only save locally (not on Heroku)
+            with open('.session_secret', 'w') as f:
+                f.write(session_secret)
+
+app.secret_key = session_secret
+
+# Configure session to be more compatible with multiple workers
+app.config['SESSION_COOKIE_SECURE'] = True  # Only send over HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # No JavaScript access
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7  # 7 days
 
 # Configure folders
 UPLOAD_FOLDER = 'uploads'
@@ -162,6 +183,7 @@ def set_api_key():
     api_key = request.form.get('api_key')
     if api_key:
         session['api_key'] = api_key
+        session.permanent = True  # Make session persistent
         return jsonify({'success': True, 'message': 'API key set successfully'})
     return jsonify({'success': False, 'message': 'API key required'}), 400
 
