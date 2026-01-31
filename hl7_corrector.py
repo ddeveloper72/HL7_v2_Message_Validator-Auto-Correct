@@ -1,11 +1,13 @@
 """
 Comprehensive HL7 v2 Message Correction Module
 Integrates all discovered fixes for Gazelle EVS validation
+Uses data-driven approach with HL7 standard code tables.
 """
 import os
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from hl7_code_tables import is_valid_code, get_valid_codes, find_similar_code
 
 
 class HL7MessageCorrector:
@@ -88,55 +90,59 @@ class HL7MessageCorrector:
         return content
     
     def _apply_code_corrections(self, content):
-        """Apply all known code value corrections"""
+        """Apply code corrections using data-driven HL7 code tables"""
         
-        # Fix 1: MCN.HLPracticeID → L (MSH-6.3, MSH-4.3, PID-3.4.3)
-        if 'MCN.HLPracticeID' in content:
-            content = content.replace(
-                '<HD.3>MCN.HLPracticeID</HD.3>',
-                '<HD.3>L</HD.3>'
-            )
-            self.corrections_made.append({
-                'type': 'CODE_FIX',
-                'field': 'Universal ID Type (HD.3)',
+        # Known problematic codes with their locations and table associations
+        # These are discovered through validation but validated against HL7 standards
+        corrections = [
+            {
+                'invalid_value': 'MCN.HLPracticeID',
+                'pattern': '<HD.3>MCN.HLPracticeID</HD.3>',
+                'table': 'HL70301',  # Universal ID Type
                 'location': 'MSH-6.3 / MSH-4.3',
-                'old_value': 'MCN.HLPracticeID',
-                'new_value': 'L',
-                'table': 'HL70301',
-                'description': 'Invalid Universal ID Type code corrected to Local (L)',
-                'reason': 'MCN.HLPracticeID is not a valid HL7 v2.2 Table 0301 code'
-            })
-        
-        # Fix 2: HIPEHOS → L (SCH-2.4 for SIU messages)
-        if 'HIPEHOS' in content:
-            content = content.replace(
-                '<EI.4>HIPEHOS</EI.4>',
-                '<EI.4>L</EI.4>'
-            )
-            self.corrections_made.append({
-                'type': 'CODE_FIX',
-                'field': 'Universal ID Type (EI.4)',
+                'field': 'Universal ID Type (HD.3)',
+                'reason': 'MCN.HLPracticeID is not a valid HL70301 code'
+            },
+            {
+                'invalid_value': 'HIPEHOS',
+                'pattern': '<EI.4>HIPEHOS</EI.4>',
+                'table': 'HL70301',  # Universal ID Type
                 'location': 'SCH-2.4',
-                'old_value': 'HIPEHOS',
-                'new_value': 'L',
-                'table': 'HL70301',
-                'description': 'HIPE Hospital System code corrected to Local (L)',
-                'reason': 'HIPEHOS is not a valid HL7 v2.2 Table 0301 code'
-            })
-        
-        # Fix 3: XXX → OTH (HL70070 specimen source code, OBR-15.1)
-        if '>XXX<' in content:
-            content = content.replace('>XXX<', '>OTH<')
-            self.corrections_made.append({
-                'type': 'CODE_FIX',
-                'field': 'Specimen Source Code (CE.1)',
+                'field': 'Universal ID Type (EI.4)',
+                'reason': 'HIPEHOS is not a valid HL70301 code'
+            },
+            {
+                'invalid_value': 'XXX',
+                'pattern': '>XXX<',
+                'table': 'HL70070',  # Specimen Source Code
                 'location': 'OBR-15.1',
-                'old_value': 'XXX',
-                'new_value': 'OTH',
-                'table': 'HL70070',
-                'description': 'Invalid specimen source code corrected to Other (OTH)',
+                'field': 'Specimen Source Code (CE.1)',
                 'reason': 'XXX is not a valid HL70070 specimen source code'
-            })
+            }
+        ]
+        
+        for correction in corrections:
+            invalid_value = correction['invalid_value']
+            pattern = correction['pattern']
+            table = correction['table']
+            
+            if pattern in content:
+                # Find a valid replacement code from HL7 standards
+                replacement = find_similar_code(table, invalid_value)
+                
+                if replacement:
+                    content = content.replace(pattern, pattern.replace(invalid_value, replacement))
+                    self.corrections_made.append({
+                        'type': 'CODE_FIX',
+                        'field': correction['field'],
+                        'location': correction['location'],
+                        'old_value': invalid_value,
+                        'new_value': replacement,
+                        'table': table,
+                        'description': f'Invalid code corrected from {invalid_value} to {replacement}',
+                        'reason': correction['reason'],
+                        'source': 'HL7 Code Tables'
+                    })
         
         return content
     
