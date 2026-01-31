@@ -268,7 +268,8 @@ class HL7MessageCorrector:
         # Or: "The code 'OTH' and code system 'L' at location Component OBR-15.1"
         # Or: "The value 'CLIP' at location ... is not member of the value set [HL70301_HL]"
         value_match = re.search(r"(?:value|code) '([^']+)'", description)
-        table_match = re.search(r'\[HL7(\d+)(?:_[A-Z]+)?\]', description)
+        # Extract table number - matches HL70301, HL70070, etc. within brackets
+        table_match = re.search(r'\[(HL7\d+)(?:_[A-Z]+)?\]', description)
         codesystem_match = re.search(r"code system '([^']+)'", description)
         
         if not value_match:
@@ -277,14 +278,14 @@ class HL7MessageCorrector:
         
         invalid_value = value_match.group(1)
         invalid_codesystem = codesystem_match.group(1) if codesystem_match else None
-        table = table_match.group(1) if table_match else 'Unknown'
+        # Extract full table name directly (e.g., 'HL70070')
+        full_table = table_match.group(1) if table_match else 'Unknown'
         
         print(f"DEBUG:   Found invalid value: '{invalid_value}'")
         print(f"DEBUG:   Invalid code system: {invalid_codesystem}")
-        print(f"DEBUG:   Table: HL70{table}")
+        print(f"DEBUG:   Table: {full_table}")
         
         # Check if the code itself is valid but the code system is wrong
-        full_table = f'HL70{table}'
         is_code_valid = is_valid_code(full_table, invalid_value)
         
         if is_code_valid and invalid_codesystem and invalid_codesystem != full_table:
