@@ -239,13 +239,24 @@
         <!-- Reports List -->
         <div class="row">
             <div class="col-12">
-                <h4 class="mb-3">
-                    <i class="bi bi-file-earmark-text"></i> Validation Reports
-                </h4>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-file-earmark-text"></i> Validation Reports
+                    </h4>
+                    {% if show_all %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-person"></i> Show My Session Only
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('dashboard', show_all=1) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-people"></i> Show All Sessions
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <div class="row" id="reportsContainer">
+        <div class="row" id="reportsContainer" data-reports-container>
             {% for report in reports %}
             <div class="col-md-6 col-lg-4 report-item" data-filename="{{ report.filename|lower }}"
                 data-status="{{ report.status }}" data-type="{{ report.message_type[:3] }}">
@@ -306,6 +317,10 @@
                                 <i class="bi bi-download"></i> Download
                             </a>
                             {% endif %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-action"
+                                onclick="deleteReport('{{ report.id }}')">
+                                <i class="bi bi-x-lg"></i> Dismiss
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -371,13 +386,52 @@
         updateTime();
         setInterval(updateTime, 1000);
 
+        // Auto-refresh reports
+        let autoRefreshInterval = null;
+
+        function autoRefreshReports() {
+            const reportsContainer = document.querySelector('[data-reports-container]');
+            if (!reportsContainer) {
+                return;
+            }
+
+            fetch(window.location.pathname + window.location.search)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const newDoc = parser.parseFromString(html, 'text/html');
+                    const newContainer = newDoc.querySelector('[data-reports-container]');
+                    if (!newContainer) {
+                        return;
+                    }
+
+                    if (reportsContainer.innerHTML !== newContainer.innerHTML) {
+                        reportsContainer.innerHTML = newContainer.innerHTML;
+                        filterReports();
+                    }
+                })
+                .catch(() => { });
+        }
+
+        function startAutoRefresh() {
+            if (!autoRefreshInterval) {
+                autoRefreshInterval = setInterval(autoRefreshReports, 3000);
+            }
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
         // Filter functionality
         const searchInput = document.getElementById('searchInput');
         const statusFilter = document.getElementById('statusFilter');
         const typeFilter = document.getElementById('typeFilter');
-        const reportItems = document.querySelectorAll('.report-item');
-
         function filterReports() {
+            const reportItems = document.querySelectorAll('.report-item');
             const searchTerm = searchInput.value.toLowerCase();
             const statusValue = statusFilter.value;
             const typeValue = typeFilter.value;
@@ -402,6 +456,9 @@
         searchInput.addEventListener('input', filterReports);
         statusFilter.addEventListener('change', filterReports);
         typeFilter.addEventListener('change', filterReports);
+
+        window.addEventListener('load', startAutoRefresh);
+        window.addEventListener('beforeunload', stopAutoRefresh);
 
         // API Key management
         function setApiKey() {
@@ -434,6 +491,24 @@
                         location.reload();
                     });
             }
+        }
+
+        function deleteReport(reportId) {
+            if (!confirm('Dismiss this validation report?')) {
+                return;
+            }
+
+            fetch(`/delete-report/${reportId}`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
         }
     </script>
 </body>

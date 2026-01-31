@@ -135,7 +135,7 @@ def fetch_and_parse_gazelle_report(oid, api_key):
         print(f"Error fetching Gazelle report: {e}")
         return None, None, None
 
-def get_sample_reports():
+def get_sample_reports(show_all=False):
     """Get user's validation reports"""
     # Always reload from temp file to get results from all workers
     load_processing_results()
@@ -143,7 +143,28 @@ def get_sample_reports():
     reports = []
     
     # Only show session-uploaded files (user's own validations)
-    if 'session_id' in session:
+    if show_all:
+        for file_id, info in processing_results.items():
+            if info.get('status') == 'completed':
+                validated_at = info.get('validated_at', datetime.now().isoformat())
+                if isinstance(validated_at, str):
+                    validated_at = datetime.fromisoformat(validated_at)
+                else:
+                    validated_at = datetime.now()
+
+                reports.append({
+                    'id': file_id,
+                    'filename': info['filename'],
+                    'message_type': info.get('message_type', 'Unknown'),
+                    'status': info.get('validation_status', 'UNKNOWN'),
+                    'report_path': info.get('report_path', ''),
+                    'corrected_path': info.get('corrected_path'),
+                    'date': validated_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'errors': info.get('errors', 0),
+                    'warnings': info.get('warnings', 0)
+                })
+        print(f"DEBUG: Found {len(reports)} completed reports (show_all)")
+    elif 'session_id' in session:
         print(f"DEBUG: Getting reports for session_id: {session['session_id']}")
         print(f"DEBUG: Total items in processing_results: {len(processing_results)}")
         for file_id, info in processing_results.items():
@@ -180,7 +201,8 @@ def index():
 @app.route('/dashboard')
 def dashboard():
     """Main dashboard showing all validation reports"""
-    reports = get_sample_reports()
+    show_all = request.args.get('show_all') == '1'
+    reports = get_sample_reports(show_all=show_all)
     
     # Check if API key is set
     has_api_key = 'api_key' in session
@@ -190,7 +212,8 @@ def dashboard():
                          has_api_key=has_api_key,
                          total_files=len(reports),
                          passed_count=sum(1 for r in reports if r['status'] == 'PASSED'),
-                         failed_count=sum(1 for r in reports if r['status'] == 'FAILED'))
+                         failed_count=sum(1 for r in reports if r['status'] == 'FAILED'),
+                         show_all=show_all)
 
 @app.route('/set-api-key', methods=['POST'])
 def set_api_key():
@@ -207,6 +230,23 @@ def clear_api_key():
     """Clear API key from session"""
     session.pop('api_key', None)
     return jsonify({'success': True, 'message': 'API key cleared'})
+
+@app.route('/delete-report/<report_id>', methods=['POST'])
+def delete_report(report_id):
+    """Delete a validation report from the dashboard"""
+    load_processing_results()
+
+    if report_id not in processing_results:
+        return jsonify({'success': False, 'message': 'Report not found'}), 404
+
+    report_info = processing_results.get(report_id, {})
+    if report_info.get('session_id') != session.get('session_id'):
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    processing_results.pop(report_id, None)
+    save_processing_results()
+
+    return jsonify({'success': True, 'message': 'Report removed'})
 
 @app.route('/report/<report_id>')
 def view_report(report_id):
@@ -462,24 +502,138 @@ def retry_auto_correct(report_id):
         with open(original_filepath, 'rb') as f:
             current_content = f.read()
         
-        max_iterations = 5  # Prevent infinite loops
+        max_iterations = int(os.getenv('MAX_AUTO_CORRECT_ITERATIONS', '10'))  # Prevent infinite loops
         iteration = 0
         total_corrections = 0
         all_corrections = []
         
+        # Initialize final_filepath early so it's always defined
+        final_filepath = original_filepath.replace('.txt', '_CORRECTED.txt').replace('.xml', '_CORRECTED.xml')
+        
+        detailed_errors = file_info.get('detailed_errors', [])
+        original_errors = detailed_errors.copy()  # Preserve original error list for report
+        
+        # Initialize variables used later in report building
+        detected_message_type = None
+        status = 'UNKNOWN'
+        errors = 0
+        warnings = 0
+        report_url = ''
+        validation_output = ''
+
+        # CRITICAL: Apply encoding fixes FIRST (these fix UNDEFINED status files)
+        print(f"DEBUG: Applying pre-validation encoding fixes...")
+        corrector = HL7MessageCorrector()
+        corrected_content, encoding_fixes = corrector.prepare_message(
+            current_content,
+            file_info['filename'],
+            gazelle_errors=[]  # No errors yet, just apply universal fixes like encoding
+        )
+        
+        encoding_fixes_summary = corrector.get_corrections_summary()
+        if encoding_fixes_summary['total_corrections'] > 0:
+            print(f"DEBUG: Applied {encoding_fixes_summary['total_corrections']} encoding/structural fixes")
+            current_content = corrected_content
+            all_corrections.extend(encoding_fixes)
+            total_corrections += encoding_fixes_summary['total_corrections']
+            
+            # Save corrected file
+            with open(final_filepath, 'wb') as f:
+                f.write(current_content)
+        else:
+            print(f"DEBUG: No encoding fixes needed")
+            # Still save the file (might be first correction pass)
+            with open(final_filepath, 'wb') as f:
+                f.write(current_content)
+
         while iteration < max_iterations:
             iteration += 1
             print(f"\n{'='*80}")
             print(f"ITERATION {iteration}/{max_iterations}")
             print(f"{'='*80}")
             
-            # Get current errors from processing_results (from last validation)
-            detailed_errors = file_info.get('detailed_errors', [])
+            # VALIDATE FIRST (before attempting corrections)
+            print(f"DEBUG: Validating file (iteration {iteration})...")
+            temp_env = os.path.join(os.getcwd(), '.env.temp')
+            with open(temp_env, 'w') as f:
+                f.write(f"GAZELLE_API_KEY={session['api_key']}\n")
+                f.write("VERIFY_SSL=True\n")
+
+            original_env = os.path.join(os.getcwd(), '.env')
+            backup_env = None
+            if os.path.exists(original_env):
+                backup_env = os.path.join(os.getcwd(), '.env.backup')
+                os.rename(original_env, backup_env)
+            os.rename(temp_env, original_env)
+
+            try:
+                env = os.environ.copy()
+                env['PYTHONIOENCODING'] = 'utf-8'
+                env['PYTHONUTF8'] = '1'
+                env['OPEN_REPORT_BROWSER'] = '0'
+
+                python_executable = sys.executable or shutil.which('python') or 'python'
+                script_path = os.path.join(os.getcwd(), 'validate_with_verification.py')
+                result = subprocess.run(
+                    [python_executable, script_path, final_filepath],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    cwd=os.getcwd(),
+                    env=env,
+                    encoding='utf-8',
+                    errors='replace'
+                )
+            finally:
+                if os.path.exists(original_env):
+                    os.remove(original_env)
+                if backup_env and os.path.exists(backup_env):
+                    os.rename(backup_env, original_env)
+
+            # Parse validation output to get updated error list
+            validation_output = result.stdout
+            new_errors = []
+
+            for line in validation_output.split('\n'):
+                if 'GAZELLE_ERRORS_JSON=' in line:
+                    try:
+                        json_str = line.split('GAZELLE_ERRORS_JSON=')[1].strip()
+                        new_errors = json.loads(json_str)
+                        print(f"DEBUG: Iteration {iteration} validation found {len(new_errors)} remaining errors")
+                    except:
+                        pass
+                elif 'Status:' in line and 'PASSED' in line.upper():
+                    status = 'PASSED'
+                elif 'Status:' in line and 'FAILED' in line.upper():
+                    status = 'FAILED'
+                elif 'Status:' in line and 'UNDEFINED' in line.upper():
+                    status = 'UNDEFINED'
+                elif 'Message Type:' in line:
+                    detected_message_type = line.split('Message Type:')[1].strip()
+                elif 'Errors:' in line and 'MANDATORY:' in line:
+                    try:
+                        errors = int(line.split('MANDATORY:')[1].split(')')[0].strip())
+                    except:
+                        pass
+                elif 'Warnings:' in line and 'Warning #' not in line:
+                    try:
+                        warnings = int(line.split('Warnings:')[1].strip())
+                    except:
+                        pass
+                elif 'Report:' in line and 'http' in line:
+                    report_url = line.split('Report:')[1].strip()
             
-            print(f"DEBUG: Found {len(detailed_errors)} errors to fix")
-            if not detailed_errors:
-                print(f"DEBUG: No errors found - validation may have passed!")
+            # Update error list for next iteration
+            detailed_errors = new_errors
+            print(f"DEBUG: Updated error list to {len(detailed_errors)} errors")
+            
+            # Check if we're done (validation passed or no errors)
+            if status == 'PASSED' or len(detailed_errors) == 0:
+                print(f"DEBUG: Validation {status} with {len(detailed_errors)} errors - stopping")
                 break
+            
+            # Now apply corrections for the next iteration
+            print(f"DEBUG: Found {len(detailed_errors)} errors to fix")
             
             # Apply corrections
             corrector = HL7MessageCorrector()
@@ -502,107 +656,90 @@ def retry_auto_correct(report_id):
             total_corrections += corrections_made
             all_corrections.extend(corrections_list)
             
-            # Save corrected file
-            corrected_filepath = original_filepath.replace('.txt', f'_CORRECTED_{iteration}.txt').replace('.xml', f'_CORRECTED_{iteration}.xml')
-            with open(corrected_filepath, 'wb') as f:
-                f.write(corrected_content)
-            
-            print(f"DEBUG: Saved iteration {iteration} to {corrected_filepath}")
-            
-            # Re-validate to get new errors
-            print(f"DEBUG: Re-validating corrected file...")
-            
-            # Run validation script on corrected file
-            temp_env = os.path.join(os.getcwd(), '.env.temp')
-            with open(temp_env, 'w') as f:
-                f.write(f"GAZELLE_API_KEY={session['api_key']}\n")
-                f.write("VERIFY_SSL=True\n")
-            
-            original_env = os.path.join(os.getcwd(), '.env')
-            backup_env = None
-            if os.path.exists(original_env):
-                backup_env = os.path.join(os.getcwd(), '.env.backup')
-                os.rename(original_env, backup_env)
-            os.rename(temp_env, original_env)
-            
-            try:
-                env = os.environ.copy()
-                env['PYTHONIOENCODING'] = 'utf-8'
-                env['PYTHONUTF8'] = '1'
-                
-                python_executable = sys.executable or shutil.which('python') or 'python'
-                script_path = os.path.join(os.getcwd(), 'validate_with_verification.py')
-                result = subprocess.run(
-                    [python_executable, script_path, corrected_filepath],
-                    capture_output=True,
-                    text=True,
-                    timeout=60,
-                    cwd=os.getcwd(),
-                    env=env,
-                    encoding='utf-8',
-                    errors='replace'
-                )
-            finally:
-                if os.path.exists(original_env):
-                    os.remove(original_env)
-                if backup_env and os.path.exists(backup_env):
-                    os.rename(backup_env, original_env)
-            
-            # Parse validation results
-            validation_output = result.stdout
-            status = 'UNKNOWN'
-            new_errors = []
-            
-            for line in validation_output.split('\n'):
-                if 'GAZELLE_ERRORS_JSON=' in line:
-                    try:
-                        json_str = line.split('GAZELLE_ERRORS_JSON=')[1].strip()
-                        new_errors = json.loads(json_str)
-                        print(f"DEBUG: Re-validation found {len(new_errors)} errors")
-                    except:
-                        pass
-                elif 'Status:' in line and 'PASSED' in line.upper():
-                    status = 'PASSED'
-                elif 'Status:' in line and 'FAILED' in line.upper():
-                    status = 'FAILED'
-            
-            # Update file_info with new errors for next iteration
-            file_info['detailed_errors'] = new_errors
-            
-            # Check if we passed validation
-            if status == 'PASSED' or len(new_errors) == 0:
-                print(f"✅ VALIDATION PASSED after {iteration} iteration(s)!")
-                
-                # Update final results
-                processing_results[report_id]['corrected_path'] = corrected_filepath
-                processing_results[report_id]['corrections_applied'] = {'total_corrections': total_corrections}
-                processing_results[report_id]['iterations'] = iteration
-                save_processing_results()
-                
-                return jsonify({
-                    'success': True,
-                    'message': f"Successfully corrected all errors in {iteration} iteration(s)!",
-                    'corrections_applied': total_corrections,
-                    'iterations': iteration,
-                    'status': 'PASSED',
-                    'corrected_file': corrected_filepath
-                })
-            
             # Continue with corrected content for next iteration
             current_content = corrected_content
+            
+            # Save temporary corrected file for validation
+            with open(final_filepath, 'wb') as f:
+                f.write(current_content)
         
-        # If we get here, we hit max iterations or couldn't fix all errors
-        final_filepath = original_filepath.replace('.txt', '_CORRECTED.txt').replace('.xml', '_CORRECTED.xml')
-        with open(final_filepath, 'wb') as f:
-            f.write(current_content)
+        print(f"DEBUG: Loop completed - {iteration} total iterations, {total_corrections} total corrections")
+
+        # Build detailed report content from final validation
+        report_content = ""
+        report_content += f"# HL7 v2 Validation Report\n\n"
+        report_content += f"File Name: {os.path.basename(final_filepath)}\n\n"
+        report_content += f"Message Type: {detected_message_type or 'Unknown'}\n\n"
+        report_content += f"Status: {status}\n\n"
+        report_content += f"Errors: {errors}\n"
+        report_content += f"Warnings: {warnings}\n\n"
+        report_content += f"**Iterations:** {iteration}\n"
+        report_content += f"**Total Corrections Applied:** {total_corrections}\n\n"
         
+        # Add original errors section
+        if original_errors:
+            report_content += "## Original Errors Found:\n\n"
+            for i, err in enumerate(original_errors, 1):
+                report_content += f"### Error #{i}: {err.get('type')}\n"
+                report_content += f"- **Location:** {err.get('location')}\n"
+                report_content += f"- **Description:** {err.get('description')}\n"
+                report_content += f"- **Severity:** {err.get('severity', 'Unknown')}\n\n"
+        
+        # Add corrections applied section
+        if all_corrections:
+            report_content += "## Corrections Applied:\n\n"
+            for i, correction in enumerate(all_corrections, 1):
+                if isinstance(correction, dict):
+                    report_content += f"### Correction #{i}\n"
+                    report_content += f"- **Field:** {correction.get('field', 'Unknown')}\n"
+                    report_content += f"- **Type:** {correction.get('type', 'Unknown')}\n"
+                    report_content += f"- **Change:** {correction.get('original')} → {correction.get('corrected')}\n"
+                    report_content += f"- **Details:** {correction.get('details', 'N/A')}\n\n"
+                else:
+                    report_content += f"### Correction #{i}\n"
+                    report_content += f"- {correction}\n\n"
+        
+        if report_url:
+            report_content += f"**Full Gazelle Report:** {report_url}\n\n"
+        
+        if detailed_errors:
+            report_content += "## Remaining Errors After Corrections:\n\n"
+            for i, err in enumerate(detailed_errors, 1):
+                report_content += f"### Error #{i}: {err.get('type')}\n"
+                report_content += f"- **Location:** {err.get('location')}\n"
+                report_content += f"- **Description:** {err.get('description')}\n\n"
+        else:
+            report_content += "## All Errors Resolved! ✅\n\n"
+        
+        report_content += "\n## Complete Validation Output:\n\n"
+        report_content += "```\n"
+        report_content += validation_output
+        report_content += "\n```\n"
+
+        processing_results[report_id]['status'] = 'completed'
+        processing_results[report_id]['validation_status'] = status
+        processing_results[report_id]['errors'] = errors
+        processing_results[report_id]['warnings'] = warnings
+        processing_results[report_id]['report_content'] = report_content
+        processing_results[report_id]['report_url'] = report_url
+        processing_results[report_id]['message_type'] = detected_message_type or 'Unknown'
         processing_results[report_id]['corrected_path'] = final_filepath
         processing_results[report_id]['corrections_applied'] = {'total_corrections': total_corrections}
         processing_results[report_id]['iterations'] = iteration
         save_processing_results()
-        
-        remaining_errors = len(file_info.get('detailed_errors', []))
-        
+
+        remaining_errors = len(detailed_errors)
+
+        if status == 'PASSED' or remaining_errors == 0:
+            return jsonify({
+                'success': True,
+                'message': f"Successfully corrected all errors in {iteration} iteration(s)!",
+                'corrections_applied': total_corrections,
+                'iterations': iteration,
+                'status': 'PASSED',
+                'corrected_file': final_filepath
+            })
+
         return jsonify({
             'success': True,
             'message': f"Applied {total_corrections} corrections in {iteration} iteration(s). {remaining_errors} error(s) remaining.",
@@ -668,6 +805,7 @@ def upload_file():
         'status': 'uploaded',
         'session_id': session['session_id']
     }
+    save_processing_results()
     
     return jsonify({
         'success': True,
@@ -723,6 +861,7 @@ def validate_file(file_id):
             env = os.environ.copy()
             env['PYTHONIOENCODING'] = 'utf-8'
             env['PYTHONUTF8'] = '1'  # Force UTF-8 mode on Windows
+            env['OPEN_REPORT_BROWSER'] = '0'
             
             python_executable = sys.executable or shutil.which('python') or 'python'
             script_path = os.path.join(os.getcwd(), 'validate_with_verification.py')

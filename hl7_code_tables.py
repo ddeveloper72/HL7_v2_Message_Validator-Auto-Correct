@@ -128,9 +128,19 @@ class HL7CodeTableManager:
         # For specimen source codes (HL70070), common values are: ACNE, ACNE,BRM, etc.
         # For generic "other" or unknown cases, look for 'O' or 'OTH' codes
         if table_name == 'HL70070':  # Specimen source codes
-            # Prefer 'OTH' (Other) as a safe generic choice
+            # Prefer a commonly-accepted specimen type before generic fallback
+            if 'SER' in valid_codes:
+                return 'SER'
+            if 'BLD' in valid_codes:
+                return 'BLD'
+            # Fallback to 'OTH' if present
             if 'OTH' in valid_codes:
                 return 'OTH'
+
+        if table_name == 'HL70301':  # Universal ID Type
+            # Prefer 'L' (Local) as a safe default for unknown IDs
+            if 'L' in valid_codes:
+                return 'L'
         
         # Default: return first valid code
         return valid_codes[0] if valid_codes else None
