@@ -440,92 +440,177 @@ def download_corrected(report_id):
 
 @app.route('/auto-correct/<report_id>', methods=['POST'])
 def retry_auto_correct(report_id):
-    """Retry auto-correction on a failed validation"""
+    """Iterative auto-correction: keeps correcting and re-validating until PASSED or no more fixes possible"""
     # Always reload from temp file to get results from all workers
     load_processing_results()
     
     if report_id not in processing_results:
         return jsonify({'success': False, 'message': 'Report not found'}), 404
     
+    if 'api_key' not in session:
+        return jsonify({'success': False, 'message': 'API key not set'}), 400
+    
     file_info = processing_results[report_id]
     original_filepath = file_info['filepath']
     
-    # Get detailed errors from the validation report
-    detailed_errors = file_info.get('detailed_errors', [])
-    
-    # DEBUG: Log what errors we have
     print(f"\n{'='*80}")
-    print(f"DEBUG: Auto-correcting {report_id}")
-    print(f"DEBUG: Original filepath: {original_filepath}")
-    print(f"DEBUG: Found {len(detailed_errors)} detailed errors from Gazelle")
-    if detailed_errors:
-        for i, err in enumerate(detailed_errors[:5]):  # Show first 5
-            print(f"DEBUG: Error {i+1}:")
-            print(f"  - Type: {err.get('type')}")
-            print(f"  - Severity: '{err.get('severity')}'")
-            print(f"  - Location: {err.get('location')}")
-            print(f"  - Description: {err.get('description')[:120]}")
-    else:
-        print("DEBUG: NO DETAILED ERRORS STORED! This is the problem!")
-    print(f"{'='*80}\n")
+    print(f"ITERATIVE AUTO-CORRECTION STARTED")
+    print(f"{'='*80}")
     
     try:
-        # Read original file as bytes
-        print(f"DEBUG: Reading original file from {original_filepath}")
+        # Read original file
         with open(original_filepath, 'rb') as f:
-            original_content = f.read()
-        print(f"DEBUG: Read {len(original_content)} bytes from original file")
+            current_content = f.read()
         
-        # Apply corrections with Gazelle error data
-        print(f"DEBUG: Creating HL7MessageCorrector and calling prepare_message()")
-        corrector = HL7MessageCorrector()
-        corrected_content, corrections_list = corrector.prepare_message(
-            original_content, 
-            file_info['filename'],
-            gazelle_errors=detailed_errors  # Pass Gazelle errors for targeted fixes
-        )
-        print(f"DEBUG: prepare_message() returned {len(corrected_content)} bytes")
-        print(f"DEBUG: corrections_list has {len(corrections_list)} items")
-        for i, corr in enumerate(corrections_list[:3]):
-            print(f"DEBUG: Correction {i+1}: {corr.get('type')} - {corr.get('description')[:80]}")
+        max_iterations = 5  # Prevent infinite loops
+        iteration = 0
+        total_corrections = 0
+        all_corrections = []
         
-        corrections_summary = corrector.get_corrections_summary()
-        correction_report = corrector.get_correction_report()
+        while iteration < max_iterations:
+            iteration += 1
+            print(f"\n{'='*80}")
+            print(f"ITERATION {iteration}/{max_iterations}")
+            print(f"{'='*80}")
+            
+            # Get current errors from processing_results (from last validation)
+            detailed_errors = file_info.get('detailed_errors', [])
+            
+            print(f"DEBUG: Found {len(detailed_errors)} errors to fix")
+            if not detailed_errors:
+                print(f"DEBUG: No errors found - validation may have passed!")
+                break
+            
+            # Apply corrections
+            corrector = HL7MessageCorrector()
+            corrected_content, corrections_list = corrector.prepare_message(
+                current_content, 
+                file_info['filename'],
+                gazelle_errors=detailed_errors
+            )
+            
+            corrections_summary = corrector.get_corrections_summary()
+            corrections_made = corrections_summary['total_corrections']
+            
+            print(f"DEBUG: Applied {corrections_made} corrections in iteration {iteration}")
+            
+            if corrections_made == 0:
+                print(f"DEBUG: No corrections could be applied - stopping iteration")
+                break
+            
+            # Track all corrections
+            total_corrections += corrections_made
+            all_corrections.extend(corrections_list)
+            
+            # Save corrected file
+            corrected_filepath = original_filepath.replace('.txt', f'_CORRECTED_{iteration}.txt').replace('.xml', f'_CORRECTED_{iteration}.xml')
+            with open(corrected_filepath, 'wb') as f:
+                f.write(corrected_content)
+            
+            print(f"DEBUG: Saved iteration {iteration} to {corrected_filepath}")
+            
+            # Re-validate to get new errors
+            print(f"DEBUG: Re-validating corrected file...")
+            
+            # Run validation script on corrected file
+            temp_env = os.path.join(os.getcwd(), '.env.temp')
+            with open(temp_env, 'w') as f:
+                f.write(f"GAZELLE_API_KEY={session['api_key']}\n")
+                f.write("VERIFY_SSL=True\n")
+            
+            original_env = os.path.join(os.getcwd(), '.env')
+            backup_env = None
+            if os.path.exists(original_env):
+                backup_env = os.path.join(os.getcwd(), '.env.backup')
+                os.rename(original_env, backup_env)
+            os.rename(temp_env, original_env)
+            
+            try:
+                env = os.environ.copy()
+                env['PYTHONIOENCODING'] = 'utf-8'
+                env['PYTHONUTF8'] = '1'
+                
+                python_executable = sys.executable or shutil.which('python') or 'python'
+                script_path = os.path.join(os.getcwd(), 'validate_with_verification.py')
+                result = subprocess.run(
+                    [python_executable, script_path, corrected_filepath],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    cwd=os.getcwd(),
+                    env=env,
+                    encoding='utf-8',
+                    errors='replace'
+                )
+            finally:
+                if os.path.exists(original_env):
+                    os.remove(original_env)
+                if backup_env and os.path.exists(backup_env):
+                    os.rename(backup_env, original_env)
+            
+            # Parse validation results
+            validation_output = result.stdout
+            status = 'UNKNOWN'
+            new_errors = []
+            
+            for line in validation_output.split('\n'):
+                if 'GAZELLE_ERRORS_JSON=' in line:
+                    try:
+                        json_str = line.split('GAZELLE_ERRORS_JSON=')[1].strip()
+                        new_errors = json.loads(json_str)
+                        print(f"DEBUG: Re-validation found {len(new_errors)} errors")
+                    except:
+                        pass
+                elif 'Status:' in line and 'PASSED' in line.upper():
+                    status = 'PASSED'
+                elif 'Status:' in line and 'FAILED' in line.upper():
+                    status = 'FAILED'
+            
+            # Update file_info with new errors for next iteration
+            file_info['detailed_errors'] = new_errors
+            
+            # Check if we passed validation
+            if status == 'PASSED' or len(new_errors) == 0:
+                print(f"✅ VALIDATION PASSED after {iteration} iteration(s)!")
+                
+                # Update final results
+                processing_results[report_id]['corrected_path'] = corrected_filepath
+                processing_results[report_id]['corrections_applied'] = {'total_corrections': total_corrections}
+                processing_results[report_id]['iterations'] = iteration
+                save_processing_results()
+                
+                return jsonify({
+                    'success': True,
+                    'message': f"Successfully corrected all errors in {iteration} iteration(s)!",
+                    'corrections_applied': total_corrections,
+                    'iterations': iteration,
+                    'status': 'PASSED',
+                    'corrected_file': corrected_filepath
+                })
+            
+            # Continue with corrected content for next iteration
+            current_content = corrected_content
         
-        print(f"DEBUG: corrections_summary: {corrections_summary}")
+        # If we get here, we hit max iterations or couldn't fix all errors
+        final_filepath = original_filepath.replace('.txt', '_CORRECTED.txt').replace('.xml', '_CORRECTED.xml')
+        with open(final_filepath, 'wb') as f:
+            f.write(current_content)
         
-        if corrections_summary['total_corrections'] == 0:
-            print(f"DEBUG: No corrections were made! This is why file is identical.")
-            return jsonify({
-                'success': False,
-                'message': 'No corrections could be applied automatically. Manual review required.'
-            })
-        
-        # Save corrected file
-        corrected_filepath = original_filepath.replace('.txt', '_CORRECTED.txt').replace('.xml', '_CORRECTED.xml')
-        print(f"DEBUG: Saving corrected file to {corrected_filepath}")
-        with open(corrected_filepath, 'wb') as f:
-            f.write(corrected_content)
-        print(f"DEBUG: Successfully saved {len(corrected_content)} bytes to corrected file")
-        
-        # Update processing results
-        processing_results[report_id]['corrected_path'] = corrected_filepath
-        processing_results[report_id]['corrections_applied'] = corrections_summary
-        processing_results[report_id]['correction_report'] = correction_report
-        
-        # Save to temp file so all workers can see the update
+        processing_results[report_id]['corrected_path'] = final_filepath
+        processing_results[report_id]['corrections_applied'] = {'total_corrections': total_corrections}
+        processing_results[report_id]['iterations'] = iteration
         save_processing_results()
-        print(f"DEBUG: Updated processing_results and saved to temp file")
+        
+        remaining_errors = len(file_info.get('detailed_errors', []))
         
         return jsonify({
             'success': True,
-            'message': f"Successfully applied {corrections_summary['total_corrections']} corrections.",
-            'corrections_applied': corrections_summary['total_corrections'],
-            'critical_fixes': corrections_summary.get('critical_fixes', 0),
-            'code_fixes': corrections_summary.get('code_fixes', 0),
-            'field_insertions': corrections_summary.get('field_insertions', 0),
-            'gazelle_fixes': corrections_summary.get('gazelle_fixes', 0),
-            'corrected_file': corrected_filepath
+            'message': f"Applied {total_corrections} corrections in {iteration} iteration(s). {remaining_errors} error(s) remaining.",
+            'corrections_applied': total_corrections,
+            'iterations': iteration,
+            'remaining_errors': remaining_errors,
+            'status': 'PARTIAL',
+            'corrected_file': final_filepath
         })
     
     except Exception as e:

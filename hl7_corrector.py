@@ -258,7 +258,7 @@ class HL7MessageCorrector:
         return content
     
     def _fix_invalid_code(self, content, location, description):
-        """Fix invalid code values reported by Gazelle"""
+        """Fix invalid code values and code systems reported by Gazelle"""
         print(f"DEBUG: _fix_invalid_code called")
         print(f"DEBUG:   location={location}")
         print(f"DEBUG:   description={description[:150]}")
@@ -283,70 +283,102 @@ class HL7MessageCorrector:
         print(f"DEBUG:   Invalid code system: {invalid_codesystem}")
         print(f"DEBUG:   Table: HL70{table}")
         
-        # Use data-driven approach to find valid replacement
-        # Build full table name
+        # Check if the code itself is valid but the code system is wrong
         full_table = f'HL70{table}'
-        print(f"DEBUG:   Looking up in {full_table}")
+        is_code_valid = is_valid_code(full_table, invalid_value)
         
-        # Use the data-driven finder to get valid code
-        correct_value = find_similar_code(full_table, invalid_value)
-        
-        if correct_value:
-            print(f"DEBUG:   Data-driven lookup found: '{invalid_value}' -> '{correct_value}' in {full_table}")
+        if is_code_valid and invalid_codesystem and invalid_codesystem != full_table:
+            # The code is correct, but the code system field is wrong
+            print(f"DEBUG:   Code '{invalid_value}' is VALID in {full_table}, but code system '{invalid_codesystem}' is WRONG")
+            print(f"DEBUG:   Need to fix code system field from '{invalid_codesystem}' to '{full_table}' or empty")
             
-            # Different replacement strategies based on location
-            replaced = False
-            
-            # Strategy 1: Simple pattern replacement for HD.3, EI.4, etc
-            search_pattern = f'>{invalid_value}<'
-            if search_pattern in content:
-                print(f"DEBUG:   Found pattern '{search_pattern}' in content, replacing with '>{correct_value}<'")
+            # Find and replace the code system field (usually CE.3)
+            # Pattern: <CE.1>OTH</CE.1>...<CE.3>L</CE.3>
+            # Replace CE.3 value with correct code system or empty
+            codesys_pattern = f'(<CE\\.3>){re.escape(invalid_codesystem)}(</CE\\.3>)'
+            if re.search(codesys_pattern, content):
+                print(f"DEBUG:   Found CE.3 with value '{invalid_codesystem}', replacing with empty")
                 old_len = len(content)
-                content = content.replace(search_pattern, f'>{correct_value}<')
+                # Replace with empty or the correct code system
+                # For HL7 standard, often CE.3 should be empty when using standard tables
+                content = re.sub(codesys_pattern, r'\1\2', content)  # Empty value
                 new_len = len(content)
-                replaced = True
                 print(f"DEBUG:   Replacement complete. Content size: {old_len} -> {new_len} bytes")
-            
-            # Strategy 2: For CE.1 with code system 'L' issue
-            if not replaced and invalid_codesystem and full_table == 'HL70070':
-                # OBR-15.1 is getting 'OTH' with code system 'L' but OTH is from HL70070, not L
-                # Need to find the field structure and replace whole thing
-                # Look for patterns like <CE.1>OTH</CE.1> or <SPM.SourceSite>OTH</SPM.SourceSite>
-                ce_patterns = [
-                    (f'<CE\\.1>{invalid_value}</CE\\.1>', f'<CE.1>{correct_value}</CE.1>'),
-                    (f'<SPM\\.SourceSite>{invalid_value}</SPM\\.SourceSite>', f'<SPM.SourceSite>{correct_value}</SPM.SourceSite>'),
-                    (f'>{invalid_value}<', f'>{correct_value}<'),
-                ]
                 
-                for pattern, replacement in ce_patterns:
-                    if re.search(pattern, content):
-                        print(f"DEBUG:   Found CE pattern '{pattern}', replacing...")
-                        old_len = len(content)
-                        content = re.sub(pattern, replacement, content)
-                        new_len = len(content)
-                        replaced = True
-                        print(f"DEBUG:   Replacement complete. Content size: {old_len} -> {new_len} bytes")
-                        break
-            
-            if replaced:
                 self.corrections_made.append({
                     'type': 'GAZELLE_FIX',
-                    'field': f'Code value at {location}',
+                    'field': f'Code system at {location}',
                     'location': location,
-                    'old_value': invalid_value,
-                    'old_codesystem': invalid_codesystem,
-                    'new_value': correct_value,
+                    'old_value': invalid_codesystem,
+                    'new_value': '(empty)',
+                    'code': invalid_value,
                     'table': full_table,
-                    'description': f'Corrected invalid code value based on Gazelle error',
+                    'description': f'Corrected invalid code system from {invalid_codesystem} to empty',
                     'reason': description,
                     'source': 'HL7 Code Tables (Data-Driven)'
                 })
+                return content
             else:
-                print(f"DEBUG:   Could not find where to replace '{invalid_value}' in content")
-                print(f"DEBUG:   Tried patterns: {[p[0] for p in ce_patterns if invalid_value in p[0]]}")
-        else:
-            print(f"DEBUG:   Data-driven lookup FAILED - no valid replacement found for '{invalid_value}' in {full_table}")
-            print(f"DEBUG:   This code may need manual intervention or addition to hl7_code_tables.json")
+                print(f"DEBUG:   Could not find CE.3 pattern with '{invalid_codesystem}'")
+        
+        # If code is not valid, find replacement
+        if not is_code_valid:
+            # Use data-driven approach to find valid replacement
+            print(f"DEBUG:   Looking up replacement for invalid code '{invalid_value}' in {full_table}")
+            correct_value = find_similar_code(full_table, invalid_value)
+            
+            if correct_value:
+                print(f"DEBUG:   Data-driven lookup found: '{invalid_value}' -> '{correct_value}' in {full_table}")
+                
+                # Different replacement strategies based on location
+                replaced = False
+                
+                # Strategy 1: Simple pattern replacement for HD.3, EI.4, etc
+                search_pattern = f'>{invalid_value}<'
+                if search_pattern in content:
+                    print(f"DEBUG:   Found pattern '{search_pattern}' in content, replacing with '>{correct_value}<'")
+                    old_len = len(content)
+                    content = content.replace(search_pattern, f'>{correct_value}<')
+                    new_len = len(content)
+                    replaced = True
+                    print(f"DEBUG:   Replacement complete. Content size: {old_len} -> {new_len} bytes")
+                
+                # Strategy 2: For CE.1 fields
+                if not replaced:
+                    ce_patterns = [
+                        (f'<CE\\.1>{re.escape(invalid_value)}</CE\\.1>', f'<CE.1>{correct_value}</CE.1>'),
+                        (f'<SPS\\.1><CE\\.1>{re.escape(invalid_value)}</CE\\.1>', f'<SPS.1><CE.1>{correct_value}</CE.1>'),
+                        (f'>{re.escape(invalid_value)}<', f'>{correct_value}<'),
+                    ]
+                    
+                    for pattern, replacement in ce_patterns:
+                        if re.search(pattern, content):
+                            print(f"DEBUG:   Found CE pattern, replacing...")
+                            old_len = len(content)
+                            content = re.sub(pattern, replacement, content)
+                            new_len = len(content)
+                            replaced = True
+                            print(f"DEBUG:   Replacement complete. Content size: {old_len} -> {new_len} bytes")
+                            break
+                
+                if replaced:
+                    self.corrections_made.append({
+                        'type': 'GAZELLE_FIX',
+                        'field': f'Code value at {location}',
+                        'location': location,
+                        'old_value': invalid_value,
+                        'old_codesystem': invalid_codesystem,
+                        'new_value': correct_value,
+                        'table': full_table,
+                        'description': f'Corrected invalid code value based on Gazelle error',
+                        'reason': description,
+                        'source': 'HL7 Code Tables (Data-Driven)'
+                    })
+                else:
+                    print(f"DEBUG:   Could not find where to replace '{invalid_value}' in content")
+            else:
+                print(f"DEBUG:   Data-driven lookup FAILED - no valid replacement found for '{invalid_value}' in {full_table}")
+                print(f"DEBUG:   This code may need manual intervention or addition to hl7_code_tables.json")
         
         return content
     
