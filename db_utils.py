@@ -34,7 +34,7 @@ class DatabaseManager:
     def get_connection(self):
         """Create and return a database connection"""
         if self.driver == 'FreeTDS':
-            # FreeTDS connection for Heroku - use direct driver path
+            # FreeTDS connection for Heroku - use direct driver path with encryption
             connection_string = (
                 f'DRIVER=/app/.apt/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so;'
                 f'SERVER={self.server};'
@@ -43,6 +43,8 @@ class DatabaseManager:
                 f'UID={self.username};'
                 f'PWD={self.password};'
                 f'TDS_Version=8.0;'
+                f'Encrypt=yes;'
+                f'TrustServerCertificate=no;'
             )
         else:
             # Microsoft ODBC Driver for local development

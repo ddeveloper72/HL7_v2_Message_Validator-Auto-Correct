@@ -21,7 +21,14 @@ from auto_correct import auto_correct_and_validate
 from hl7_corrector import HL7MessageCorrector
 import time
 import sys
+import re
 from functools import wraps
+
+# Security imports
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import bleach
 
 # Azure AD and Database imports
 import msal
@@ -41,7 +48,7 @@ if not session_secret:
         with open('.session_secret', 'r') as f:
             session_secret = f.read().strip()
     else:
-        session_secret = os.urandom(24).hex()
+        session_secret = os.urandom(32).hex()  # 32 bytes = 256 bits for strong security
         # Don't save for Heroku - it needs to be set as an environment variable
         if not os.environ.get('DYNO'):  # Only save locally (not on Heroku)
             with open('.session_secret', 'w') as f:
@@ -50,12 +57,24 @@ if not session_secret:
 app.secret_key = session_secret
 
 # Configure session to be more compatible with multiple workers
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True only in production with HTTPS
+# Use HTTPS-only cookies in production (Heroku)
+app.config['SESSION_COOKIE_SECURE'] = True if os.environ.get('DYNO') else False
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # No JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7  # 7 days
 app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions on disk
 app.config['SESSION_PERMANENT'] = True  # Sessions persist across browser restarts
+
+# Security configuration
+csrf = CSRFProtect(app)
+
+# Rate limiting
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 # Azure AD Configuration
 AZURE_AD_CLIENT_ID = os.getenv('AZURE_AD_CLIENT_ID')
@@ -125,6 +144,17 @@ def save_processing_results():
 
 # Load existing results on startup
 load_processing_results()
+
+# Security headers middleware
+@app.after_request
+def set_security_headers(response):
+    """Add security headers to all responses"""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; img-src 'self' data:;"
+    return response
 
 def fetch_and_parse_gazelle_report(oid, api_key):
     """Fetch XML report from Gazelle and parse detailed errors/warnings"""
@@ -244,6 +274,7 @@ def index():
     return redirect(url_for('login'))
 
 @app.route('/login')
+@csrf.exempt
 def login():
     """Initiate Azure AD login flow"""
     msal_app = get_msal_app()
@@ -255,6 +286,7 @@ def login():
     return redirect(auth_url)
 
 @app.route('/auth/callback')
+@csrf.exempt
 def auth_callback():
     """Handle Azure AD callback"""
     code = request.args.get('code')
@@ -322,13 +354,22 @@ def profile():
 
 @app.route('/set-api-key-db', methods=['POST'])
 @login_required
+@limiter.limit("10 per minute")
 def set_api_key_db():
     """Save user's Gazelle API key to database (encrypted)"""
     user_id = session['user_id']
-    api_key = request.form.get('api_key')
+    api_key = request.form.get('api_key', '').strip()
     
+    # Input validation
     if not api_key:
         return jsonify({'success': False, 'message': 'API key required'}), 400
+    
+    if len(api_key) > 256:
+        return jsonify({'success': False, 'message': 'API key too long (max 256 characters)'}), 400
+    
+    # Basic format validation - alphanumeric and common special chars only
+    if not re.match(r'^[A-Za-z0-9_\-\.]+$', api_key):
+        return jsonify({'success': False, 'message': 'Invalid API key format'}), 400
     
     try:
         # Save encrypted API key to database
@@ -340,7 +381,9 @@ def set_api_key_db():
         
         return jsonify({'success': True, 'message': 'API key saved successfully'})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        # Log the error but don't expose details to user
+        print(f"Error saving API key: {e}")
+        return jsonify({'success': False, 'message': 'Failed to save API key. Please try again.'}), 500
 
 # ==================== DASHBOARD ROUTES ====================
 
@@ -438,8 +481,21 @@ def view_report(report_id):
             print(f"  - Keys in processing_results[{report_id}]: {list(processing_results[report_id].keys())}")
         return "Report content not found", 404
     
-    # Convert to HTML
+    # Convert to HTML and sanitize to prevent XSS
     html_content = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
+    
+    # Sanitize HTML while preserving safe tags and attributes
+    allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                    'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                    'code', 'pre', 'blockquote', 'a', 'div', 'span', 'img']
+    allowed_attrs = {
+        '*': ['class', 'id'],
+        'a': ['href', 'title', 'target'],
+        'img': ['src', 'alt', 'title', 'width', 'height'],
+        'td': ['colspan', 'rowspan'],
+        'th': ['colspan', 'rowspan']
+    }
+    html_content = bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs, strip=True)
     
     return render_template('report.html',
                          report=report,
@@ -1362,9 +1418,11 @@ def validate_file(file_id):
         save_processing_results()
         return jsonify({'success': False, 'message': 'Validation timeout'}), 500
     except Exception as e:
+        # Log the error but don't expose details to user
+        print(f"Error during validation: {e}")
         processing_results[file_id]['status'] = 'error'
         save_processing_results()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({'success': False, 'message': 'Validation failed. Please try again.'}), 500
 
 @app.route('/retry-auto-correct/<file_id>', methods=['POST'])
 def auto_correct_if_errors(file_id):
@@ -1401,4 +1459,5 @@ def auto_correct_if_errors(file_id):
     return redirect(f'/auto-correct/{file_id}', code=307)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Only enable debug in local development
+    app.run(debug=False if os.environ.get('DYNO') else True, port=5000)

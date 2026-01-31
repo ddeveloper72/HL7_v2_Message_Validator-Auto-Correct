@@ -7,6 +7,11 @@ playwright==1.48.0
 lxml==6.0.2
 gunicorn==21.2.0
 
+# Security packages
+Flask-WTF==1.2.1
+bleach==6.1.0
+Flask-Limiter==3.5.0
+
 # Azure AD Authentication
 msal==1.31.1
 Flask-Session==0.8.0
