@@ -676,9 +676,30 @@ def validate_file(file_id):
         report_url = ''
         oid = ''
         detected_message_type = None
+        detailed_errors = []  # Initialize empty list for errors
+        detailed_warnings = []  # Initialize empty list for warnings
         
+        # Extract parsing variables from subprocess output
         for line in validation_output.split('\n'):
-            if 'Status:' in line:
+            if 'GAZELLE_OID=' in line:
+                # New parseable format from validation script
+                oid = line.split('GAZELLE_OID=')[1].strip()
+                print(f"DEBUG: Extracted OID from GAZELLE_OID= format: {oid}")
+            elif 'GAZELLE_ERRORS_JSON=' in line:
+                # Parse JSON errors directly from validation script output
+                try:
+                    json_str = line.split('GAZELLE_ERRORS_JSON=')[1].strip()
+                    # Handle JSON parsing carefully in case of encoding issues
+                    parsed_json_errors = json.loads(json_str)
+                    if isinstance(parsed_json_errors, list):
+                        detailed_errors = parsed_json_errors
+                        print(f"DEBUG: Extracted {len(detailed_errors)} detailed errors from JSON format")
+                        for i, err in enumerate(detailed_errors[:3]):
+                            print(f"DEBUG: Error {i+1}: Type={err.get('type')}, Location={err.get('location')}")
+                except Exception as e:
+                    print(f"DEBUG: Failed to parse GAZELLE_ERRORS_JSON: {e}")
+                    pass
+            elif 'Status:' in line:
                 status_text = line.split('Status:')[1].strip()
                 # Check for PASSED anywhere in the status (could be PASSED or DONE_PASSED)
                 if 'PASSED' in status_text.upper():
@@ -718,8 +739,12 @@ def validate_file(file_id):
         elif status == 'UNKNOWN':
             status = 'FAILED'
         
-        # Fetch detailed error information from Gazelle XML report
-        detailed_errors, detailed_warnings, xml_report = fetch_and_parse_gazelle_report(oid, session['api_key']) if oid else (None, None, None)
+        # Fetch detailed error information from Gazelle XML report if not already obtained from JSON
+        if not detailed_errors and oid:
+            detailed_errors, detailed_warnings, xml_report = fetch_and_parse_gazelle_report(oid, session['api_key'])
+            print(f"DEBUG: Fallback: Fetched {len(detailed_errors) if detailed_errors else 0} errors from Gazelle API")
+        else:
+            print(f"DEBUG: Using {len(detailed_errors) if detailed_errors else 0} errors from JSON format (no API call needed)")
         
         # Create report markdown with detailed format (matching last night's reports)
         report_content = ""  # Store content in memory

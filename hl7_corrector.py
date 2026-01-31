@@ -265,58 +265,88 @@ class HL7MessageCorrector:
         
         # Extract the invalid value from description
         # Example: "The value 'HIPEHOS' at location ... is not member of the value set [HL70301]"
-        # Or: "The code 'XXX' and code system 'L' at location Component OBR-15.1"
+        # Or: "The code 'OTH' and code system 'L' at location Component OBR-15.1"
+        # Or: "The value 'CLIP' at location ... is not member of the value set [HL70301_HL]"
         value_match = re.search(r"(?:value|code) '([^']+)'", description)
-        table_match = re.search(r'\[HL7(\d+)\]', description)
+        table_match = re.search(r'\[HL7(\d+)(?:_[A-Z]+)?\]', description)
+        codesystem_match = re.search(r"code system '([^']+)'", description)
         
         if not value_match:
             print(f"DEBUG:   Could not extract invalid value from description using regex")
             return content
         
         invalid_value = value_match.group(1)
+        invalid_codesystem = codesystem_match.group(1) if codesystem_match else None
         table = table_match.group(1) if table_match else 'Unknown'
         
         print(f"DEBUG:   Found invalid value: '{invalid_value}'")
+        print(f"DEBUG:   Invalid code system: {invalid_codesystem}")
         print(f"DEBUG:   Table: HL70{table}")
         
-        # Map known invalid values to correct ones
-        code_mappings = {
-            'HIPEHOS': 'L',  # HL70301 - Universal ID Type
-            'MCN.HLPracticeID': 'L',  # HL70301 - Universal ID Type
-        }
+        # Use data-driven approach to find valid replacement
+        # Build full table name
+        full_table = f'HL70{table}'
+        print(f"DEBUG:   Looking up in {full_table}")
         
-        print(f"DEBUG:   Checking if '{invalid_value}' is in known code_mappings: {list(code_mappings.keys())}")
+        # Use the data-driven finder to get valid code
+        correct_value = find_similar_code(full_table, invalid_value)
         
-        # If we have a known mapping, use it
-        if invalid_value in code_mappings:
-            correct_value = code_mappings[invalid_value]
-            print(f"DEBUG:   YES! Found mapping: '{invalid_value}' -> '{correct_value}'")
-            # Replace the invalid value
+        if correct_value:
+            print(f"DEBUG:   Data-driven lookup found: '{invalid_value}' -> '{correct_value}' in {full_table}")
+            
+            # Different replacement strategies based on location
+            replaced = False
+            
+            # Strategy 1: Simple pattern replacement for HD.3, EI.4, etc
             search_pattern = f'>{invalid_value}<'
             if search_pattern in content:
-                print(f"DEBUG:   Found '{search_pattern}' in content, replacing...")
+                print(f"DEBUG:   Found pattern '{search_pattern}' in content, replacing with '>{correct_value}<'")
                 old_len = len(content)
                 content = content.replace(search_pattern, f'>{correct_value}<')
                 new_len = len(content)
+                replaced = True
                 print(f"DEBUG:   Replacement complete. Content size: {old_len} -> {new_len} bytes")
+            
+            # Strategy 2: For CE.1 with code system 'L' issue
+            if not replaced and invalid_codesystem and full_table == 'HL70070':
+                # OBR-15.1 is getting 'OTH' with code system 'L' but OTH is from HL70070, not L
+                # Need to find the field structure and replace whole thing
+                # Look for patterns like <CE.1>OTH</CE.1> or <SPM.SourceSite>OTH</SPM.SourceSite>
+                ce_patterns = [
+                    (f'<CE\\.1>{invalid_value}</CE\\.1>', f'<CE.1>{correct_value}</CE.1>'),
+                    (f'<SPM\\.SourceSite>{invalid_value}</SPM\\.SourceSite>', f'<SPM.SourceSite>{correct_value}</SPM.SourceSite>'),
+                    (f'>{invalid_value}<', f'>{correct_value}<'),
+                ]
+                
+                for pattern, replacement in ce_patterns:
+                    if re.search(pattern, content):
+                        print(f"DEBUG:   Found CE pattern '{pattern}', replacing...")
+                        old_len = len(content)
+                        content = re.sub(pattern, replacement, content)
+                        new_len = len(content)
+                        replaced = True
+                        print(f"DEBUG:   Replacement complete. Content size: {old_len} -> {new_len} bytes")
+                        break
+            
+            if replaced:
                 self.corrections_made.append({
                     'type': 'GAZELLE_FIX',
                     'field': f'Code value at {location}',
                     'location': location,
                     'old_value': invalid_value,
+                    'old_codesystem': invalid_codesystem,
                     'new_value': correct_value,
-                    'table': f'HL70{table}',
+                    'table': full_table,
                     'description': f'Corrected invalid code value based on Gazelle error',
                     'reason': description,
-                    'source': 'Gazelle Error Report'
+                    'source': 'HL7 Code Tables (Data-Driven)'
                 })
             else:
-                print(f"DEBUG:   Pattern '{search_pattern}' NOT found in content")
-                print(f"DEBUG:   Content preview: {content[500:700]}")
+                print(f"DEBUG:   Could not find where to replace '{invalid_value}' in content")
+                print(f"DEBUG:   Tried patterns: {[p[0] for p in ce_patterns if invalid_value in p[0]]}")
         else:
-            print(f"DEBUG:   NO - '{invalid_value}' is not in code_mappings")
-            print(f"DEBUG:   This unknown code value cannot be auto-corrected without a mapping")
-            print(f"DEBUG:   Need to add '{invalid_value}' to code_mappings or handle it manually")
+            print(f"DEBUG:   Data-driven lookup FAILED - no valid replacement found for '{invalid_value}' in {full_table}")
+            print(f"DEBUG:   This code may need manual intervention or addition to hl7_code_tables.json")
         
         return content
     

@@ -216,9 +216,10 @@ def validate_file_with_verification(file_path, show_warnings=False):
     
     if error:
         print(f"❌ Submission failed: {error}")
-        return False
+        return False, None
     
     print(f"✅ Submitted successfully")
+    print(f"GAZELLE_OID={result['oid']}")  # Parseable format for dashboard app
     print(f"   OID: {result['oid']}")
     print(f"   Message Type: {result['message_type']}")
     
@@ -228,7 +229,7 @@ def validate_file_with_verification(file_path, show_warnings=False):
     
     if error:
         print(f"❌ Failed to get validation report: {error}")
-        return False
+        return False, None
     
     print(f"✅ Validation completed")
     
@@ -238,9 +239,12 @@ def validate_file_with_verification(file_path, show_warnings=False):
     
     if error:
         print(f"❌ Failed to parse results: {error}")
-        return False
+        return False, None
     
-    # Step 4: Report results
+    # Step 4: Output detailed errors in JSON format for dashboard to parse
+    print(f"GAZELLE_ERRORS_JSON={json.dumps(parsed_result.get('mandatory_errors', []))}")  # Parseable JSON format
+    
+    # Step 5: Report results
     print(f"\n{'='*80}")
     print(f"VALIDATION RESULTS")
     print(f"{'='*80}")
