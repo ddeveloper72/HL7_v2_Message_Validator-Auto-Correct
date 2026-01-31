@@ -6,3 +6,11 @@ markdown==3.10.1
 playwright==1.48.0
 lxml==6.0.2
 gunicorn==21.2.0
+
+# Azure AD Authentication
+msal==1.31.1
+Flask-Session==0.8.0
+
+# Azure SQL Database
+pyodbc==5.2.0
+cryptography==44.0.0

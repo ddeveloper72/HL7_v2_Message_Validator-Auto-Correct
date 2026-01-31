@@ -21,6 +21,15 @@ from auto_correct import auto_correct_and_validate
 from hl7_corrector import HL7MessageCorrector
 import time
 import sys
+from functools import wraps
+
+# Azure AD and Database imports
+import msal
+from db_utils import DatabaseManager
+
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -41,10 +50,42 @@ if not session_secret:
 app.secret_key = session_secret
 
 # Configure session to be more compatible with multiple workers
-app.config['SESSION_COOKIE_SECURE'] = True  # Only send over HTTPS
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True only in production with HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # No JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7  # 7 days
+app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions on disk
+app.config['SESSION_PERMANENT'] = True  # Sessions persist across browser restarts
+
+# Azure AD Configuration
+AZURE_AD_CLIENT_ID = os.getenv('AZURE_AD_CLIENT_ID')
+AZURE_AD_CLIENT_SECRET = os.getenv('AZURE_AD_CLIENT_SECRET')
+AZURE_AD_TENANT_ID = os.getenv('AZURE_AD_TENANT_ID')
+AZURE_AD_REDIRECT_URI = os.getenv('AZURE_AD_REDIRECT_URI', 'http://localhost:5000/auth/callback')
+AZURE_AD_AUTHORITY = f'https://login.microsoftonline.com/{AZURE_AD_TENANT_ID}'
+AZURE_AD_SCOPE = ['User.Read']
+
+# Initialize database manager
+db = DatabaseManager()
+
+# Initialize MSAL Confidential Client
+def get_msal_app():
+    """Create MSAL confidential client application"""
+    return msal.ConfidentialClientApplication(
+        AZURE_AD_CLIENT_ID,
+        authority=AZURE_AD_AUTHORITY,
+        client_credential=AZURE_AD_CLIENT_SECRET
+    )
+
+# Authentication decorator
+def login_required(f):
+    """Decorator to require authentication for routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Configure folders
 UPLOAD_FOLDER = 'uploads'
@@ -193,23 +234,137 @@ def get_sample_reports(show_all=False):
     
     return reports
 
+# ==================== AUTHENTICATION ROUTES ====================
+
 @app.route('/')
 def index():
-    """Redirect to dashboard"""
-    return redirect(url_for('dashboard'))
+    """Landing page - redirect to login or dashboard"""
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
+@app.route('/login')
+def login():
+    """Initiate Azure AD login flow"""
+    msal_app = get_msal_app()
+    auth_url = msal_app.get_authorization_request_url(
+        AZURE_AD_SCOPE,
+        redirect_uri=AZURE_AD_REDIRECT_URI
+    )
+    session['state'] = str(uuid.uuid4())
+    return redirect(auth_url)
+
+@app.route('/auth/callback')
+def auth_callback():
+    """Handle Azure AD callback"""
+    code = request.args.get('code')
+    if not code:
+        return "Authentication failed: No authorization code", 400
+    
+    msal_app = get_msal_app()
+    result = msal_app.acquire_token_by_authorization_code(
+        code,
+        scopes=AZURE_AD_SCOPE,
+        redirect_uri=AZURE_AD_REDIRECT_URI
+    )
+    
+    if 'error' in result:
+        return f"Authentication error: {result.get('error_description')}", 400
+    
+    # Get user info from token
+    user_info = result.get('id_token_claims')
+    email = user_info.get('preferred_username') or user_info.get('email')
+    azure_ad_oid = user_info.get('oid')
+    display_name = user_info.get('name')
+    
+    # Create or update user in database
+    user_id = db.create_or_update_user(email, azure_ad_oid, display_name)
+    
+    # Store in session (mark as permanent BEFORE setting values)
+    session.permanent = True
+    session['user_id'] = user_id
+    session['email'] = email
+    session['display_name'] = display_name
+    session['azure_ad_oid'] = azure_ad_oid
+    session['logged_in_at'] = datetime.now().isoformat()
+    
+    # Store MSAL token for refresh (optional but recommended)
+    if 'access_token' in result:
+        session['access_token'] = result['access_token']
+    
+    return redirect(url_for('profile'))
+
+@app.route('/logout')
+def logout():
+    """Logout user"""
+    session.clear()
+    logout_url = f"{AZURE_AD_AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri={request.host_url}"
+    return redirect(logout_url)
+
+@app.route('/profile')
+@login_required
+def profile():
+    """User profile page with API key management"""
+    user_id = session['user_id']
+    
+    # Check if user has Gazelle API key
+    api_key = db.get_user_api_key(user_id)
+    has_api_key = api_key is not None
+    
+    # Get user statistics
+    stats = db.get_user_statistics(user_id)
+    
+    return render_template('profile.html',
+                         user_email=session.get('email'),
+                         user_name=session.get('display_name'),
+                         has_api_key=has_api_key,
+                         stats=stats)
+
+@app.route('/set-api-key-db', methods=['POST'])
+@login_required
+def set_api_key_db():
+    """Save user's Gazelle API key to database (encrypted)"""
+    user_id = session['user_id']
+    api_key = request.form.get('api_key')
+    
+    if not api_key:
+        return jsonify({'success': False, 'message': 'API key required'}), 400
+    
+    try:
+        # Save encrypted API key to database
+        ip_address = request.remote_addr
+        db.set_user_api_key(user_id, api_key, ip_address)
+        
+        # Also store in session for immediate use
+        session['api_key'] = api_key
+        
+        return jsonify({'success': True, 'message': 'API key saved successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# ==================== DASHBOARD ROUTES ====================
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     """Main dashboard showing all validation reports"""
+    user_id = session['user_id']
     show_all = request.args.get('show_all') == '1'
     reports = get_sample_reports(show_all=show_all)
     
-    # Check if API key is set
+    # Load API key from database if not in session
+    if 'api_key' not in session:
+        api_key = db.get_user_api_key(user_id)
+        if api_key:
+            session['api_key'] = api_key
+    
     has_api_key = 'api_key' in session
     
     return render_template('dashboard.html', 
                          reports=reports,
                          has_api_key=has_api_key,
+                         user_name=session.get('display_name'),
+                         user_email=session.get('email'),
                          total_files=len(reports),
                          passed_count=sum(1 for r in reports if r['status'] == 'PASSED'),
                          failed_count=sum(1 for r in reports if r['status'] == 'FAILED'),
@@ -728,6 +883,23 @@ def retry_auto_correct(report_id):
         processing_results[report_id]['iterations'] = iteration
         save_processing_results()
 
+        # Save to database if user is authenticated
+        if 'user_id' in session:
+            try:
+                db.save_validation_result(
+                    user_id=session['user_id'],
+                    filename=file_info['filename'],
+                    message_type=detected_message_type or 'Unknown',
+                    status=status,
+                    report_url=report_url or '',
+                    error_count=errors,
+                    warning_count=warnings,
+                    corrections_applied=total_corrections
+                )
+                print(f"DEBUG: Saved auto-correct result to database for user {session['user_id']}")
+            except Exception as e:
+                print(f"WARNING: Failed to save to database: {e}")
+
         remaining_errors = len(detailed_errors)
 
         if status == 'PASSED' or remaining_errors == 0:
@@ -764,12 +936,14 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/upload-page')
+@login_required
 def upload_page():
     """Upload page"""
     has_api_key = 'api_key' in session
     return render_template('upload.html', has_api_key=has_api_key)
 
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload_file():
     """Handle file upload"""
     if 'file' not in request.files:
@@ -1145,6 +1319,23 @@ def validate_file(file_id):
         
         # Save to temp file so results persist across dyno restarts
         save_processing_results()
+        
+        # Save to database if user is authenticated
+        if 'user_id' in session:
+            try:
+                db.save_validation_result(
+                    user_id=session['user_id'],
+                    filename=file_info['filename'],
+                    message_type=message_type,
+                    status=status,
+                    report_url=report_url or '',
+                    error_count=errors,
+                    warning_count=warnings,
+                    corrections_applied=0  # No auto-correction on upload
+                )
+                print(f"DEBUG: Saved validation result to database for user {session['user_id']}")
+            except Exception as e:
+                print(f"WARNING: Failed to save to database: {e}")
         
         print(f"DEBUG: Validation completed for file_id={file_id}")
         print(f"DEBUG: Status={status}, Errors={errors}, Warnings={warnings}")

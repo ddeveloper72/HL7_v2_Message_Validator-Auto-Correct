@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gazelle HL7 Validator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            max-width: 450px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 2rem;
+        }
+
+        .btn-microsoft {
+            background-color: #2f2f2f;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .btn-microsoft:hover {
+            background-color: #1a1a1a;
+            color: white;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-icon {
+            color: #667eea;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <div class="card-header text-center">
+            <h1 class="mb-2">🏥</h1>
+            <h3 class="mb-0">Gazelle HL7 Validator</h3>
+            <p class="mb-0 mt-2">Validate & Auto-Correct HL7 v2 Messages</p>
+        </div>
+        <div class="card-body p-4">
+            <div class="mb-4">
+                <h5 class="mb-3">Features:</h5>
+                <ul class="feature-list">
+                    <li>
+                        <span class="feature-icon">✅</span>
+                        <span>Validate HL7 v2 messages with Gazelle EVS</span>
+                    </li>
+                    <li>
+                        <span class="feature-icon">🔧</span>
+                        <span>Automatic error correction (10+ fix types)</span>
+                    </li>
+                    <li>
+                        <span class="feature-icon">📊</span>
+                        <span>Track validation history & statistics</span>
+                    </li>
+                    <li>
+                        <span class="feature-icon">📄</span>
+                        <span>Export reports as PDF</span>
+                    </li>
+                    <li>
+                        <span class="feature-icon">🔒</span>
+                        <span>Secure encrypted API key storage</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="d-grid mb-3">
+                <a href="{{ url_for('login') }}" class="btn btn-microsoft btn-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                        viewBox="0 0 16 16">
+                        <path d="M0 0h7.5v7.5H0V0zm8.5 0H16v7.5H8.5V0zM0 8.5h7.5V16H0V8.5zm8.5 0H16V16H8.5V8.5z" />
+                    </svg>
+                    Sign in with Microsoft
+                </a>
+            </div>
+
+            <div class="text-center text-muted">
+                <small>Secure authentication with Azure AD</small>
+            </div>
+        </div>
+        <div class="card-footer text-center text-muted bg-light">
+            <small>Powered by Gazelle EVS & Azure</small>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

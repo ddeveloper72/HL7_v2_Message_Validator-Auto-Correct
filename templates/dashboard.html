@@ -124,13 +124,19 @@
             <span class="navbar-brand mb-0 h1">
                 <i class="bi bi-file-medical"></i> Gazelle HL7 v2 Validation Dashboard
             </span>
-            <div>
+            <div class="d-flex align-items-center">
                 <a href="{{ url_for('upload_page') }}" class="btn btn-success me-2">
                     <i class="bi bi-cloud-upload"></i> Upload Files
                 </a>
-                <span class="text-white" id="currentTime">
-                    <i class="bi bi-clock"></i> <span></span>
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-light me-2">
+                    <i class="bi bi-person-circle"></i> Profile
+                </a>
+                <span class="text-white me-3">
+                    <i class="bi bi-person"></i> {{ user_name or user_email }}
                 </span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
             </div>
         </div>
     </nav>

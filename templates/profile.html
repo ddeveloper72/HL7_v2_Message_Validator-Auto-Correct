@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Gazelle HL7 Validator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">🏥 Gazelle HL7 Validator</a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white me-3">{{ user_name }}</span>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <!-- User Profile Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">👤 User Profile</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4"><strong>Name:</strong></div>
+                            <div class="col-md-8">{{ user_name }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4"><strong>Email:</strong></div>
+                            <div class="col-md-8">{{ user_email }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Key Management Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">🔑 Gazelle API Key</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if has_api_key %}
+                        <div class="alert alert-success">
+                            ✅ API key is configured
+                        </div>
+                        <p class="text-muted">Your Gazelle API key is securely encrypted and stored. You can validate
+                            messages from the dashboard.</p>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            ⚠️ No API key configured
+                        </div>
+                        <p class="text-muted">You need to set your Gazelle API key to validate HL7 messages.</p>
+                        {% endif %}
+
+                        <form id="apiKeyForm">
+                            <div class="mb-3">
+                                <label for="apiKey" class="form-label">Gazelle API Key</label>
+                                <input type="password" class="form-control" id="apiKey"
+                                    placeholder="Enter your Gazelle API key">
+                                <small class="form-text text-muted">
+                                    Your API key is encrypted before storage and never shared.
+                                </small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save API Key</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">📌 Quick Links</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary me-2">View Dashboard</a>
+                        <a href="{{ url_for('upload_page') }}" class="btn btn-outline-success">Upload Files</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Statistics Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">📊 Your Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h2 class="text-primary mb-0">{{ stats.total }}</h2>
+                            <small class="text-muted">Total Validations</small>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-success">
+                                    <h4>{{ stats.passed }}</h4>
+                                    <small>Passed</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-danger">
+                                    <h4>{{ stats.failed }}</h4>
+                                    <small>Failed</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-warning">
+                                    <h4>{{ stats.undefined }}</h4>
+                                    <small>Undefined</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">❓ Need Help?</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Get your Gazelle API key from:</p>
+                        <a href="https://testing.ehealthireland.ie" target="_blank"
+                            class="btn btn-sm btn-outline-primary">
+                            Gazelle EVS Portal →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('apiKeyForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const apiKey = document.getElementById('apiKey').value;
+
+            if (!apiKey) {
+                alert('Please enter an API key');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('api_key', apiKey);
+
+                const response = await fetch('{{ url_for("set_api_key_db") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('API key saved successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error saving API key: ' + error.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
