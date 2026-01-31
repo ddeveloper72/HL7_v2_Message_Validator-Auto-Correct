@@ -18,7 +18,8 @@ class DatabaseManager:
         self.database = os.getenv('AZURE_SQL_DATABASE')
         self.username = os.getenv('AZURE_SQL_USERNAME')
         self.password = os.getenv('AZURE_SQL_PASSWORD')
-        self.driver = os.getenv('DB_DRIVER', 'ODBC Driver 18 for SQL Server')
+        # Use FreeTDS driver on Heroku, ODBC Driver 18 locally
+        self.driver = os.getenv('DB_DRIVER', 'FreeTDS' if os.getenv('DYNO') else 'ODBC Driver 18 for SQL Server')
         
         # Encryption key for API keys (generate once and store securely)
         encryption_key = os.getenv('ENCRYPTION_KEY')
@@ -32,16 +33,29 @@ class DatabaseManager:
     
     def get_connection(self):
         """Create and return a database connection"""
-        connection_string = (
-            f'DRIVER={{{self.driver}}};'
-            f'SERVER={self.server};'
-            f'DATABASE={self.database};'
-            f'UID={self.username};'
-            f'PWD={self.password};'
-            f'Encrypt=yes;'
-            f'TrustServerCertificate=no;'
-            f'Connection Timeout=30;'
-        )
+        if self.driver == 'FreeTDS':
+            # FreeTDS connection for Heroku
+            connection_string = (
+                f'DRIVER={{{self.driver}}};'
+                f'SERVER={self.server};'
+                f'PORT=1433;'
+                f'DATABASE={self.database};'
+                f'UID={self.username};'
+                f'PWD={self.password};'
+                f'TDS_Version=8.0;'
+            )
+        else:
+            # Microsoft ODBC Driver for local development
+            connection_string = (
+                f'DRIVER={{{self.driver}}};'
+                f'SERVER={self.server};'
+                f'DATABASE={self.database};'
+                f'UID={self.username};'
+                f'PWD={self.password};'
+                f'Encrypt=yes;'
+                f'TrustServerCertificate=no;'
+                f'Connection Timeout=30;'
+            )
         return pyodbc.connect(connection_string)
     
     def encrypt_api_key(self, api_key):
