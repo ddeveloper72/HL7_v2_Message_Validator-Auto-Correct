@@ -48,6 +48,7 @@ test_*.py
 verify_*.py
 diagnose_*.py
 debug_*.py
+*_debug.py
 batch_*.py
 fix_*.py
 check_*.py
@@ -80,6 +81,10 @@ gazelle_api_spec.json
 # Test data folders and files
 Gazelle_Configuration_Data/
 Healthlink Tests/
+cli_test/
+
+# Backup files
+*.bak
 
 # Old simple app (superseded by dashboard_app.py)
 app.py
