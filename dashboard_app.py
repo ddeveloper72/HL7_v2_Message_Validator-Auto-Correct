@@ -677,7 +677,7 @@ def upload_file():
 
 @app.route('/validate/<file_id>', methods=['POST'])
 def validate_file(file_id):
-    """Validate uploaded file (without automatic correction)"""
+    """Validate uploaded file with optional automatic correction"""
     if file_id not in processing_results:
         return jsonify({'success': False, 'message': 'File not found'}), 404
     
@@ -686,6 +686,14 @@ def validate_file(file_id):
     
     file_info = processing_results[file_id]
     filepath = file_info['filepath']
+    
+    # Check if auto-correct was requested
+    auto_correct = False
+    try:
+        request_data = request.get_json() or {}
+        auto_correct = request_data.get('auto_correct', False)
+    except:
+        pass
     
     print(f"\nDEBUG: Starting validation for file_id={file_id}, filename={file_info['filename']}")
     print(f"DEBUG: Session ID: {session.get('session_id')}")
@@ -1002,13 +1010,21 @@ def validate_file(file_id):
         print(f"DEBUG: Validation completed for file_id={file_id}")
         print(f"DEBUG: Status={status}, Errors={errors}, Warnings={warnings}")
         print(f"DEBUG: processing_results[{file_id}] status is now: {processing_results[file_id]['status']}")
+
+        # If auto-correct is requested and there are errors, run correction cycle
+        if auto_correct and errors > 0:
+            print(f"DEBUG: Auto-correct flag is True and {errors} errors found - running correction cycle")
+            # Call the correction logic from retry_auto_correct
+            return retry_auto_correct(file_id)
         
         return jsonify({
             'success': True,
             'status': status,
             'errors': errors,
             'warnings': warnings,
-            'report_url': report_url
+            'report_url': report_url,
+            'report_content': report_content,
+            'message_type': message_type
         })
         
     except subprocess.TimeoutExpired:

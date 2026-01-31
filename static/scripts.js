@@ -66,17 +66,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('auto_correct', autoCorrect ? 'true' : 'false');
 
         try {
-            // Step 1: Upload file
-            const uploadResponse = await fetch('/upload', {
+            const response = await fetch('/upload', {
                 method: 'POST',
                 body: formData
             });
 
-            const uploadData = await uploadResponse.json();
+            const uploadData = await response.json();
 
-            if (!uploadResponse.ok) {
+            if (!response.ok) {
                 showError(uploadData.message || 'Upload failed');
                 hideLoading();
                 return;
@@ -85,9 +85,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const fileId = uploadData.file_id;
             const fileName = uploadData.filename;
 
-            // Step 2: Validate file
+            // Validate with auto_correct flag
             const validateResponse = await fetch(`/validate/${fileId}`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ auto_correct: autoCorrect })
             });
 
             const validateData = await validateResponse.json();
@@ -98,85 +102,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Check if auto-correction should be applied
-            if (autoCorrect && validateData.errors > 0) {
-                // Auto-correct is enabled and there are errors
-                await autoCorrectFile(fileId, validateData);
-            } else {
-                // Just show validation results
-                displayValidationResults(validateData, fileName);
-            }
+            // Transform response to match displayResults expectations
+            const transformedData = {
+                filename: fileName,
+                validation_passed: validateData.status === 'PASSED',
+                validation_status: validateData.status,
+                message_type: validateData.message_type,
+                errors: validateData.errors || [],
+                warnings: validateData.warnings || [],
+                report_url: validateData.report_url,
+                report: validateData.report_content,
+                correction_report: validateData.report_content
+            };
+
+            displayResults(transformedData);
         } catch (error) {
             showError('Network error: ' + error.message);
         } finally {
             hideLoading();
         }
-    }
-
-    /**
-     * Auto-correct file by running correction iterations
-     */
-    async function autoCorrectFile(fileId, initialData) {
-        // Show loading with iteration info
-        const loadingDiv = document.querySelector('#loadingSpinner p');
-        if (loadingDiv) {
-            loadingDiv.innerHTML = 'Running auto-correction (max 5 iterations)...';
-        }
-
-        try {
-            const response = await fetch(`/retry-auto-correct/${fileId}`, {
-                method: 'POST'
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                displayResults(data);
-            } else {
-                showError(data.message || 'Auto-correction failed');
-                // Show initial validation results anyway
-                displayValidationResults(initialData, 'File');
-            }
-        } catch (error) {
-            showError('Network error during auto-correction: ' + error.message);
-            // Show initial validation results
-            displayValidationResults(initialData, 'File');
-        }
-    }
-
-    /**
-     * Display validation results
-     */
-    function displayValidationResults(data, fileName) {
-        document.getElementById('fileName').textContent = fileName;
-        
-        const statusElement = document.getElementById('validationStatus');
-        const isPassed = data.status === 'PASSED';
-        
-        let statusHTML = '';
-        if (isPassed) {
-            statusHTML = `
-                <div class="alert alert-success">
-                    <h5><i class="bi bi-check-circle"></i> Validation PASSED</h5>
-                    <p class="mb-0">All validation checks completed successfully.</p>
-                </div>
-            `;
-        } else {
-            statusHTML = `
-                <div class="alert alert-danger">
-                    <h5><i class="bi bi-x-circle"></i> Validation FAILED</h5>
-                    <p class="mb-2">Errors: <strong>${data.errors || 0}</strong> | Warnings: <strong>${data.warnings || 0}</strong></p>
-                </div>
-            `;
-        }
-
-        statusElement.innerHTML = statusHTML;
-
-        // Show validation report
-        document.getElementById('validationReport').textContent = data.report_content || 'No report available';
-
-        // Show results container
-        document.getElementById('resultsContainer').style.display = 'block';
     }
 
     /**
