@@ -320,6 +320,11 @@ def auth_callback():
     session['azure_ad_oid'] = azure_ad_oid
     session['logged_in_at'] = datetime.now().isoformat()
     
+    # Load user's API key from database into session
+    api_key = db.get_user_api_key(user_id)
+    if api_key:
+        session['api_key'] = api_key
+    
     # Store MSAL token for refresh (optional but recommended)
     if 'access_token' in result:
         session['access_token'] = result['access_token']
