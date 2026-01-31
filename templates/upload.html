@@ -167,6 +167,16 @@
             <!-- File List -->
             <div class="file-list" id="fileList"></div>
 
+            <!-- Auto-correct option -->
+            <div class="form-check mt-3" id="autoCorrectContainer" style="display: none;">
+                <input class="form-check-input" type="checkbox" id="autoCorrectCheckbox">
+                <label class="form-check-label" for="autoCorrectCheckbox">
+                    <strong>Auto-correct on upload</strong>
+                    <br>
+                    <small class="text-muted">If errors are found, automatically apply corrections (up to 5 iterations)</small>
+                </label>
+            </div>
+
             <!-- Upload Button -->
             <div class="text-center mt-4" id="uploadButtonContainer" style="display: none;">
                 <button class="btn btn-success btn-lg" id="uploadButton" {% if not has_api_key %}disabled{% endif %}>
@@ -232,6 +242,8 @@
         const fileInput = document.getElementById('fileInput');
         const fileList = document.getElementById('fileList');
         const uploadButtonContainer = document.getElementById('uploadButtonContainer');
+        const autoCorrectContainer = document.getElementById('autoCorrectContainer');
+        const autoCorrectCheckbox = document.getElementById('autoCorrectCheckbox');
 
         // Drag and drop handlers (click handled by Browse button only)
         dropZone.addEventListener('dragover', (e) => {
@@ -266,6 +278,7 @@
             if (selectedFiles.length === 0) {
                 fileList.innerHTML = '';
                 uploadButtonContainer.style.display = 'none';
+                autoCorrectContainer.style.display = 'none';
                 return;
             }
 
@@ -290,6 +303,7 @@
             });
 
             uploadButtonContainer.style.display = 'block';
+            autoCorrectContainer.style.display = 'block';
         }
 
         function removeFile(index) {
@@ -328,6 +342,7 @@
         async function processFile(file) {
             const processingList = document.getElementById('processingList');
             const itemId = 'file-' + Date.now();
+            const autoCorrect = autoCorrectCheckbox.checked;
 
             // Create processing item
             const item = document.createElement('div');
@@ -367,7 +382,11 @@
 
                     // Start validation
                     const validateResponse = await fetch('/validate/' + result.file_id, {
-                        method: 'POST'
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ auto_correct: autoCorrect })
                     });
 
                     const validateResult = await validateResponse.json();
