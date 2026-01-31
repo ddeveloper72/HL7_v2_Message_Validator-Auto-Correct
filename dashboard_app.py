@@ -430,8 +430,17 @@ def set_api_key():
 
 @app.route('/clear-api-key', methods=['POST'])
 def clear_api_key():
-    """Clear API key from session"""
+    """Clear API key from session and database"""
+    # Remove from session
     session.pop('api_key', None)
+    
+    # Remove from database
+    if 'user_id' in session:
+        try:
+            db.set_user_api_key(session['user_id'], None)
+        except Exception as e:
+            print(f"Error clearing API key from database: {e}")
+    
     return jsonify({'success': True, 'message': 'API key cleared'})
 
 @app.route('/delete-report/<report_id>', methods=['POST'])
