@@ -400,13 +400,15 @@ def dashboard():
     show_all = request.args.get('show_all') == '1'
     reports = get_sample_reports(show_all=show_all)
     
-    # Load API key from database if not in session
-    if 'api_key' not in session:
-        api_key = db.get_user_api_key(user_id)
-        if api_key:
-            session['api_key'] = api_key
+    # Always check database for API key (source of truth)
+    api_key = db.get_user_api_key(user_id)
+    if api_key:
+        session['api_key'] = api_key
+    else:
+        # Clear from session if not in database
+        session.pop('api_key', None)
     
-    has_api_key = 'api_key' in session
+    has_api_key = api_key is not None
     
     return render_template('dashboard.html', 
                          reports=reports,
