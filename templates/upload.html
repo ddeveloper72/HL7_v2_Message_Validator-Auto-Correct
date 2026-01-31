@@ -369,6 +369,7 @@
             // Upload file
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('csrf_token', '{{ csrf_token() }}');
 
             try {
                 const response = await fetch('/upload', {
@@ -385,7 +386,8 @@
                     const validateResponse = await fetch('/validate/' + result.file_id, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({ auto_correct: autoCorrect })
                     });
