@@ -34,9 +34,9 @@ class DatabaseManager:
     def get_connection(self):
         """Create and return a database connection"""
         if self.driver == 'FreeTDS':
-            # FreeTDS connection for Heroku
+            # FreeTDS connection for Heroku - use direct driver path
             connection_string = (
-                f'DRIVER={{{self.driver}}};'
+                f'DRIVER=/app/.apt/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so;'
                 f'SERVER={self.server};'
                 f'PORT=1433;'
                 f'DATABASE={self.database};'
