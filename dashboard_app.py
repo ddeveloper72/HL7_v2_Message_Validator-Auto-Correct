@@ -400,16 +400,31 @@ def dashboard():
     show_all = request.args.get('show_all') == '1'
     
     # Get current session reports from temp file
-    reports = get_sample_reports(show_all=show_all)
+    temp_reports = get_sample_reports(show_all=show_all)
     
-    # Also get historical validation reports from database
+    # Get historical validation reports from database
+    reports = []
     try:
         db_history = db.get_user_validation_history(user_id, limit=100)
-        # Convert database records to report format if needed
-        # For now just use temp file reports
+        # Convert database records to report format
+        for record in db_history:
+            reports.append({
+                'id': f"db_{record['id']}",  # Prefix with 'db_' to distinguish from temp file
+                'filename': record['filename'],
+                'message_type': record['message_type'],
+                'status': record['status'],
+                'report_url': record['report_url'],
+                'date': record['timestamp'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(record['timestamp'], 'strftime') else str(record['timestamp']),
+                'errors': record['error_count'],
+                'warnings': record['warning_count'],
+                'corrections_applied': record.get('corrections_applied', 0),
+                'validation_id': record['id']  # Store for auto-correct retrieval
+            })
+        print(f"DEBUG: Loaded {len(reports)} reports from database")
     except Exception as e:
         print(f"DEBUG: Error loading validation history from database: {e}")
-        db_history = []
+        # Fallback to temp file reports only
+        reports = temp_reports
     
     # Always check database for API key (source of truth)
     api_key = db.get_user_api_key(user_id)
@@ -494,32 +509,79 @@ def view_report(report_id):
     
     print(f"\nDEBUG view_report: Looking for report_id={report_id}")
     print(f"DEBUG view_report: Session ID: {session.get('session_id', 'NO SESSION')}")
-    print(f"DEBUG view_report: Total items in processing_results: {len(processing_results)}")
-    print(f"DEBUG view_report: Keys in processing_results: {list(processing_results.keys())}")
     
-    reports = get_sample_reports()
-    print(f"DEBUG view_report: get_sample_reports() returned {len(reports)} reports")
-    for r in reports:
-        print(f"  - Report ID: {r['id']}, filename: {r['filename']}")
-    
-    report = next((r for r in reports if r['id'] == report_id), None)
-    
-    if not report:
-        print(f"DEBUG view_report: Report {report_id} NOT FOUND in reports list")
-        return "Report not found", 404
-    
-    print(f"DEBUG view_report: Found report: {report['filename']}")
-    
-    # Get markdown content from memory (stored during validation)
-    if report_id in processing_results and 'report_content' in processing_results[report_id]:
-        md_content = processing_results[report_id]['report_content']
-        print(f"DEBUG view_report: Found report_content (length: {len(md_content)})")
+    # Check if this is a database report (prefixed with 'db_')
+    if report_id.startswith('db_'):
+        validation_id = int(report_id.replace('db_', ''))
+        print(f"DEBUG view_report: Database report, validation_id={validation_id}")
+        
+        # Get report from database
+        try:
+            db_report = db.get_validation_report_by_id(validation_id)
+            if not db_report:
+                return "Report not found in database", 404
+            
+            # Build report dict for template
+            report = {
+                'id': report_id,
+                'filename': db_report['filename'],
+                'message_type': db_report['message_type'],
+                'status': db_report['status'],
+                'errors': db_report['error_count'],
+                'warnings': db_report['warning_count'],
+                'date': db_report['timestamp'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(db_report['timestamp'], 'strftime') else str(db_report['timestamp']),
+                'report_path': db_report.get('report_url', ''),
+                'corrected_path': None,  # Database reports don't have local corrected files
+                'validation_id': validation_id
+            }
+            
+            # Generate markdown content for database report
+            md_content = f"# Validation Report: {db_report['filename']}\n\n"
+            md_content += f"**Status:** {db_report['status']}  \n"
+            md_content += f"**Message Type:** {db_report['message_type']}  \n"
+            md_content += f"**Validated:** {report['date']}  \n\n"
+            md_content += f"**Errors:** {db_report['error_count']}  \n"
+            md_content += f"**Warnings:** {db_report['warning_count']}  \n"
+            if db_report.get('corrections_applied', 0) > 0:
+                md_content += f"**Corrections Applied:** {db_report['corrections_applied']}  \n"
+            
+            if db_report.get('report_url'):
+                md_content += f"\n[View Full Gazelle Report]({db_report['report_url']})\n"
+            
+            print(f"DEBUG view_report: Generated markdown for database report")
+            
+        except Exception as e:
+            print(f"ERROR view_report: Failed to load database report: {e}")
+            return f"Error loading report: {e}", 500
     else:
-        print(f"DEBUG view_report: report_content NOT FOUND for {report_id}")
-        print(f"  - report_id in processing_results: {report_id in processing_results}")
-        if report_id in processing_results:
-            print(f"  - Keys in processing_results[{report_id}]: {list(processing_results[report_id].keys())}")
-        return "Report content not found", 404
+        # Original temp file logic
+        print(f"DEBUG view_report: Temp file report")
+        print(f"DEBUG view_report: Total items in processing_results: {len(processing_results)}")
+        print(f"DEBUG view_report: Keys in processing_results: {list(processing_results.keys())}")
+        
+        reports = get_sample_reports()
+        print(f"DEBUG view_report: get_sample_reports() returned {len(reports)} reports")
+        for r in reports:
+            print(f"  - Report ID: {r['id']}, filename: {r['filename']}")
+        
+        report = next((r for r in reports if r['id'] == report_id), None)
+        
+        if not report:
+            print(f"DEBUG view_report: Report {report_id} NOT FOUND in reports list")
+            return "Report not found", 404
+        
+        print(f"DEBUG view_report: Found report: {report['filename']}")
+        
+        # Get markdown content from memory (stored during validation)
+        if report_id in processing_results and 'report_content' in processing_results[report_id]:
+            md_content = processing_results[report_id]['report_content']
+            print(f"DEBUG view_report: Found report_content (length: {len(md_content)})")
+        else:
+            print(f"DEBUG view_report: report_content NOT FOUND for {report_id}")
+            print(f"  - report_id in processing_results: {report_id in processing_results}")
+            if report_id in processing_results:
+                print(f"  - Keys in processing_results[{report_id}]: {list(processing_results[report_id].keys())}")
+            return "Report content not found", 404
     
     # Convert to HTML and sanitize to prevent XSS
     html_content = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])

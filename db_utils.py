@@ -257,6 +257,38 @@ class DatabaseManager:
             cursor.close()
             conn.close()
     
+    def get_validation_report_by_id(self, validation_id):
+        """Get a single validation report by ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute("""
+                SELECT 
+                    ValidationID, Filename, MessageType, Status, ReportURL, 
+                    ErrorCount, WarningCount, CorrectionsApplied, ValidationTimestamp
+                FROM ValidationHistory
+                WHERE ValidationID = ?
+            """, validation_id)
+            
+            row = cursor.fetchone()
+            if row:
+                return {
+                    'id': row[0],
+                    'filename': row[1],
+                    'message_type': row[2],
+                    'status': row[3],
+                    'report_url': row[4],
+                    'error_count': row[5],
+                    'warning_count': row[6],
+                    'corrections_applied': row[7],
+                    'timestamp': row[8]
+                }
+            return None
+        finally:
+            cursor.close()
+            conn.close()
+    
     def get_user_statistics(self, user_id):
         """Get user validation statistics"""
         conn = self.get_connection()
