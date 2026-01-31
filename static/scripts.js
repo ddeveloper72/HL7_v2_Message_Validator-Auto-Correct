@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get DOM elements
     const uploadForm = document.getElementById('uploadForm');
     const fileInput = document.getElementById('fileInput');
+    const autoCorrectCheckbox = document.getElementById('autoCorrectCheckbox');
     const validateBtn = document.getElementById('validateBtn');
     const validateSampleBtn = document.getElementById('validateSampleBtn');
     const loadingSpinner = document.getElementById('loadingSpinner');
@@ -26,7 +27,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        await validateFile(file);
+        const autoCorrect = autoCorrectCheckbox.checked;
+        await validateFile(file, autoCorrect);
     });
 
     // Sample file validation handler
@@ -55,9 +57,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     /**
-     * Validate uploaded file with auto-correction
+     * Validate uploaded file with optional auto-correction
      */
-    async function validateFile(file) {
+    async function validateFile(file, autoCorrect = false) {
         showLoading();
         hideError();
         hideResults();
@@ -66,9 +68,64 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('file', file);
 
         try {
-            const response = await fetch('/auto-validate', {
+            // Step 1: Upload file
+            const uploadResponse = await fetch('/upload', {
                 method: 'POST',
                 body: formData
+            });
+
+            const uploadData = await uploadResponse.json();
+
+            if (!uploadResponse.ok) {
+                showError(uploadData.message || 'Upload failed');
+                hideLoading();
+                return;
+            }
+
+            const fileId = uploadData.file_id;
+            const fileName = uploadData.filename;
+
+            // Step 2: Validate file
+            const validateResponse = await fetch(`/validate/${fileId}`, {
+                method: 'POST'
+            });
+
+            const validateData = await validateResponse.json();
+
+            if (!validateResponse.ok) {
+                showError(validateData.message || 'Validation failed');
+                hideLoading();
+                return;
+            }
+
+            // Check if auto-correction should be applied
+            if (autoCorrect && validateData.errors > 0) {
+                // Auto-correct is enabled and there are errors
+                await autoCorrectFile(fileId, validateData);
+            } else {
+                // Just show validation results
+                displayValidationResults(validateData, fileName);
+            }
+        } catch (error) {
+            showError('Network error: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    /**
+     * Auto-correct file by running correction iterations
+     */
+    async function autoCorrectFile(fileId, initialData) {
+        // Show loading with iteration info
+        const loadingDiv = document.querySelector('#loadingSpinner p');
+        if (loadingDiv) {
+            loadingDiv.innerHTML = 'Running auto-correction (max 5 iterations)...';
+        }
+
+        try {
+            const response = await fetch(`/retry-auto-correct/${fileId}`, {
+                method: 'POST'
             });
 
             const data = await response.json();
@@ -76,17 +133,50 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.ok) {
                 displayResults(data);
             } else {
-                showError(data.error || 'Validation failed');
-                // Still show corrections if any were applied
-                if (data.corrections_applied) {
-                    displayCorrectionsOnly(data);
-                }
+                showError(data.message || 'Auto-correction failed');
+                // Show initial validation results anyway
+                displayValidationResults(initialData, 'File');
             }
         } catch (error) {
-            showError('Network error: ' + error.message);
-        } finally {
-            hideLoading();
+            showError('Network error during auto-correction: ' + error.message);
+            // Show initial validation results
+            displayValidationResults(initialData, 'File');
         }
+    }
+
+    /**
+     * Display validation results
+     */
+    function displayValidationResults(data, fileName) {
+        document.getElementById('fileName').textContent = fileName;
+        
+        const statusElement = document.getElementById('validationStatus');
+        const isPassed = data.status === 'PASSED';
+        
+        let statusHTML = '';
+        if (isPassed) {
+            statusHTML = `
+                <div class="alert alert-success">
+                    <h5><i class="bi bi-check-circle"></i> Validation PASSED</h5>
+                    <p class="mb-0">All validation checks completed successfully.</p>
+                </div>
+            `;
+        } else {
+            statusHTML = `
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-x-circle"></i> Validation FAILED</h5>
+                    <p class="mb-2">Errors: <strong>${data.errors || 0}</strong> | Warnings: <strong>${data.warnings || 0}</strong></p>
+                </div>
+            `;
+        }
+
+        statusElement.innerHTML = statusHTML;
+
+        // Show validation report
+        document.getElementById('validationReport').textContent = data.report_content || 'No report available';
+
+        // Show results container
+        document.getElementById('resultsContainer').style.display = 'block';
     }
 
     /**

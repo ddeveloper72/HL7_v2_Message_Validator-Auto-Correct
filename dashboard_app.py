@@ -1020,5 +1020,39 @@ def validate_file(file_id):
         save_processing_results()
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/retry-auto-correct/<file_id>', methods=['POST'])
+def auto_correct_if_errors(file_id):
+    """Auto-correct file if errors found (called when auto-correct checkbox is checked)"""
+    # Reload from temp file to get latest results
+    load_processing_results()
+    
+    if file_id not in processing_results:
+        return jsonify({'success': False, 'message': 'File not found'}), 404
+    
+    if 'api_key' not in session:
+        return jsonify({'success': False, 'message': 'API key not set'}), 400
+    
+    file_info = processing_results[file_id]
+    
+    # Check if there are errors to correct
+    detailed_errors = file_info.get('detailed_errors', [])
+    if not detailed_errors:
+        # No errors, validation already passed
+        return jsonify({
+            'success': True,
+            'status': 'PASSED',
+            'errors': 0,
+            'warnings': file_info.get('warnings', 0),
+            'report_content': file_info.get('report_content', ''),
+            'message_type': file_info.get('message_type', 'Unknown'),
+            'corrections': [],
+            'iteration_count': 0
+        })
+    
+    # Use the existing retry_auto_correct logic but adapted for file_id instead of report_id
+    # Delegate to the existing retry_auto_correct endpoint
+    from flask import redirect
+    return redirect(f'/auto-correct/{file_id}', code=307)
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
