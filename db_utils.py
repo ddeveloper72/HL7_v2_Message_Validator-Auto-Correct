@@ -134,8 +134,15 @@ class DatabaseManager:
             conn.close()
     
     def set_user_api_key(self, user_id, api_key, ip_address=None):
-        """Set or update user's Gazelle API key (encrypted)"""
-        encrypted_key = self.encrypt_api_key(api_key)
+        """Set or update user's Gazelle API key (encrypted), or clear if None"""
+        # Handle clearing the API key
+        if api_key is None:
+            encrypted_key = None
+            action = 'CLEAR'
+        else:
+            encrypted_key = self.encrypt_api_key(api_key)
+            action = 'SET'
+        
         conn = self.get_connection()
         cursor = conn.cursor()
         
@@ -149,7 +156,7 @@ class DatabaseManager:
             cursor.execute("""
                 INSERT INTO APIKeyAuditLog (UserID, Action, IPAddress)
                 VALUES (?, ?, ?)
-            """, (user_id, 'SET', ip_address))
+            """, (user_id, action, ip_address))
             
             conn.commit()
         finally:
