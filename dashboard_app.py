@@ -749,9 +749,30 @@ def retry_auto_correct(report_id):
     print(f"{'='*80}")
     
     try:
-        # Read original file
-        with open(original_filepath, 'rb') as f:
-            current_content = f.read()
+        # Try to read from database first (persistent), fall back to temp file
+        current_content = None
+        validation_id = file_info.get('validation_id')
+        
+        if validation_id:
+            try:
+                file_data = db.get_validation_file_content(validation_id)
+                if file_data and file_data['content']:
+                    current_content = file_data['content']
+                    print(f"DEBUG: Retrieved file content from database (validation_id={validation_id})")
+            except Exception as e:
+                print(f"WARNING: Failed to retrieve from database: {e}")
+        
+        # Fall back to temp file if database retrieval failed
+        if current_content is None:
+            if os.path.exists(original_filepath):
+                with open(original_filepath, 'rb') as f:
+                    current_content = f.read()
+                print(f"DEBUG: Retrieved file content from temp file: {original_filepath}")
+            else:
+                return jsonify({
+                    'success': False, 
+                    'message': 'File not found. Please re-upload and validate the file.'
+                }), 404
         
         max_iterations = int(os.getenv('MAX_AUTO_CORRECT_ITERATIONS', '10'))  # Prevent infinite loops
         iteration = 0
@@ -982,7 +1003,11 @@ def retry_auto_correct(report_id):
         # Save to database if user is authenticated
         if 'user_id' in session:
             try:
-                db.save_validation_result(
+                # Read the corrected file content
+                with open(final_filepath, 'rb') as f:
+                    corrected_content = f.read()
+                
+                validation_id = db.save_validation_result(
                     user_id=session['user_id'],
                     filename=file_info['filename'],
                     message_type=detected_message_type or 'Unknown',
@@ -990,9 +1015,12 @@ def retry_auto_correct(report_id):
                     report_url=report_url or '',
                     error_count=errors,
                     warning_count=warnings,
-                    corrections_applied=total_corrections
+                    corrections_applied=total_corrections,
+                    file_content=corrected_content
                 )
-                print(f"DEBUG: Saved auto-correct result to database for user {session['user_id']}")
+                # Update validation_id in case user wants to retry
+                processing_results[report_id]['validation_id'] = validation_id
+                print(f"DEBUG: Saved auto-correct result to database (ID={validation_id}) for user {session['user_id']}")
             except Exception as e:
                 print(f"WARNING: Failed to save to database: {e}")
 
@@ -1419,7 +1447,11 @@ def validate_file(file_id):
         # Save to database if user is authenticated
         if 'user_id' in session:
             try:
-                db.save_validation_result(
+                # Read file content to store in database
+                with open(filepath, 'rb') as f:
+                    file_content = f.read()
+                
+                validation_id = db.save_validation_result(
                     user_id=session['user_id'],
                     filename=file_info['filename'],
                     message_type=message_type,
@@ -1427,9 +1459,12 @@ def validate_file(file_id):
                     report_url=report_url or '',
                     error_count=errors,
                     warning_count=warnings,
-                    corrections_applied=0  # No auto-correction on upload
+                    corrections_applied=0,  # No auto-correction on upload
+                    file_content=file_content
                 )
-                print(f"DEBUG: Saved validation result to database for user {session['user_id']}")
+                # Store validation_id for later retrieval
+                processing_results[file_id]['validation_id'] = validation_id
+                print(f"DEBUG: Saved validation result to database (ID={validation_id}) for user {session['user_id']}")
             except Exception as e:
                 print(f"WARNING: Failed to save to database: {e}")
         

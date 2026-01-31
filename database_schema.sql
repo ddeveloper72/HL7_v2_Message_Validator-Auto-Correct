@@ -26,6 +26,7 @@ CREATE TABLE ValidationHistory (
     ErrorCount INT DEFAULT 0,
     WarningCount INT DEFAULT 0,
     CorrectionsApplied INT DEFAULT 0,
+    OriginalFileContent VARBINARY(MAX),  -- Original file for auto-correction
     ValidationTimestamp DATETIME2 DEFAULT GETUTCDATE(),
     FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
     INDEX IX_ValidationHistory_User (UserID),

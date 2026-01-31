@@ -163,6 +163,28 @@ class DatabaseManager:
             cursor.close()
             conn.close()
     
+    def get_validation_file_content(self, validation_id):
+        """Get original file content for a validation record"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute("""
+                SELECT OriginalFileContent, Filename 
+                FROM ValidationHistory 
+                WHERE ValidationID = ?
+            """, validation_id)
+            result = cursor.fetchone()
+            if result:
+                return {
+                    'content': result[0],
+                    'filename': result[1]
+                }
+            return None
+        finally:
+            cursor.close()
+            conn.close()
+    
     def get_user_api_key(self, user_id):
         """Get user's decrypted Gazelle API key"""
         conn = self.get_connection()
@@ -181,19 +203,23 @@ class DatabaseManager:
     # ==================== VALIDATION HISTORY ====================
     
     def save_validation_result(self, user_id, filename, message_type, status, 
-                               report_url, error_count=0, warning_count=0, corrections_applied=0):
-        """Save validation result to history"""
+                               report_url, error_count=0, warning_count=0, corrections_applied=0, file_content=None):
+        """Save validation result to history with optional file content"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
         try:
             cursor.execute("""
                 INSERT INTO ValidationHistory 
-                (UserID, Filename, MessageType, Status, ReportURL, ErrorCount, WarningCount, CorrectionsApplied)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (user_id, filename, message_type, status, report_url, error_count, warning_count, corrections_applied))
+                (UserID, Filename, MessageType, Status, ReportURL, ErrorCount, WarningCount, CorrectionsApplied, OriginalFileContent)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (user_id, filename, message_type, status, report_url, error_count, warning_count, corrections_applied, file_content))
             
             conn.commit()
+            # Return the inserted ValidationID
+            cursor.execute("SELECT @@IDENTITY")
+            validation_id = cursor.fetchone()[0]
+            return validation_id
         finally:
             cursor.close()
             conn.close()

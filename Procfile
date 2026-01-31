@@ -1,2 +1,2 @@
-release: playwright install chromium --with-deps
+release: playwright install chromium
 web: gunicorn dashboard_app:app --timeout 120
