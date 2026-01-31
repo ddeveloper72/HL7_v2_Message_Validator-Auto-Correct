@@ -398,7 +398,18 @@ def dashboard():
     """Main dashboard showing all validation reports"""
     user_id = session['user_id']
     show_all = request.args.get('show_all') == '1'
+    
+    # Get current session reports from temp file
     reports = get_sample_reports(show_all=show_all)
+    
+    # Also get historical validation reports from database
+    try:
+        db_history = db.get_user_validation_history(user_id, limit=100)
+        # Convert database records to report format if needed
+        # For now just use temp file reports
+    except Exception as e:
+        print(f"DEBUG: Error loading validation history from database: {e}")
+        db_history = []
     
     # Always check database for API key (source of truth)
     api_key = db.get_user_api_key(user_id)
@@ -410,14 +421,28 @@ def dashboard():
     
     has_api_key = api_key is not None
     
+    # Get user statistics from database for accurate counts
+    try:
+        db_stats = db.get_user_statistics(user_id)
+        total_files = db_stats['total']
+        passed_count = db_stats['passed']
+        failed_count = db_stats['failed']
+    except Exception as e:
+        print(f"DEBUG: Error loading stats from database: {e}")
+        # Fallback to temp file stats
+        total_files = len(reports)
+        passed_count = sum(1 for r in reports if r['status'] == 'PASSED')
+        failed_count = sum(1 for r in reports if r['status'] == 'FAILED')
+    
     return render_template('dashboard.html', 
                          reports=reports,
                          has_api_key=has_api_key,
                          user_name=session.get('display_name'),
                          user_email=session.get('email'),
-                         total_files=len(reports),
-                         passed_count=sum(1 for r in reports if r['status'] == 'PASSED'),
-                         failed_count=sum(1 for r in reports if r['status'] == 'FAILED'),
+                         total_files=total_files,
+                         passed_count=passed_count,
+                         failed_count=failed_count,
+                         show_all=show_all)
                          show_all=show_all)
 
 @app.route('/set-api-key', methods=['POST'])
