@@ -443,7 +443,6 @@ def dashboard():
                          passed_count=passed_count,
                          failed_count=failed_count,
                          show_all=show_all)
-                         show_all=show_all)
 
 @app.route('/set-api-key', methods=['POST'])
 def set_api_key():
