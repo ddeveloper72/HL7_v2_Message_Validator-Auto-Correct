@@ -219,7 +219,11 @@ class HL7MessageCorrector:
             elif ('Code' in error_type or 'code' in error_type.lower()) and 'not member of' in description.lower():
                 content = self._fix_invalid_code(content, location, description)
             
-            # Fix 3: Empty required components
+            # Fix 3: Missing required components (e.g., OBX-3.3, OBR-4.3)
+            elif error_type == 'Usage' and 'missing' in description.lower():
+                content = self._fix_missing_component(content, location, description)
+            
+            # Fix 4: Other missing components with different error types
             elif 'required' in description.lower() and 'missing' in description.lower():
                 content = self._fix_missing_component(content, location, description)
         
@@ -385,18 +389,91 @@ class HL7MessageCorrector:
     
     def _fix_missing_component(self, content, location, description):
         """Fix missing required components within fields"""
-        # Parse location to identify segment and field
-        # Example: 'hl7shortpath:SCH[1]-6[1].3[1]' -> SCH-6.3
-        match = re.search(r':([A-Z]{3})\[1\]-(\d+)\[1\]\.(\d+)', location)
+        print(f"DEBUG: _fix_missing_component called")
+        print(f"DEBUG:   location={location}")
+        print(f"DEBUG:   description={description[:150]}")
+        
+        # Parse location to identify segment, field, and component
+        # Example patterns:
+        # - 'hl7shortpath:SCH[1]-6[1].3[1]' -> SCH-6.3
+        # - 'hl7shortpath:OBX[1]-3[1].3' -> OBX[1]-3.3
+        # - 'hl7shortpath:OBR[1]-4[1].3' -> OBR[1]-4.3
+        
+        # Try to match segment[n]-field.component format
+        match = re.search(r':([A-Z]{3})\[(\d+)\]-(\d+)(?:\[1\])?\.(\d+)', location)
         if not match:
+            print(f"DEBUG:   Could not parse location pattern")
             return content
         
         segment = match.group(1)
-        field_num = match.group(2)
-        component = match.group(3)
+        segment_repeat = match.group(2)
+        field_num = match.group(3)
+        component = match.group(4)
         
-        # Known fixes for missing components
-        if segment == 'SCH' and field_num == '6' and component == '3':
+        print(f"DEBUG:   Parsed: {segment}[{segment_repeat}]-{field_num}.{component}")
+        
+        # Handle specific missing components
+        if segment == 'OBX' and field_num == '3' and component == '3':
+            # OBX-3.3: Name of coding system for observation identifier
+            print(f"DEBUG:   Fixing OBX[{segment_repeat}]-3.3 (Name of coding system)")
+            
+            # Find the specific OBX segment repeat and its OBX.3 field
+            # Pattern: <OBX>...<OBX.3>...<CE.3></CE.3>...</OBX.3>...</OBX>
+            # We need to target the specific repeat
+            
+            # Strategy: Find all OBX segments and replace only the one at the right repeat position
+            obx_pattern = rf'(<OBX>(?:(?!<OBX>).)*?<OBX\.3>(?:(?!<OBX>).)*?<CE\.3>)(\s*)(</CE\.3>)'
+            
+            # Use a counter to track which OBX we're in
+            obx_count = [0]  # Use list to allow modification in nested function
+            
+            def replace_obx_ce3(match_obj):
+                obx_count[0] += 1
+                # Only replace if this is the right segment repeat
+                if obx_count[0] == int(segment_repeat):
+                    if match_obj.group(2).strip() == '':
+                        print(f"DEBUG:   Found empty CE.3 in OBX[{obx_count[0]}], adding 'LIS'")
+                        self.corrections_made.append({
+                            'type': 'GAZELLE_FIX',
+                            'field': f'OBX[{segment_repeat}]-3.3 (Name of coding system)',
+                            'location': location,
+                            'old_value': '(empty)',
+                            'new_value': 'LIS',
+                            'description': f'Added missing coding system name (LIS) for observation identifier',
+                            'reason': description,
+                            'source': 'Gazelle Error Report'
+                        })
+                        return f'{match_obj.group(1)}LIS{match_obj.group(3)}'
+                return match_obj.group(0)
+            
+            content = re.sub(obx_pattern, replace_obx_ce3, content, flags=re.DOTALL)
+        
+        elif segment == 'OBR' and field_num == '4' and component == '3':
+            # OBR-4.3: Name of coding system for universal service identifier
+            print(f"DEBUG:   Fixing OBR[{segment_repeat}]-4.3 (Name of coding system)")
+            
+            # Pattern for OBR-4 field
+            obr_pattern = rf'(<OBR\.4>(?:(?!</OBR\.4>).)*?<CE\.3>)(\s*)(</CE\.3>)'
+            
+            def replace_obr_ce3(match_obj):
+                if match_obj.group(2).strip() == '':
+                    print(f"DEBUG:   Found empty CE.3 in OBR-4, adding 'LIS'")
+                    self.corrections_made.append({
+                        'type': 'GAZELLE_FIX',
+                        'field': f'OBR-4.3 (Name of coding system)',
+                        'location': location,
+                        'old_value': '(empty)',
+                        'new_value': 'LIS',
+                        'description': f'Added missing coding system name (LIS) for universal service identifier',
+                        'reason': description,
+                        'source': 'Gazelle Error Report'
+                    })
+                    return f'{match_obj.group(1)}LIS{match_obj.group(3)}'
+                return match_obj.group(0)
+            
+            content = re.sub(obr_pattern, replace_obr_ce3, content, flags=re.DOTALL)
+        
+        elif segment == 'SCH' and field_num == '6' and component == '3':
             # SCH-6.3: Name of coding system for appointment reason
             pattern = rf'(<{segment}\.{field_num}>.*?<CE\.{component}>)(\s*)(</CE\.{component}>)'
             
