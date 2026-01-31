@@ -121,6 +121,11 @@ def submit_validation(file_path):
     try:
         response = requests.post(API_ENDPOINT, json=payload, headers=headers)
         
+        # Debug: Print response details
+        print(f"DEBUG: Gazelle API Response Status: {response.status_code}")
+        print(f"DEBUG: Response Headers: {dict(response.headers)}")
+        print(f"DEBUG: Response Content-Type: {response.headers.get('Content-Type', 'N/A')}")
+        
         if response.status_code == 201:
             location = response.headers.get('Location')
             if "/validations/" in location and "?privacyKey=" in location:
@@ -134,10 +139,18 @@ def submit_validation(file_path):
                     'message_type': msg_type
                 }, None
         
-        return None, f"HTTP {response.status_code}: {response.text[:200]}"
+        # Show detailed error if not 201
+        error_msg = f"HTTP {response.status_code}"
+        if response.headers.get('Content-Type', '').startswith('text/html'):
+            error_msg += ": Gazelle returned HTML (likely auth error or API key invalid)"
+        else:
+            error_msg += f": {response.text[:300]}"
+        
+        print(f"DEBUG: Gazelle error response: {response.text[:500]}")
+        return None, error_msg
     
     except Exception as e:
-        return None, str(e)
+        return None, f"Exception: {str(e)}"
 
 def check_validation_status(oid, max_wait=30):
     """Check validation status and wait for completion"""
