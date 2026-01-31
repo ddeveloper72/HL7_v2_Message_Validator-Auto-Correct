@@ -152,6 +152,7 @@
             try {
                 const formData = new FormData();
                 formData.append('api_key', apiKey);
+                formData.append('csrf_token', '{{ csrf_token() }}');
 
                 const response = await fetch('{{ url_for("set_api_key_db") }}', {
                     method: 'POST',

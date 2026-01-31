@@ -358,7 +358,6 @@ def profile():
                          stats=stats)
 
 @app.route('/set-api-key-db', methods=['POST'])
-@csrf.exempt
 @login_required
 @limiter.limit("10 per minute")
 def set_api_key_db():
@@ -432,7 +431,6 @@ def set_api_key():
     return jsonify({'success': False, 'message': 'API key required'}), 400
 
 @app.route('/clear-api-key', methods=['POST'])
-@csrf.exempt
 def clear_api_key():
     """Clear API key from session and database"""
     # Remove from session
