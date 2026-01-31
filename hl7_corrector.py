@@ -215,8 +215,8 @@ class HL7MessageCorrector:
             if error_type == 'Cardinality' and 'missing' in description.lower():
                 content = self._fix_missing_field(content, location, description)
             
-            # Fix 2: Invalid code values (Code errors)
-            elif error_type == 'Code' and 'not member of' in description.lower():
+            # Fix 2: Invalid code values (Code errors or Code Not Found errors)
+            elif ('Code' in error_type or 'code' in error_type.lower()) and 'not member of' in description.lower():
                 content = self._fix_invalid_code(content, location, description)
             
             # Fix 3: Empty required components
