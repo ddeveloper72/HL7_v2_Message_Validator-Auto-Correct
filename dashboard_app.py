@@ -9,7 +9,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 from io import BytesIO
-from playwright.sync_api import sync_playwright
+from weasyprint import HTML, CSS
 import uuid
 import shutil
 from werkzeug.utils import secure_filename
@@ -886,13 +886,8 @@ def export_pdf(report_id):
     </html>
     """
     
-    # Generate PDF using Playwright (headless browser)
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page()
-        page.set_content(html_template)
-        pdf_bytes = page.pdf(format='A4', print_background=True)
-        browser.close()
+    # Generate PDF using WeasyPrint
+    pdf_bytes = HTML(string=html_template).write_pdf()
     
     # Create response
     buffer = BytesIO(pdf_bytes)
