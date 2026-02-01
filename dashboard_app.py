@@ -1338,8 +1338,11 @@ def retry_auto_correct(report_id):
                     report_content += f"### Correction #{i}\n"
                     report_content += f"- **Field:** {correction.get('field', 'Unknown')}\n"
                     report_content += f"- **Type:** {correction.get('type', 'Unknown')}\n"
-                    report_content += f"- **Change:** {correction.get('original')} → {correction.get('corrected')}\n"
-                    report_content += f"- **Details:** {correction.get('details', 'N/A')}\n\n"
+                    # Support both old_value/new_value (from HL7MessageCorrector) and original/corrected
+                    old_val = correction.get('old_value') or correction.get('original')
+                    new_val = correction.get('new_value') or correction.get('corrected')
+                    report_content += f"- **Change:** {old_val} → {new_val}\n"
+                    report_content += f"- **Details:** {correction.get('details') or correction.get('description') or 'N/A'}\n\n"
                 else:
                     report_content += f"### Correction #{i}\n"
                     report_content += f"- {correction}\n\n"
