@@ -266,7 +266,7 @@ class DatabaseManager:
             cursor.execute("""
                 SELECT 
                     ValidationID, Filename, MessageType, Status, ReportURL, 
-                    ErrorCount, WarningCount, CorrectionsApplied, ValidationTimestamp, ReportDetails
+                    ErrorCount, WarningCount, CorrectionsApplied, ValidationTimestamp, ReportDetails, OriginalFileContent
                 FROM ValidationHistory
                 WHERE ValidationID = ?
             """, validation_id)
@@ -283,7 +283,8 @@ class DatabaseManager:
                     'warning_count': row[6],
                     'corrections_applied': row[7],
                     'timestamp': row[8],
-                    'report_details': row[9]
+                    'report_details': row[9],
+                    'corrected_content': row[10]
                 }
             return None
         finally:
