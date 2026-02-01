@@ -133,10 +133,13 @@
                 <div class="card feature-card shadow-sm">
                     <div class="card-body text-center p-4">
                         <i class="bi bi-wrench-adjustable feature-icon"></i>
-                        <h4 class="fw-bold mb-3">Auto-Correction</h4>
+                        <h4 class="fw-bold mb-3">AI-Assisted Auto-Correction</h4>
                         <p class="text-muted">
-                            Intelligent auto-correction engine fixes common errors automatically.
+                            AI-powered auto-correction engine fixes common errors automatically.
                             Iterative validation ensures your message passes all checks.
+                        </p>
+                        <p class="text-muted mb-0">
+                            <small><i class="bi bi-info-circle"></i> Uses AI technology - see transparency notice below</small>
                         </p>
                     </div>
                 </div>
@@ -250,13 +253,84 @@
         </div>
     </section>
 
+    <!-- EU AI Act Compliance Notice -->
+    <section class="container my-5">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i> AI Transparency Notice (EU AI Act Compliance)
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">AI-Assisted Features</h6>
+                <p>
+                    This application uses AI-powered auto-correction technology to assist with HL7 v2 message validation. 
+                    The auto-correction feature employs rule-based algorithms and pattern matching to identify and suggest 
+                    corrections for common validation errors in HL7 v2 messages.
+                </p>
+
+                <h6 class="fw-bold mt-3">How Auto-Correction Works</h6>
+                <ul>
+                    <li><strong>Detection:</strong> The system analyzes validation errors reported by Gazelle EVS API</li>
+                    <li><strong>Analysis:</strong> Automated rules identify correctable issues based on HL7 v2.4 standards</li>
+                    <li><strong>Correction:</strong> Suggested fixes are applied to message segments, fields, and components</li>
+                    <li><strong>Validation:</strong> Corrected messages are re-validated iteratively until they pass or no more corrections are possible</li>
+                </ul>
+
+                <h6 class="fw-bold mt-3">Human Oversight & Control</h6>
+                <p>
+                    <strong>You maintain full control:</strong> All auto-corrections are performed at your request. 
+                    You can review validation reports, download corrected files, and verify all changes before submission. 
+                    The system provides detailed reports showing what corrections were applied.
+                </p>
+
+                <h6 class="fw-bold mt-3">Limitations & Recommendations</h6>
+                <div class="alert alert-warning mb-3">
+                    <strong>⚠️ Important:</strong> While our auto-correction feature can fix many common errors, it may not 
+                    resolve all validation issues. Always review corrected files and validation reports before submitting 
+                    to production systems. This tool is designed to assist, not replace, human expertise in HL7 message development.
+                </div>
+
+                <h6 class="fw-bold mt-3">Data Privacy & Security</h6>
+                <p>
+                    Your uploaded files and validation results are:
+                </p>
+                <ul>
+                    <li>Stored securely in Microsoft Azure SQL Database with encryption</li>
+                    <li>Accessible only to you via Azure AD authentication</li>
+                    <li>Not used for training AI models or shared with third parties</li>
+                    <li>Retained in your validation history for your reference</li>
+                </ul>
+
+                <h6 class="fw-bold mt-3">Contact & Support</h6>
+                <p>
+                    If you have questions about how this system works, wish to report issues, or need assistance:
+                </p>
+                <ul>
+                    <li><strong>Technical Support:</strong> Contact your system administrator</li>
+                    <li><strong>Data Protection:</strong> See your organization's data protection officer</li>
+                    <li><strong>Feedback:</strong> Use the in-app feedback mechanisms after signing in</li>
+                </ul>
+
+                <p class="text-muted mb-0 mt-3">
+                    <small>
+                        <strong>EU AI Act Classification:</strong> This system is classified as "Limited Risk" AI under 
+                        Regulation (EU) 2024/1689 (EU Artificial Intelligence Act). We are committed to transparency 
+                        and ensuring users are informed when interacting with AI-assisted features.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
     <footer class="bg-dark text-white py-4 mt-5">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
                     <h5><i class="bi bi-shield-check"></i> HL7 v2 Message Validator</h5>
-                    <p class="text-muted mb-0">Professional HL7 v2 validation with auto-correction</p>
+                    <p class="text-muted mb-0">Professional HL7 v2 validation with AI-assisted auto-correction</p>
+                    <p class="text-muted mb-0"><small>Compliant with EU AI Act (Regulation 2024/1689)</small></p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="text-muted mb-0">
