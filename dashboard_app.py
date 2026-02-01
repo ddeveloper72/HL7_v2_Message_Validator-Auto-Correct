@@ -973,7 +973,7 @@ def favicon():
 
 @app.route('/download/<report_id>/corrected')
 def download_corrected(report_id):
-    """Download corrected file (or original if it passed without correction)"""
+    """Download file from Gazelle (original or corrected)"""
     # Check if this is a database report
     if report_id.startswith('db_'):
         validation_id = int(report_id.replace('db_', ''))
@@ -983,25 +983,50 @@ def download_corrected(report_id):
         if not db_report:
             return "Report not found", 404
         
-        # Use corrected content if available, otherwise use original file content
-        file_content = db_report.get('corrected_content') or db_report.get('file_content')
-        if not file_content:
-            return "File content not found", 404
+        # Get the Gazelle report URL and extract the OID
+        report_url = db_report.get('report_url')
+        if not report_url:
+            return "Report URL not found", 404
         
-        # Create a file-like object from the content
-        from io import BytesIO
-        buffer = BytesIO(file_content.encode('utf-8'))
-        buffer.seek(0)
+        # Extract OID and privacy key from URL
+        # URL format: https://testing.ehealthireland.ie/evs/report.seam?oid=X&privacyKey=Y
+        import re
+        oid_match = re.search(r'oid=([^&]+)', report_url)
+        key_match = re.search(r'privacyKey=([^&#]+)', report_url)
         
-        # Use appropriate filename
-        filename = db_report['filename']
-        if db_report.get('corrected_content'):
-            filename = filename.replace('.txt', '_CORRECTED.txt')
+        if not oid_match or not key_match:
+            return "Invalid report URL format", 400
         
-        return send_file(buffer,
-                        as_attachment=True,
-                        download_name=filename,
-                        mimetype='text/plain')
+        oid = oid_match.group(1)
+        privacy_key = key_match.group(1)
+        
+        # Fetch file from Gazelle
+        # Try to get the file download endpoint
+        download_url = f"{os.environ.get('GAZELLE_BASE_URL')}/evs/downloadValidatedFile.seam?oid={oid}&privacyKey={privacy_key}"
+        
+        try:
+            response = requests.get(download_url, verify=os.environ.get('VERIFY_SSL', 'true').lower() == 'true')
+            
+            if response.status_code == 200:
+                # Create buffer from response content
+                buffer = BytesIO(response.content)
+                buffer.seek(0)
+                
+                # Use appropriate filename
+                filename = db_report['filename']
+                if db_report.get('corrections_applied', 0) > 0:
+                    filename = filename.replace('.txt', '_CORRECTED.txt')
+                
+                return send_file(buffer,
+                                as_attachment=True,
+                                download_name=filename,
+                                mimetype='text/plain')
+            else:
+                return f"Failed to download from Gazelle: {response.status_code}", 500
+                
+        except Exception as e:
+            print(f"ERROR downloading from Gazelle: {e}")
+            return f"Error downloading file: {e}", 500
     else:
         # Handle temp file reports
         load_processing_results()
