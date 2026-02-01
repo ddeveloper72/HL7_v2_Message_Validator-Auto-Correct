@@ -792,49 +792,92 @@ def download_corrected(report_id):
                     mimetype='text/plain')
 
 @app.route('/auto-correct/<report_id>', methods=['POST'])
+@login_required
 def retry_auto_correct(report_id):
     """Iterative auto-correction: keeps correcting and re-validating until PASSED or no more fixes possible"""
     # Always reload from temp file to get results from all workers
     load_processing_results()
     
-    if report_id not in processing_results:
-        return jsonify({'success': False, 'message': 'Report not found'}), 404
-    
     if 'api_key' not in session:
         return jsonify({'success': False, 'message': 'API key not set'}), 400
     
-    file_info = processing_results[report_id]
-    original_filepath = file_info['filepath']
-    
     print(f"\n{'='*80}")
-    print(f"ITERATIVE AUTO-CORRECTION STARTED")
+    print(f"ITERATIVE AUTO-CORRECTION STARTED - Report ID: {report_id}")
     print(f"{'='*80}")
     
+    # Check if this is a database report (db_XXX) or temp file report
+    is_db_report = report_id.startswith('db_')
+    
     try:
-        # Try to read from database first (persistent), fall back to temp file
         current_content = None
-        validation_id = file_info.get('validation_id')
+        original_filepath = None
+        filename = None
+        validation_id = None
+        detailed_errors = []
         
-        if validation_id:
-            try:
-                file_data = db.get_validation_file_content(validation_id)
-                if file_data and file_data['content']:
-                    current_content = file_data['content']
-                    print(f"DEBUG: Retrieved file content from database (validation_id={validation_id})")
-            except Exception as e:
-                print(f"WARNING: Failed to retrieve from database: {e}")
-        
-        # Fall back to temp file if database retrieval failed
-        if current_content is None:
-            if os.path.exists(original_filepath):
-                with open(original_filepath, 'rb') as f:
-                    current_content = f.read()
-                print(f"DEBUG: Retrieved file content from temp file: {original_filepath}")
-            else:
+        if is_db_report:
+            # Handle database report
+            validation_id = int(report_id.replace('db_', ''))
+            print(f"DEBUG: Database report - validation_id={validation_id}")
+            
+            # Retrieve file from database
+            file_data = db.get_validation_file_content(validation_id)
+            if not file_data or not file_data['content']:
                 return jsonify({
-                    'success': False, 
-                    'message': 'File not found. Please re-upload and validate the file.'
+                    'success': False,
+                    'message': 'File not found in database. Please re-upload and validate the file.'
                 }), 404
+            
+            current_content = file_data['content']
+            filename = file_data['filename']
+            print(f"DEBUG: Retrieved file from database: {filename} ({len(current_content)} bytes)")
+            
+            # Create temp file for processing
+            original_filepath = os.path.join(UPLOAD_FOLDER, f"db_temp_{validation_id}_{filename}")
+            with open(original_filepath, 'wb') as f:
+                f.write(current_content)
+            
+            # Get report details to extract errors
+            db_report = db.get_validation_report_by_id(validation_id)
+            if db_report:
+                # We don't have detailed_errors stored, so we'll need to re-fetch from Gazelle
+                # Or start with empty list and let the correction loop handle it
+                detailed_errors = []
+            
+        else:
+            # Handle temp file report
+            if report_id not in processing_results:
+                return jsonify({'success': False, 'message': 'Report not found in temporary storage'}), 404
+            
+            file_info = processing_results[report_id]
+            original_filepath = file_info['filepath']
+            filename = file_info['filename']
+            validation_id = file_info.get('validation_id')
+            detailed_errors = file_info.get('detailed_errors', [])
+            
+            print(f"DEBUG: Temp file report - filepath={original_filepath}")
+            
+            # Try to read from database first (persistent), fall back to temp file
+            if validation_id:
+                try:
+                    file_data = db.get_validation_file_content(validation_id)
+                    if file_data and file_data['content']:
+                        current_content = file_data['content']
+                        print(f"DEBUG: Retrieved file content from database (validation_id={validation_id})")
+                except Exception as e:
+                    print(f"WARNING: Failed to retrieve from database: {e}")
+            
+            # Fall back to temp file if database retrieval failed
+            if current_content is None:
+                if os.path.exists(original_filepath):
+                    with open(original_filepath, 'rb') as f:
+                        current_content = f.read()
+                    print(f"DEBUG: Retrieved file content from temp file: {original_filepath}")
+                else:
+                    return jsonify({
+                        'success': False, 
+                        'message': 'File not found. Please re-upload and validate the file.'
+                    }), 404
         
         max_iterations = int(os.getenv('MAX_AUTO_CORRECT_ITERATIONS', '10'))  # Prevent infinite loops
         iteration = 0
@@ -844,7 +887,6 @@ def retry_auto_correct(report_id):
         # Initialize final_filepath early so it's always defined
         final_filepath = original_filepath.replace('.txt', '_CORRECTED.txt').replace('.xml', '_CORRECTED.xml')
         
-        detailed_errors = file_info.get('detailed_errors', [])
         original_errors = detailed_errors.copy()  # Preserve original error list for report
         
         # Initialize variables used later in report building
@@ -1050,28 +1092,30 @@ def retry_auto_correct(report_id):
         report_content += validation_output
         report_content += "\n```\n"
 
-        processing_results[report_id]['status'] = 'completed'
-        processing_results[report_id]['validation_status'] = status
-        processing_results[report_id]['errors'] = errors
-        processing_results[report_id]['warnings'] = warnings
-        processing_results[report_id]['report_content'] = report_content
-        processing_results[report_id]['report_url'] = report_url
-        processing_results[report_id]['message_type'] = detected_message_type or 'Unknown'
-        processing_results[report_id]['corrected_path'] = final_filepath
-        processing_results[report_id]['corrections_applied'] = {'total_corrections': total_corrections}
-        processing_results[report_id]['iterations'] = iteration
-        save_processing_results()
+        # Update processing_results only for temp file reports
+        if not is_db_report and report_id in processing_results:
+            processing_results[report_id]['status'] = 'completed'
+            processing_results[report_id]['validation_status'] = status
+            processing_results[report_id]['errors'] = errors
+            processing_results[report_id]['warnings'] = warnings
+            processing_results[report_id]['report_content'] = report_content
+            processing_results[report_id]['report_url'] = report_url
+            processing_results[report_id]['message_type'] = detected_message_type or 'Unknown'
+            processing_results[report_id]['corrected_path'] = final_filepath
+            processing_results[report_id]['corrections_applied'] = {'total_corrections': total_corrections}
+            processing_results[report_id]['iterations'] = iteration
+            save_processing_results()
 
-        # Save to database if user is authenticated
+        # Save to database if user is authenticated (ALWAYS save for both report types)
         if 'user_id' in session:
             try:
                 # Read the corrected file content
                 with open(final_filepath, 'rb') as f:
                     corrected_content = f.read()
                 
-                validation_id = db.save_validation_result(
+                new_validation_id = db.save_validation_result(
                     user_id=session['user_id'],
-                    filename=file_info['filename'],
+                    filename=filename,
                     message_type=detected_message_type or 'Unknown',
                     status=status,
                     report_url=report_url or '',
@@ -1080,9 +1124,12 @@ def retry_auto_correct(report_id):
                     corrections_applied=total_corrections,
                     file_content=corrected_content
                 )
-                # Update validation_id in case user wants to retry
-                processing_results[report_id]['validation_id'] = validation_id
-                print(f"DEBUG: Saved auto-correct result to database (ID={validation_id}) for user {session['user_id']}")
+                # Update validation_id for future operations (only for temp file reports)
+                if not is_db_report and report_id in processing_results:
+                    processing_results[report_id]['validation_id'] = new_validation_id
+                    save_processing_results()
+                
+                print(f"DEBUG: Saved auto-correct result to database (ID={new_validation_id}) for user {session['user_id']}")
             except Exception as e:
                 print(f"WARNING: Failed to save to database: {e}")
 
