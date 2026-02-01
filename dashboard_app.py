@@ -869,30 +869,52 @@ def export_pdf(report_id):
     story.append(metadata_table)
     story.append(Spacer(1, 0.3*inch))
     
-    # Parse markdown content and add to PDF
-    lines = md_content.split('\n')
-    for line in lines:
-        line = line.strip()
-        if not line:
+    # Convert markdown to HTML first, then parse
+    html_content = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
+    
+    # Parse HTML and convert to PDF elements
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    def clean_text(text):
+        """Clean text for PDF - remove special characters that might not render"""
+        return text.replace('✓', '[OK]').replace('✗', '[X]').replace('→', '->').replace('✅', '[PASS]').replace('❌', '[FAIL]')
+    
+    for element in soup.find_all(['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'pre', 'code', 'strong', 'em']):
+        if element.name == 'h1':
+            text = clean_text(element.get_text())
+            story.append(Paragraph(f"<b>{text}</b>", heading_style))
+            story.append(Spacer(1, 0.15*inch))
+        elif element.name == 'h2':
+            text = clean_text(element.get_text())
+            story.append(Paragraph(f"<b>{text}</b>", heading_style))
             story.append(Spacer(1, 0.1*inch))
-        elif line.startswith('# '):
-            story.append(Paragraph(line[2:], heading_style))
+        elif element.name == 'h3':
+            text = clean_text(element.get_text())
+            story.append(Paragraph(text, heading_style))
             story.append(Spacer(1, 0.1*inch))
-        elif line.startswith('## '):
-            story.append(Paragraph(line[3:], heading_style))
+        elif element.name == 'p':
+            text = clean_text(element.get_text())
+            # Handle bold and italic inline
+            para_html = str(element)
+            para_html = para_html.replace('<strong>', '<b>').replace('</strong>', '</b>')
+            para_html = para_html.replace('<em>', '<i>').replace('</em>', '</i>')
+            # Extract just the inner content
+            para_soup = BeautifulSoup(para_html, 'html.parser')
+            inner_text = ''.join([str(c) for c in para_soup.p.children]) if para_soup.p else text
+            inner_text = clean_text(inner_text)
+            story.append(Paragraph(inner_text, normal_style))
+            story.append(Spacer(1, 0.05*inch))
+        elif element.name in ['ul', 'ol']:
+            for li in element.find_all('li', recursive=False):
+                bullet = '•' if element.name == 'ul' else f"{li.get('value', '1')}."
+                text = clean_text(li.get_text())
+                story.append(Paragraph(f"{bullet} {text}", normal_style))
             story.append(Spacer(1, 0.1*inch))
-        elif line.startswith('**') and line.endswith('**'):
-            # Bold text
-            story.append(Paragraph(f"<b>{line[2:-2]}</b>", normal_style))
-        elif line.startswith('- ') or line.startswith('* '):
-            # Bullet point
-            story.append(Paragraph(f"• {line[2:]}", normal_style))
-        elif line.startswith('```'):
-            # Skip code block markers
-            continue
-        else:
-            # Regular text or code
-            story.append(Paragraph(line, normal_style))
+        elif element.name in ['pre', 'code']:
+            text = clean_text(element.get_text())
+            story.append(Paragraph(f"<font name='Courier'>{text}</font>", code_style))
+            story.append(Spacer(1, 0.1*inch))
     
     # Footer
     story.append(Spacer(1, 0.3*inch))
