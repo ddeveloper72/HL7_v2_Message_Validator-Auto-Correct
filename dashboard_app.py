@@ -950,17 +950,16 @@ def export_pdf(report_id):
     </html>
     """
     
-    # Generate PDF using WeasyPrint
-    pdf_bytes = HTML(string=html_template).write_pdf()
-    
-    # Create response
-    buffer = BytesIO(pdf_bytes)
-    buffer.seek(0)
-    
-    return send_file(buffer,
-                    as_attachment=True,
-                    download_name=f"{report['filename']}_validation_report.pdf",
-                    mimetype='application/pdf')
+    # Return HTML page that browser can print to PDF (Ctrl+P)
+    response = make_response(html_template)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    response.headers['Content-Disposition'] = f'inline; filename="{report["filename"]}_validation_report.html"'
+    return response
+
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon - returns empty 204 to prevent 404 errors"""
+    return '', 204
 
 @app.route('/download/<report_id>/corrected')
 def download_corrected(report_id):
