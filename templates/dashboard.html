@@ -249,15 +249,22 @@
                     <h4 class="mb-0">
                         <i class="bi bi-file-earmark-text"></i> Validation Reports
                     </h4>
-                    {% if show_all %}
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-person"></i> Show My Session Only
-                    </a>
-                    {% else %}
-                    <a href="{{ url_for('dashboard', show_all=1) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-people"></i> Show All Sessions
-                    </a>
-                    {% endif %}
+                    <div>
+                        {% if reports|length > 0 %}
+                        <button class="btn btn-sm btn-outline-danger me-2" onclick="clearAllHistory()">
+                            <i class="bi bi-trash"></i> Clear All History
+                        </button>
+                        {% endif %}
+                        {% if show_all %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-person"></i> Show My Session Only
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('dashboard', show_all=1) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-people"></i> Show All Sessions
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -517,6 +524,49 @@
                         location.reload();
                     } else {
                         alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting report');
+                    console.error(error);
+                });
+        }
+
+        function clearAllHistory() {
+            if (!confirm('⚠️ WARNING: This will permanently delete ALL your validation history.\n\nThis action cannot be undone.\n\nAre you absolutely sure?')) {
+                return;
+            }
+
+            // Show loading indicator
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Deleting...';
+
+            fetch('/clear-history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`✅ Successfully deleted ${data.count} validation record(s)`);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    alert('Error clearing history. Please try again.');
+                    console.error(error);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+        }
                     }
                 });
         }

@@ -315,3 +315,41 @@ class DatabaseManager:
         finally:
             cursor.close()
             conn.close()
+    
+    def clear_user_validation_history(self, user_id):
+        """Delete all validation history for a user"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Get count before deletion for logging
+            cursor.execute("SELECT COUNT(*) FROM ValidationHistory WHERE UserID = ?", user_id)
+            count = cursor.fetchone()[0]
+            
+            # Delete all validation records for this user
+            cursor.execute("DELETE FROM ValidationHistory WHERE UserID = ?", user_id)
+            conn.commit()
+            
+            return count
+        finally:
+            cursor.close()
+            conn.close()
+    
+    def delete_validation_record(self, validation_id, user_id):
+        """Delete a single validation record (with user ownership check)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Verify ownership before deletion
+            cursor.execute("""
+                DELETE FROM ValidationHistory 
+                WHERE ValidationID = ? AND UserID = ?
+            """, (validation_id, user_id))
+            
+            conn.commit()
+            deleted = cursor.rowcount > 0
+            return deleted
+        finally:
+            cursor.close()
+            conn.close()

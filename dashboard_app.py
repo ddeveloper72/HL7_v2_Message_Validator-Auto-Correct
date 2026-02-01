@@ -459,6 +459,98 @@ def dashboard():
                          failed_count=failed_count,
                          show_all=show_all)
 
+@app.route('/clear-history', methods=['POST'])
+@login_required
+@limiter.limit("5 per minute")
+def clear_history():
+    """Clear all validation history for the current user"""
+    user_id = session['user_id']
+    
+    try:
+        # Delete all validation records from database
+        count = db.clear_user_validation_history(user_id)
+        
+        # Also clear from processing_results (temp file storage)
+        global processing_results
+        session_id = session.get('session_id')
+        if session_id:
+            # Remove only this user's session records
+            keys_to_remove = [k for k, v in processing_results.items() 
+                            if v.get('session_id') == session_id]
+            for key in keys_to_remove:
+                del processing_results[key]
+            save_processing_results()
+        
+        print(f"DEBUG: Cleared {count} validation records for user {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted {count} validation record(s)',
+            'count': count
+        })
+    except Exception as e:
+        print(f"ERROR: Failed to clear history: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to clear validation history. Please try again.'
+        }), 500
+
+@app.route('/delete-record/<record_id>', methods=['POST'])
+@login_required
+@limiter.limit("10 per minute")
+def delete_record(record_id):
+    """Delete a single validation record"""
+    user_id = session['user_id']
+    
+    try:
+        # Handle database records (db_XXX format)
+        if record_id.startswith('db_'):
+            validation_id = int(record_id.replace('db_', ''))
+            deleted = db.delete_validation_record(validation_id, user_id)
+            
+            if deleted:
+                return jsonify({
+                    'success': True,
+                    'message': 'Record deleted successfully'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Record not found or you do not have permission to delete it'
+                }), 404
+        else:
+            # Handle temp file records
+            if record_id in processing_results:
+                session_id = session.get('session_id')
+                # Verify ownership
+                if processing_results[record_id].get('session_id') == session_id:
+                    del processing_results[record_id]
+                    save_processing_results()
+                    return jsonify({
+                        'success': True,
+                        'message': 'Record deleted successfully'
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': 'You do not have permission to delete this record'
+                    }), 403
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Record not found'
+                }), 404
+    except Exception as e:
+        print(f"ERROR: Failed to delete record {record_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to delete record. Please try again.'
+        }), 500
+
 @app.route('/set-api-key', methods=['POST'])
 def set_api_key():
     """Store API key in session"""
