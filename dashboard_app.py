@@ -9,7 +9,6 @@ from datetime import datetime
 import json
 from pathlib import Path
 from io import BytesIO
-from weasyprint import HTML, CSS
 import uuid
 import shutil
 from werkzeug.utils import secure_filename
@@ -18,6 +17,16 @@ import threading
 import requests
 from xml.etree import ElementTree as ET
 from auto_correct import auto_correct_and_validate
+
+# Try to import WeasyPrint - PDF export will be disabled if not available
+try:
+    from weasyprint import HTML, CSS
+    WEASYPRINT_AVAILABLE = True
+    print("✓ WeasyPrint loaded successfully")
+except ImportError as e:
+    WEASYPRINT_AVAILABLE = False
+    print(f"⚠ WeasyPrint not available: {e}")
+    print("⚠ PDF export will be disabled")
 from hl7_corrector import HL7MessageCorrector
 import time
 import sys
@@ -736,6 +745,10 @@ def view_report(report_id):
 @app.route('/report/<report_id>/pdf')
 def export_pdf(report_id):
     """Export report as PDF"""
+    # Check if WeasyPrint is available
+    if not WEASYPRINT_AVAILABLE:
+        return "PDF export is not available. WeasyPrint library could not be loaded.", 503
+    
     # Always reload from temp file to get results from all workers
     load_processing_results()
     
