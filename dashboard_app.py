@@ -2,7 +2,7 @@
 Gazelle HL7 v2 Validation Dashboard
 Web interface for validating HL7 messages and viewing reports
 """
-from flask import Flask, render_template, request, send_file, session, redirect, url_for, jsonify
+from flask import Flask, render_template, request, send_file, session, redirect, url_for, jsonify, make_response
 import os
 import markdown
 from datetime import datetime
@@ -18,15 +18,22 @@ import requests
 from xml.etree import ElementTree as ET
 from auto_correct import auto_correct_and_validate
 
-# Try to import WeasyPrint - PDF export will be disabled if not available
+# Try to import reportlab for PDF generation
 try:
-    from weasyprint import HTML, CSS
-    WEASYPRINT_AVAILABLE = True
-    print("✓ WeasyPrint loaded successfully")
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_LEFT, TA_CENTER
+    from html.parser import HTMLParser
+    REPORTLAB_AVAILABLE = True
+    print("✓ ReportLab loaded successfully")
 except ImportError as e:
-    WEASYPRINT_AVAILABLE = False
-    print(f"⚠ WeasyPrint not available: {e}")
+    REPORTLAB_AVAILABLE = False
+    print(f"⚠ ReportLab not available: {e}")
     print("⚠ PDF export will be disabled")
+    
 from hl7_corrector import HL7MessageCorrector
 import time
 import sys
@@ -748,12 +755,12 @@ def export_pdf(report_id):
     """Export report as PDF"""
     print(f"\nDEBUG export_pdf: Looking for report_id={report_id}")
     
-    # Check if WeasyPrint is available
-    if not WEASYPRINT_AVAILABLE:
-        print("DEBUG export_pdf: WeasyPrint NOT available")
-        return "PDF export is not available. WeasyPrint library could not be loaded.", 503
+    # Check if ReportLab is available
+    if not REPORTLAB_AVAILABLE:
+        print("DEBUG export_pdf: ReportLab NOT available")
+        return "PDF export is not available. ReportLab library could not be loaded.", 503
     
-    print("DEBUG export_pdf: WeasyPrint IS available")
+    print("DEBUG export_pdf: ReportLab IS available")
     
     # Always reload from temp file to get results from all workers
     load_processing_results()
@@ -815,146 +822,93 @@ def export_pdf(report_id):
         else:
             return "Report content not found", 404
     
-    # Convert to HTML
-    html_content = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
+    # Check if reportlab is available
+    if not REPORTLAB_AVAILABLE:
+        return "PDF export is not available. ReportLab library could not be loaded.", 503
     
-    # Create styled HTML template (same as browser view)
-    status_color = '#27ae60' if report['status'] == 'PASSED' else '#e74c3c'
-    status_emoji = '✅' if report['status'] == 'PASSED' else '❌'
+    # Create PDF using reportlab
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.75*inch, bottomMargin=0.75*inch)
+    story = []
     
-    html_template = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-            @page {{
-                margin: 2cm;
-                size: A4;
-            }}
-            body {{
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-                font-size: 11pt;
-                line-height: 1.6;
-                color: #2c3e50;
-                margin: 0;
-                padding: 20px;
-            }}
-            h1 {{
-                color: #2c3e50;
-                font-size: 20pt;
-                border-bottom: 3px solid #3498db;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
-            }}
-            h2 {{
-                color: #34495e;
-                font-size: 16pt;
-                margin-top: 20px;
-                margin-bottom: 10px;
-                border-bottom: 2px solid #ecf0f1;
-                padding-bottom: 5px;
-            }}
-            h3 {{
-                color: #7f8c8d;
-                font-size: 14pt;
-                margin-top: 15px;
-            }}
-            h4 {{
-                color: #95a5a6;
-                font-size: 12pt;
-            }}
-            .metadata {{
-                background: #f8f9fa;
-                padding: 15px;
-                border-radius: 5px;
-                margin-bottom: 20px;
-                border-left: 4px solid #3498db;
-            }}
-            .metadata p {{
-                margin: 5px 0;
-            }}
-            .status {{
-                color: {status_color};
-                font-weight: bold;
-            }}
-            code {{
-                background: #f4f4f4;
-                padding: 2px 6px;
-                border-radius: 3px;
-                font-family: 'Courier New', Consolas, monospace;
-                font-size: 10pt;
-                color: #e74c3c;
-            }}
-            pre {{
-                background: #2c3e50;
-                color: #ecf0f1;
-                padding: 15px;
-                border-radius: 5px;
-                overflow-x: auto;
-                border-left: 4px solid #3498db;
-                font-size: 9pt;
-            }}
-            pre code {{
-                background: none;
-                color: #ecf0f1;
-                padding: 0;
-            }}
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin: 15px 0;
-            }}
-            th, td {{
-                border: 1px solid #ddd;
-                padding: 8px;
-                text-align: left;
-            }}
-            th {{
-                background-color: #3498db;
-                color: white;
-            }}
-            hr {{
-                border: none;
-                border-top: 2px solid #ecf0f1;
-                margin: 20px 0;
-            }}
-            .footer {{
-                margin-top: 30px;
-                padding-top: 15px;
-                border-top: 1px solid #ddd;
-                font-size: 9pt;
-                color: #7f8c8d;
-                text-align: center;
-            }}
-        </style>
-    </head>
-    <body>
-        <h1>HL7 v2 Validation Report</h1>
-        
-        <div class="metadata">
-            <p><strong>File:</strong> {report['filename']}</p>
-            <p><strong>Message Type:</strong> {report['message_type']}</p>
-            <p><strong>Date:</strong> {report['date']}</p>
-            <p><strong>Status:</strong> <span class="status">{status_emoji} {report['status']}</span></p>
-            <p><strong>Errors:</strong> {report['errors']}</p>
-            <p><strong>Warnings:</strong> {report['warnings']}</p>
-        </div>
-        
-        {html_content}
-        
-        <div class="footer">
-            Generated by Gazelle HL7 v2 Validation Dashboard on {datetime.now().strftime('%Y-%m-%d at %H:%M:%S')}
-        </div>
-    </body>
-    </html>
-    """
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=18, textColor=colors.HexColor('#2c3e50'))
+    heading_style = ParagraphStyle('CustomHeading', parent=styles['Heading2'], fontSize=14, textColor=colors.HexColor('#34495e'))
+    normal_style = styles['Normal']
+    code_style = ParagraphStyle('Code', parent=styles['Code'], fontSize=9, leftIndent=20)
     
-    # Return HTML page that browser can print to PDF (Ctrl+P)
-    response = make_response(html_template)
-    response.headers['Content-Type'] = 'text/html; charset=utf-8'
-    response.headers['Content-Disposition'] = f'inline; filename="{report["filename"]}_validation_report.html"'
-    return response
+    # Title
+    story.append(Paragraph("HL7 v2 Validation Report", title_style))
+    story.append(Spacer(1, 0.2*inch))
+    
+    # Metadata table
+    status_color = colors.green if report['status'] == 'PASSED' else colors.red
+    metadata_data = [
+        ['File:', report['filename']],
+        ['Message Type:', report['message_type']],
+        ['Date:', report['date']],
+        ['Status:', report['status']],
+        ['Errors:', str(report['errors'])],
+        ['Warnings:', str(report['warnings'])]
+    ]
+    metadata_table = Table(metadata_data, colWidths=[1.5*inch, 5*inch])
+    metadata_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f8f9fa')),
+        ('TEXTCOLOR', (0, 3), (1, 3), status_color),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    story.append(metadata_table)
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Parse markdown content and add to PDF
+    lines = md_content.split('\n')
+    for line in lines:
+        line = line.strip()
+        if not line:
+            story.append(Spacer(1, 0.1*inch))
+        elif line.startswith('# '):
+            story.append(Paragraph(line[2:], heading_style))
+            story.append(Spacer(1, 0.1*inch))
+        elif line.startswith('## '):
+            story.append(Paragraph(line[3:], heading_style))
+            story.append(Spacer(1, 0.1*inch))
+        elif line.startswith('**') and line.endswith('**'):
+            # Bold text
+            story.append(Paragraph(f"<b>{line[2:-2]}</b>", normal_style))
+        elif line.startswith('- ') or line.startswith('* '):
+            # Bullet point
+            story.append(Paragraph(f"• {line[2:]}", normal_style))
+        elif line.startswith('```'):
+            # Skip code block markers
+            continue
+        else:
+            # Regular text or code
+            story.append(Paragraph(line, normal_style))
+    
+    # Footer
+    story.append(Spacer(1, 0.3*inch))
+    footer_text = f"Generated by Gazelle HL7 v2 Validation Dashboard on {datetime.now().strftime('%Y-%m-%d at %H:%M:%S')}"
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey)
+    story.append(Paragraph(footer_text, footer_style))
+    
+    # Build PDF
+    doc.build(story)
+    buffer.seek(0)
+    
+    # Return PDF file
+    return send_file(buffer,
+                    as_attachment=True,
+                    download_name=f"{report['filename']}_validation_report.pdf",
+                    mimetype='application/pdf')
 
 @app.route('/favicon.ico')
 def favicon():
