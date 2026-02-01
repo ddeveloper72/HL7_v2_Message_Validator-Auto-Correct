@@ -393,8 +393,11 @@
     <script>
         // Update current time
         function updateTime() {
-            const now = new Date();
-            document.querySelector('#currentTime span').textContent = now.toLocaleString();
+            const timeElement = document.querySelector('#currentTime span');
+            if (timeElement) {
+                const now = new Date();
+                timeElement.textContent = now.toLocaleString();
+            }
         }
         updateTime();
         setInterval(updateTime, 1000);
@@ -498,7 +501,7 @@
             if (confirm('Are you sure you want to clear your API key?')) {
                 const formData = new FormData();
                 formData.append('csrf_token', '{{ csrf_token() }}');
-                
+
                 fetch('/clear-api-key', {
                     method: 'POST',
                     body: formData
@@ -515,8 +518,12 @@
                 return;
             }
 
+            const formData = new FormData();
+            formData.append('csrf_token', '{{ csrf_token() }}');
+
             fetch(`/delete-report/${reportId}`, {
-                method: 'POST'
+                method: 'POST',
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
@@ -543,11 +550,12 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Deleting...';
 
+            const formData = new FormData();
+            formData.append('csrf_token', '{{ csrf_token() }}');
+
             fetch('/clear-history', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
@@ -565,9 +573,6 @@
                     console.error(error);
                     btn.disabled = false;
                     btn.innerHTML = originalText;
-                });
-        }
-                    }
                 });
         }
     </script>

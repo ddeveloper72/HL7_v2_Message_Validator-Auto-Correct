@@ -203,17 +203,17 @@ class DatabaseManager:
     # ==================== VALIDATION HISTORY ====================
     
     def save_validation_result(self, user_id, filename, message_type, status, 
-                               report_url, error_count=0, warning_count=0, corrections_applied=0, file_content=None):
-        """Save validation result to history with optional file content"""
+                               report_url, error_count=0, warning_count=0, corrections_applied=0, file_content=None, report_details=None):
+        """Save validation result to history with optional file content and detailed report"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
         try:
             cursor.execute("""
                 INSERT INTO ValidationHistory 
-                (UserID, Filename, MessageType, Status, ReportURL, ErrorCount, WarningCount, CorrectionsApplied, OriginalFileContent)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (user_id, filename, message_type, status, report_url, error_count, warning_count, corrections_applied, file_content))
+                (UserID, Filename, MessageType, Status, ReportURL, ErrorCount, WarningCount, CorrectionsApplied, OriginalFileContent, ReportDetails)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (user_id, filename, message_type, status, report_url, error_count, warning_count, corrections_applied, file_content, report_details))
             
             conn.commit()
             # Return the inserted ValidationID
@@ -258,7 +258,7 @@ class DatabaseManager:
             conn.close()
     
     def get_validation_report_by_id(self, validation_id):
-        """Get a single validation report by ID"""
+        """Get a single validation report by ID with full details"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
@@ -266,7 +266,7 @@ class DatabaseManager:
             cursor.execute("""
                 SELECT 
                     ValidationID, Filename, MessageType, Status, ReportURL, 
-                    ErrorCount, WarningCount, CorrectionsApplied, ValidationTimestamp
+                    ErrorCount, WarningCount, CorrectionsApplied, ValidationTimestamp, ReportDetails
                 FROM ValidationHistory
                 WHERE ValidationID = ?
             """, validation_id)
@@ -282,7 +282,8 @@ class DatabaseManager:
                     'error_count': row[5],
                     'warning_count': row[6],
                     'corrections_applied': row[7],
-                    'timestamp': row[8]
+                    'timestamp': row[8],
+                    'report_details': row[9]
                 }
             return None
         finally:

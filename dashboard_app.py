@@ -153,7 +153,7 @@ def set_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; font-src 'self' cdn.jsdelivr.net data:; img-src 'self' data:;"
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; font-src 'self' cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self' cdn.jsdelivr.net;"
     return response
 
 def fetch_and_parse_gazelle_report(oid, api_key):
@@ -577,21 +577,53 @@ def clear_api_key():
     return jsonify({'success': True, 'message': 'API key cleared'})
 
 @app.route('/delete-report/<report_id>', methods=['POST'])
+@login_required
 def delete_report(report_id):
-    """Delete a validation report from the dashboard"""
-    load_processing_results()
+    """Delete a validation report from the dashboard (handles both temp and database reports)"""
+    user_id = session['user_id']
+    
+    try:
+        # Handle database records (db_XXX format)
+        if report_id.startswith('db_'):
+            validation_id = int(report_id.replace('db_', ''))
+            deleted = db.delete_validation_record(validation_id, user_id)
+            
+            if deleted:
+                return jsonify({
+                    'success': True,
+                    'message': 'Report deleted successfully'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Report not found or you do not have permission to delete it'
+                }), 404
+        else:
+            # Handle temp file records
+            load_processing_results()
+            
+            if report_id not in processing_results:
+                return jsonify({'success': False, 'message': 'Report not found'}), 404
 
-    if report_id not in processing_results:
-        return jsonify({'success': False, 'message': 'Report not found'}), 404
+            report_info = processing_results.get(report_id, {})
+            session_id = session.get('session_id')
+            
+            # Verify ownership
+            if report_info.get('session_id') != session_id:
+                return jsonify({'success': False, 'message': 'Unauthorized'}), 403
 
-    report_info = processing_results.get(report_id, {})
-    if report_info.get('session_id') != session.get('session_id'):
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+            processing_results.pop(report_id, None)
+            save_processing_results()
 
-    processing_results.pop(report_id, None)
-    save_processing_results()
-
-    return jsonify({'success': True, 'message': 'Report removed'})
+            return jsonify({'success': True, 'message': 'Report removed'})
+    except Exception as e:
+        print(f"ERROR: Failed to delete report {report_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to delete report. Please try again.'
+        }), 500
 
 @app.route('/report/<report_id>')
 def view_report(report_id):
@@ -627,20 +659,25 @@ def view_report(report_id):
                 'validation_id': validation_id
             }
             
-            # Generate markdown content for database report
-            md_content = f"# Validation Report: {db_report['filename']}\n\n"
-            md_content += f"**Status:** {db_report['status']}  \n"
-            md_content += f"**Message Type:** {db_report['message_type']}  \n"
-            md_content += f"**Validated:** {report['date']}  \n\n"
-            md_content += f"**Errors:** {db_report['error_count']}  \n"
-            md_content += f"**Warnings:** {db_report['warning_count']}  \n"
-            if db_report.get('corrections_applied', 0) > 0:
-                md_content += f"**Corrections Applied:** {db_report['corrections_applied']}  \n"
-            
-            if db_report.get('report_url'):
-                md_content += f"\n[View Full Gazelle Report]({db_report['report_url']})\n"
-            
-            print(f"DEBUG view_report: Generated markdown for database report")
+            # Use stored report details if available, otherwise generate basic report
+            if db_report.get('report_details'):
+                md_content = db_report['report_details']
+                print(f"DEBUG view_report: Using stored report_details (length: {len(md_content)})")
+            else:
+                # Fallback: Generate basic markdown content for database report
+                md_content = f"# Validation Report: {db_report['filename']}\n\n"
+                md_content += f"**Status:** {db_report['status']}  \n"
+                md_content += f"**Message Type:** {db_report['message_type']}  \n"
+                md_content += f"**Validated:** {report['date']}  \n\n"
+                md_content += f"**Errors:** {db_report['error_count']}  \n"
+                md_content += f"**Warnings:** {db_report['warning_count']}  \n"
+                if db_report.get('corrections_applied', 0) > 0:
+                    md_content += f"**Corrections Applied:** {db_report['corrections_applied']}  \n"
+                
+                if db_report.get('report_url'):
+                    md_content += f"\n[View Full Gazelle Report]({db_report['report_url']})\n"
+                
+                print(f"DEBUG view_report: Generated basic markdown for database report (no stored details)")
             
         except Exception as e:
             print(f"ERROR view_report: Failed to load database report: {e}")
@@ -887,25 +924,46 @@ def download_corrected(report_id):
 @login_required
 def retry_auto_correct(report_id):
     """Iterative auto-correction: keeps correcting and re-validating until PASSED or no more fixes possible"""
-    # Always reload from temp file to get results from all workers
-    load_processing_results()
-    
-    if 'api_key' not in session:
-        return jsonify({'success': False, 'message': 'API key not set'}), 400
-    
-    print(f"\n{'='*80}")
-    print(f"ITERATIVE AUTO-CORRECTION STARTED - Report ID: {report_id}")
-    print(f"{'='*80}")
-    
-    # Check if this is a database report (db_XXX) or temp file report
-    is_db_report = report_id.startswith('db_')
-    
     try:
+        # Always reload from temp file to get results from all workers
+        load_processing_results()
+        
+        print(f"DEBUG auto-correct: report_id={report_id}, session_id={session.get('session_id')}")
+        print(f"DEBUG auto-correct: Has api_key in session: {'api_key' in session}")
+        print(f"DEBUG auto-correct: Has user_id in session: {'user_id' in session}")
+        
+        if 'api_key' not in session:
+            print("ERROR: API key not found in session")
+            # Try to retrieve from database if user is logged in
+            if 'user_id' in session:
+                try:
+                    api_key = db.get_encrypted_api_key(session['user_id'])
+                    if api_key:
+                        session['api_key'] = api_key
+                        print("DEBUG: Retrieved API key from database")
+                    else:
+                        print("ERROR: No API key in database for this user")
+                        return jsonify({'success': False, 'message': 'API key not set. Please go to Settings.'}), 400
+                except Exception as e:
+                    print(f"ERROR retrieving API key: {e}")
+                    import traceback
+                    print(traceback.format_exc())
+                    return jsonify({'success': False, 'message': 'Error retrieving API key'}), 400
+            else:
+                return jsonify({'success': False, 'message': 'API key not set. Please log in again.'}), 400
+        
+        print(f"\n{'='*80}")
+        print(f"ITERATIVE AUTO-CORRECTION STARTED - Report ID: {report_id}")
+        print(f"{'='*80}")
+        
+        # Check if this is a database report (db_XXX) or temp file report
+        is_db_report = report_id.startswith('db_')
         current_content = None
         original_filepath = None
         filename = None
         validation_id = None
         detailed_errors = []
+        file_info = {}  # Initialize file_info dict for both paths
         
         if is_db_report:
             # Handle database report
@@ -924,10 +982,19 @@ def retry_auto_correct(report_id):
             filename = file_data['filename']
             print(f"DEBUG: Retrieved file from database: {filename} ({len(current_content)} bytes)")
             
+            # Create file_info dict to match temp file structure
+            file_info = {
+                'filename': filename,
+                'filepath': None,  # Will be set after creating temp file
+                'validation_id': validation_id
+            }
+            
             # Create temp file for processing
             original_filepath = os.path.join(UPLOAD_FOLDER, f"db_temp_{validation_id}_{filename}")
             with open(original_filepath, 'wb') as f:
                 f.write(current_content)
+            
+            file_info['filepath'] = original_filepath
             
             # Get report details to extract errors
             db_report = db.get_validation_report_by_id(validation_id)
@@ -1214,7 +1281,8 @@ def retry_auto_correct(report_id):
                     error_count=errors,
                     warning_count=warnings,
                     corrections_applied=total_corrections,
-                    file_content=corrected_content
+                    file_content=corrected_content,
+                    report_details=report_content
                 )
                 # Update validation_id for future operations (only for temp file reports)
                 if not is_db_report and report_id in processing_results:
@@ -1222,6 +1290,7 @@ def retry_auto_correct(report_id):
                     save_processing_results()
                 
                 print(f"DEBUG: Saved auto-correct result to database (ID={new_validation_id}) for user {session['user_id']}")
+
             except Exception as e:
                 print(f"WARNING: Failed to save to database: {e}")
 
@@ -1248,7 +1317,7 @@ def retry_auto_correct(report_id):
         })
     
     except Exception as e:
-        print(f"DEBUG: Exception in retry_auto_correct: {str(e)}")
+        print(f"ERROR: Exception in retry_auto_correct: {str(e)}")
         import traceback
         print(traceback.format_exc())
         return jsonify({
@@ -1271,6 +1340,9 @@ def upload_page():
 @login_required
 def upload_file():
     """Handle file upload"""
+    # Always reload from temp file to get results from all workers
+    load_processing_results()
+    
     if 'file' not in request.files:
         return jsonify({'success': False, 'message': 'No file provided'}), 400
     
@@ -1306,6 +1378,9 @@ def upload_file():
     }
     save_processing_results()
     
+    print(f"DEBUG upload: file_id={file_id}, filename={filename}, session_id={session['session_id']}")
+    print(f"DEBUG upload: Saved to processing_results, total items: {len(processing_results)}")
+    
     return jsonify({
         'success': True,
         'file_id': file_id,
@@ -1313,15 +1388,30 @@ def upload_file():
     })
 
 @app.route('/validate/<file_id>', methods=['POST'])
+@login_required
 def validate_file(file_id):
     """Validate uploaded file with optional automatic correction"""
+    # Always reload from temp file to get results from all workers
+    load_processing_results()
+    
+    print(f"DEBUG validate: Requested file_id={file_id}, session_id={session.get('session_id')}")
+    print(f"DEBUG validate: processing_results has {len(processing_results)} items")
+    
     if file_id not in processing_results:
+        print(f"ERROR: file_id {file_id} not found in processing_results")
+        print(f"ERROR: Available file_ids: {list(processing_results.keys())}")
         return jsonify({'success': False, 'message': 'File not found'}), 404
     
     if 'api_key' not in session:
         return jsonify({'success': False, 'message': 'API key not set'}), 400
     
     file_info = processing_results[file_id]
+    
+    # Verify session ownership
+    if file_info.get('session_id') != session.get('session_id'):
+        print(f"ERROR: Session mismatch - file session: {file_info.get('session_id')}, current session: {session.get('session_id')}")
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
     filepath = file_info['filepath']
     
     # Check if auto-correct was requested
@@ -1661,13 +1751,15 @@ def validate_file(file_id):
                     error_count=errors,
                     warning_count=warnings,
                     corrections_applied=0,  # No auto-correction on upload
-                    file_content=file_content
+                    file_content=file_content,
+                    report_details=report_content
                 )
                 # Store validation_id for later retrieval
                 processing_results[file_id]['validation_id'] = validation_id
                 print(f"DEBUG: Saved validation result to database (ID={validation_id}) for user {session['user_id']}")
             except Exception as e:
                 print(f"WARNING: Failed to save to database: {e}")
+
         
         print(f"DEBUG: Validation completed for file_id={file_id}")
         print(f"DEBUG: Status={status}, Errors={errors}, Warnings={warnings}")
