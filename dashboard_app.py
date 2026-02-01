@@ -671,7 +671,7 @@ def view_report(report_id):
                 'warnings': db_report['warning_count'],
                 'date': db_report['timestamp'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(db_report['timestamp'], 'strftime') else str(db_report['timestamp']),
                 'report_path': db_report.get('report_url', ''),
-                'corrected_path': None,  # Database reports don't have local corrected files
+                'corrected_path': 'available' if db_report.get('corrected_content') else None,  # Show download button if corrected file exists
                 'validation_id': validation_id
             }
             
@@ -940,19 +940,39 @@ def favicon():
 @app.route('/download/<report_id>/corrected')
 def download_corrected(report_id):
     """Download corrected file"""
-    # Always reload from temp file to get results from all workers
-    load_processing_results()
-    
-    reports = get_sample_reports()
-    report = next((r for r in reports if r['id'] == report_id), None)
-    
-    if not report or not report['corrected_path']:
-        return "Corrected file not found", 404
-    
-    return send_file(report['corrected_path'],
-                    as_attachment=True,
-                    download_name=f"{report['filename'].replace('.txt', '_CORRECTED.txt')}",
-                    mimetype='text/plain')
+    # Check if this is a database report
+    if report_id.startswith('db_'):
+        validation_id = int(report_id.replace('db_', ''))
+        
+        # Get report from database
+        db_report = db.get_validation_report_by_id(validation_id)
+        if not db_report or not db_report.get('corrected_content'):
+            return "Corrected file not found", 404
+        
+        # Create a file-like object from the corrected content
+        from io import BytesIO
+        file_content = db_report['corrected_content'].encode('utf-8')
+        buffer = BytesIO(file_content)
+        buffer.seek(0)
+        
+        return send_file(buffer,
+                        as_attachment=True,
+                        download_name=f"{db_report['filename'].replace('.txt', '_CORRECTED.txt')}",
+                        mimetype='text/plain')
+    else:
+        # Handle temp file reports
+        load_processing_results()
+        
+        reports = get_sample_reports()
+        report = next((r for r in reports if r['id'] == report_id), None)
+        
+        if not report or not report['corrected_path']:
+            return "Corrected file not found", 404
+        
+        return send_file(report['corrected_path'],
+                        as_attachment=True,
+                        download_name=f"{report['filename'].replace('.txt', '_CORRECTED.txt')}",
+                        mimetype='text/plain')
 
 @app.route('/auto-correct/<report_id>', methods=['POST'])
 @login_required
