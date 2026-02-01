@@ -23,7 +23,7 @@ try:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Preformatted
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_LEFT, TA_CENTER
     from html.parser import HTMLParser
@@ -913,7 +913,23 @@ def export_pdf(report_id):
             story.append(Spacer(1, 0.1*inch))
         elif element.name in ['pre', 'code']:
             text = clean_text(element.get_text())
-            story.append(Paragraph(f"<font name='Courier'>{text}</font>", code_style))
+            # Use Preformatted for code blocks to preserve whitespace and line breaks
+            preformatted_style = ParagraphStyle(
+                'CodeBlock',
+                parent=styles['Code'],
+                fontName='Courier',
+                fontSize=7,
+                leading=9,
+                leftIndent=10,
+                rightIndent=10,
+                spaceBefore=6,
+                spaceAfter=6,
+                backColor=colors.HexColor('#f4f4f4'),
+                borderColor=colors.HexColor('#cccccc'),
+                borderWidth=1,
+                borderPadding=8
+            )
+            story.append(Preformatted(text, preformatted_style))
             story.append(Spacer(1, 0.1*inch))
     
     # Footer
