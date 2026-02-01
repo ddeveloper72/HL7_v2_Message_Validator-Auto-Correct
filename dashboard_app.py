@@ -671,7 +671,8 @@ def view_report(report_id):
                 'warnings': db_report['warning_count'],
                 'date': db_report['timestamp'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(db_report['timestamp'], 'strftime') else str(db_report['timestamp']),
                 'report_path': db_report.get('report_url', ''),
-                'corrected_path': 'available' if db_report.get('corrected_content') else None,  # Show download button if corrected file exists
+                # Show download button for any PASSED report or if corrected content exists
+                'corrected_path': 'available' if (db_report['status'] == 'PASSED' or db_report.get('corrected_content')) else None,
                 'validation_id': validation_id
             }
             
@@ -972,25 +973,34 @@ def favicon():
 
 @app.route('/download/<report_id>/corrected')
 def download_corrected(report_id):
-    """Download corrected file"""
+    """Download corrected file (or original if it passed without correction)"""
     # Check if this is a database report
     if report_id.startswith('db_'):
         validation_id = int(report_id.replace('db_', ''))
         
         # Get report from database
         db_report = db.get_validation_report_by_id(validation_id)
-        if not db_report or not db_report.get('corrected_content'):
-            return "Corrected file not found", 404
+        if not db_report:
+            return "Report not found", 404
         
-        # Create a file-like object from the corrected content
+        # Use corrected content if available, otherwise use original file content
+        file_content = db_report.get('corrected_content') or db_report.get('file_content')
+        if not file_content:
+            return "File content not found", 404
+        
+        # Create a file-like object from the content
         from io import BytesIO
-        file_content = db_report['corrected_content'].encode('utf-8')
-        buffer = BytesIO(file_content)
+        buffer = BytesIO(file_content.encode('utf-8'))
         buffer.seek(0)
+        
+        # Use appropriate filename
+        filename = db_report['filename']
+        if db_report.get('corrected_content'):
+            filename = filename.replace('.txt', '_CORRECTED.txt')
         
         return send_file(buffer,
                         as_attachment=True,
-                        download_name=f"{db_report['filename'].replace('.txt', '_CORRECTED.txt')}",
+                        download_name=filename,
                         mimetype='text/plain')
     else:
         # Handle temp file reports
