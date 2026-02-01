@@ -735,21 +735,59 @@ def view_report(report_id):
 
 @app.route('/report/<report_id>/pdf')
 def export_pdf(report_id):
-    """Export report as PDF using Playwright (browser-based, perfect emoji support)"""
+    """Export report as PDF"""
     # Always reload from temp file to get results from all workers
     load_processing_results()
     
-    reports = get_sample_reports()
-    report = next((r for r in reports if r['id'] == report_id), None)
-    
-    if not report:
-        return "Report not found", 404
-    
-    # Read markdown content from memory (stored during validation)
-    if report_id in processing_results and 'report_content' in processing_results[report_id]:
-        md_content = processing_results[report_id]['report_content']
+    # Check if this is a database report (prefixed with 'db_')
+    if report_id.startswith('db_'):
+        validation_id = int(report_id.replace('db_', ''))
+        
+        # Get report from database
+        try:
+            db_report = db.get_validation_report_by_id(validation_id)
+            if not db_report:
+                return "Report not found in database", 404
+            
+            # Build report dict for PDF
+            report = {
+                'id': report_id,
+                'filename': db_report['filename'],
+                'message_type': db_report['message_type'],
+                'status': db_report['status'],
+                'errors': db_report['error_count'],
+                'warnings': db_report['warning_count'],
+                'date': db_report['timestamp'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(db_report['timestamp'], 'strftime') else str(db_report['timestamp']),
+                'report_path': db_report.get('report_url', '')
+            }
+            
+            # Use stored report details if available
+            if db_report.get('report_details'):
+                md_content = db_report['report_details']
+            else:
+                # Fallback: Generate basic content
+                md_content = f"# Validation Report: {db_report['filename']}\n\n"
+                md_content += f"**Status:** {db_report['status']}  \n"
+                md_content += f"**Message Type:** {db_report['message_type']}  \n"
+                md_content += f"**Errors:** {db_report['error_count']}  \n"
+                md_content += f"**Warnings:** {db_report['warning_count']}  \n"
+                
+        except Exception as e:
+            print(f"ERROR: Failed to load database report for PDF: {e}")
+            return f"Error loading report: {e}", 500
     else:
-        return "Report content not found", 404
+        # Handle temp file report
+        reports = get_sample_reports()
+        report = next((r for r in reports if r['id'] == report_id), None)
+        
+        if not report:
+            return "Report not found", 404
+        
+        # Read markdown content from memory (stored during validation)
+        if report_id in processing_results and 'report_content' in processing_results[report_id]:
+            md_content = processing_results[report_id]['report_content']
+        else:
+            return "Report content not found", 404
     
     # Convert to HTML
     html_content = markdown.markdown(md_content, extensions=['tables', 'fenced_code'])
