@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HL7 v2 Message Validator & Auto-Correct</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 100px 0;
+            margin-bottom: 60px;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card {
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .cta-button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats-section {
+            background-color: #f8f9fa;
+            padding: 60px 0;
+            margin: 60px 0;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check text-primary"></i>
+                <strong>HL7 Validator</strong>
+            </a>
+            <div class="ms-auto">
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1 class="display-3 fw-bold mb-4">
+                        Validate HL7 v2 Messages with Confidence
+                    </h1>
+                    <p class="lead mb-4">
+                        Ensure your Healthlink HL7 v2 messages meet validation standards before submission.
+                        Our intelligent auto-correction system helps fix errors automatically, saving you time and reducing rejections.
+                    </p>
+                    <a href="{{ url_for('login') }}" class="btn btn-light btn-lg cta-button">
+                        <i class="bi bi-microsoft"></i> Sign In with Microsoft
+                    </a>
+                </div>
+                <div class="col-lg-5 text-center">
+                    <i class="bi bi-file-earmark-check" style="font-size: 15rem; opacity: 0.9;"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="container mb-5">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Why Use Our Validator?</h2>
+                <p class="lead text-muted">Powerful features designed for healthcare developers</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Feature 1 -->
+            <div class="col-md-4">
+                <div class="card feature-card shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-lightning-charge feature-icon"></i>
+                        <h4 class="fw-bold mb-3">Instant Validation</h4>
+                        <p class="text-muted">
+                            Validate your HL7 v2 XML files against Gazelle EVS standards in seconds.
+                            Get detailed reports with errors, warnings, and compliance status.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="col-md-4">
+                <div class="card feature-card shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-wrench-adjustable feature-icon"></i>
+                        <h4 class="fw-bold mb-3">Auto-Correction</h4>
+                        <p class="text-muted">
+                            Intelligent auto-correction engine fixes common errors automatically.
+                            Iterative validation ensures your message passes all checks.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="col-md-4">
+                <div class="card feature-card shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-clock-history feature-icon"></i>
+                        <h4 class="fw-bold mb-3">Validation History</h4>
+                        <p class="text-muted">
+                            Track all your validations with complete history. Download corrected files
+                            and export detailed PDF reports anytime.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="col-md-4">
+                <div class="card feature-card shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-shield-lock feature-icon"></i>
+                        <h4 class="fw-bold mb-3">Secure & Private</h4>
+                        <p class="text-muted">
+                            Azure AD authentication ensures only authorized users access your data.
+                            All files are encrypted and stored securely in Azure SQL Database.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 5 -->
+            <div class="col-md-4">
+                <div class="card feature-card shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-file-earmark-pdf feature-icon"></i>
+                        <h4 class="fw-bold mb-3">PDF Reports</h4>
+                        <p class="text-muted">
+                            Export professional validation reports to PDF with detailed error analysis,
+                            perfect for documentation and compliance records.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 6 -->
+            <div class="col-md-4">
+                <div class="card feature-card shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-graph-up feature-icon"></i>
+                        <h4 class="fw-bold mb-3">Analytics Dashboard</h4>
+                        <p class="text-muted">
+                            View your validation statistics with pass/fail rates, error trends,
+                            and message type breakdown at a glance.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-5 fw-bold mb-3">How It Works</h2>
+                    <p class="lead text-muted">Simple, fast, and effective</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3 text-center mb-4">
+                    <div class="display-1 text-primary fw-bold mb-3">1</div>
+                    <h5 class="fw-bold">Sign In</h5>
+                    <p class="text-muted">Authenticate with your Microsoft account</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <div class="display-1 text-primary fw-bold mb-3">2</div>
+                    <h5 class="fw-bold">Upload</h5>
+                    <p class="text-muted">Upload your HL7 v2 XML file</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <div class="display-1 text-primary fw-bold mb-3">3</div>
+                    <h5 class="fw-bold">Validate</h5>
+                    <p class="text-muted">Get instant validation results with detailed reports</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <div class="display-1 text-primary fw-bold mb-3">4</div>
+                    <h5 class="fw-bold">Download</h5>
+                    <p class="text-muted">Download corrected files or PDF reports</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="container text-center mb-5 pb-5">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-4">Ready to Get Started?</h2>
+                <p class="lead text-muted mb-4">
+                    Sign in with your Microsoft account to start validating HL7 v2 messages
+                </p>
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg cta-button">
+                    <i class="bi bi-microsoft"></i> Sign In with Microsoft
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-shield-check"></i> HL7 v2 Message Validator</h5>
+                    <p class="text-muted mb-0">Professional HL7 v2 validation with auto-correction</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-0">
+                        Powered by Gazelle EVS API
+                    </p>
+                    <p class="text-muted mb-0">
+                        <small>&copy; 2026 All rights reserved</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

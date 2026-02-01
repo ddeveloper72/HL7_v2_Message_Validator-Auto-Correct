@@ -284,10 +284,8 @@ def get_sample_reports(show_all=False):
 
 @app.route('/')
 def index():
-    """Landing page - redirect to login or dashboard"""
-    if 'user_id' in session:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    """Public landing page"""
+    return render_template('landing.html')
 
 @app.route('/login')
 @csrf.exempt
