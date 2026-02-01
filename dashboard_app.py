@@ -743,11 +743,17 @@ def view_report(report_id):
                          markdown_content=md_content)
 
 @app.route('/report/<report_id>/pdf')
+@login_required
 def export_pdf(report_id):
     """Export report as PDF"""
+    print(f"\nDEBUG export_pdf: Looking for report_id={report_id}")
+    
     # Check if WeasyPrint is available
     if not WEASYPRINT_AVAILABLE:
+        print("DEBUG export_pdf: WeasyPrint NOT available")
         return "PDF export is not available. WeasyPrint library could not be loaded.", 503
+    
+    print("DEBUG export_pdf: WeasyPrint IS available")
     
     # Always reload from temp file to get results from all workers
     load_processing_results()
@@ -755,12 +761,17 @@ def export_pdf(report_id):
     # Check if this is a database report (prefixed with 'db_')
     if report_id.startswith('db_'):
         validation_id = int(report_id.replace('db_', ''))
+        print(f"DEBUG export_pdf: Database report, validation_id={validation_id}")
         
         # Get report from database
         try:
             db_report = db.get_validation_report_by_id(validation_id)
+            print(f"DEBUG export_pdf: db_report = {db_report is not None}")
             if not db_report:
+                print("DEBUG export_pdf: Report NOT found in database")
                 return "Report not found in database", 404
+            
+            print(f"DEBUG export_pdf: Found database report for {db_report['filename']}")
             
             # Build report dict for PDF
             report = {
@@ -777,8 +788,10 @@ def export_pdf(report_id):
             # Use stored report details if available
             if db_report.get('report_details'):
                 md_content = db_report['report_details']
+                print(f"DEBUG export_pdf: Using stored report_details (length: {len(md_content)})")
             else:
                 # Fallback: Generate basic content
+                print("DEBUG export_pdf: No stored report_details, generating basic content")
                 md_content = f"# Validation Report: {db_report['filename']}\n\n"
                 md_content += f"**Status:** {db_report['status']}  \n"
                 md_content += f"**Message Type:** {db_report['message_type']}  \n"
