@@ -913,6 +913,23 @@ def export_pdf(report_id):
             story.append(Spacer(1, 0.1*inch))
         elif element.name in ['pre', 'code']:
             text = clean_text(element.get_text())
+            
+            # Split long lines to fit page width (approximately 90 characters for 7pt Courier)
+            max_line_length = 90
+            wrapped_lines = []
+            for line in text.split('\n'):
+                if len(line) <= max_line_length:
+                    wrapped_lines.append(line)
+                else:
+                    # Wrap long lines
+                    while len(line) > max_line_length:
+                        wrapped_lines.append(line[:max_line_length])
+                        line = '  ' + line[max_line_length:]  # Indent continuation
+                    if line:
+                        wrapped_lines.append(line)
+            
+            wrapped_text = '\n'.join(wrapped_lines)
+            
             # Use Preformatted for code blocks to preserve whitespace and line breaks
             preformatted_style = ParagraphStyle(
                 'CodeBlock',
@@ -929,7 +946,7 @@ def export_pdf(report_id):
                 borderWidth=1,
                 borderPadding=8
             )
-            story.append(Preformatted(text, preformatted_style))
+            story.append(Preformatted(wrapped_text, preformatted_style))
             story.append(Spacer(1, 0.1*inch))
     
     # Footer
