@@ -145,6 +145,8 @@ class HL7MessageCorrector:
             content = '<?xml version="1.0" encoding="utf-8"?>\n' + content
             self.corrections_made.append({
                 'type': 'XML_DECLARATION',
+                'old_value': '(missing)',
+                'new_value': '<?xml version="1.0" encoding="utf-8"?>',
                 'description': 'Added XML declaration header',
                 'reason': 'Required for proper XML parsing',
                 'critical': True
@@ -222,7 +224,8 @@ class HL7MessageCorrector:
                         'type': 'FIELD_INSERTION',
                         'field': 'Name of Coding System (CE.3)',
                         'location': 'SCH-6.3',
-                        'value': 'HL70276',
+                        'old_value': '(empty)',
+                        'new_value': 'HL70276',
                         'description': 'Filled empty required field with appointment reason code system',
                         'reason': 'SCH-6.3 is required when SCH-6 is present'
                     })
@@ -324,7 +327,8 @@ class HL7MessageCorrector:
                         'type': 'GAZELLE_FIX',
                         'field': f'{segment}-{field_num} ({xcn_label})',
                         'location': location,
-                        'value': 'SYSTEM',
+                        'old_value': '(empty)',
+                        'new_value': 'SYSTEM',
                         'description': f'Filled required field {segment}-{field_num} with placeholder XCN.1',
                         'reason': description,
                         'source': 'Gazelle Error Report'
