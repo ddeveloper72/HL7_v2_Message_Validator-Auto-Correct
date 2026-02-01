@@ -291,13 +291,28 @@ def index():
 @csrf.exempt
 def login():
     """Initiate Azure AD login flow"""
-    msal_app = get_msal_app()
-    auth_url = msal_app.get_authorization_request_url(
-        AZURE_AD_SCOPE,
-        redirect_uri=AZURE_AD_REDIRECT_URI
-    )
-    session['state'] = str(uuid.uuid4())
-    return redirect(auth_url)
+    # Check if Azure AD is configured
+    if not all([AZURE_AD_CLIENT_ID, AZURE_AD_CLIENT_SECRET, AZURE_AD_TENANT_ID]):
+        return render_template('error.html', 
+            error_title="Authentication Not Configured",
+            error_message="Azure AD authentication is not properly configured. Please contact the administrator.",
+            details="Missing required environment variables: AZURE_AD_CLIENT_ID, AZURE_AD_CLIENT_SECRET, or AZURE_AD_TENANT_ID"
+        ), 500
+    
+    try:
+        msal_app = get_msal_app()
+        auth_url = msal_app.get_authorization_request_url(
+            AZURE_AD_SCOPE,
+            redirect_uri=AZURE_AD_REDIRECT_URI
+        )
+        session['state'] = str(uuid.uuid4())
+        return redirect(auth_url)
+    except Exception as e:
+        return render_template('error.html',
+            error_title="Authentication Error",
+            error_message="Failed to initiate Microsoft sign-in.",
+            details=str(e)
+        ), 500
 
 @app.route('/auth/callback')
 @csrf.exempt
