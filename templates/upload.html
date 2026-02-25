@@ -173,8 +173,7 @@
                 <label class="form-check-label" for="autoCorrectCheckbox">
                     <strong>Auto-correct on upload</strong>
                     <br>
-                    <small class="text-muted">If errors are found, automatically apply corrections (up to 5
-                        iterations)</small>
+                    <small class="text-muted">If errors are found, automatically apply corrections (up to 5 iterations)</small>
                 </label>
             </div>
 
@@ -369,7 +368,6 @@
             // Upload file
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('csrf_token', '{{ csrf_token() }}');
 
             try {
                 const response = await fetch('/upload', {
@@ -386,8 +384,7 @@
                     const validateResponse = await fetch('/validate/' + result.file_id, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({ auto_correct: autoCorrect })
                     });
@@ -397,6 +394,11 @@
                     if (validateResult.success) {
                         updateStatus(itemId, 'success',
                             `✓ ${validateResult.status} - ${validateResult.errors} errors, ${validateResult.warnings} warnings`);
+
+                        // Redirect to dashboard after 2 seconds to show the results
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 2000);
                     } else {
                         updateStatus(itemId, 'error', 'Validation failed: ' + validateResult.message);
                     }
