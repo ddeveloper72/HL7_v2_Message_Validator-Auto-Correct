@@ -62,29 +62,6 @@ def detect_message_type(content):
     
     return None
 
-
-def find_suspect_characters(content, max_results=5):
-    """Find suspect characters that may break Gazelle parsing"""
-    suspects = []
-    for idx, ch in enumerate(content):
-        code = ord(ch)
-        is_control = code < 0x20 and ch not in ['\n', '\r', '\t']
-        is_delete = code == 0x7F
-        is_bom = code == 0xFEFF
-        if is_control or is_delete or is_bom:
-            start = max(0, idx - 20)
-            end = min(len(content), idx + 20)
-            context = content[start:end].replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
-            suspects.append({
-                'index': idx,
-                'code': f"U+{code:04X}",
-                'char': repr(ch),
-                'context': context
-            })
-            if len(suspects) >= max_results:
-                break
-    return suspects
-
 def submit_validation(file_path):
     """Submit file for validation and return validation OID"""
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -121,11 +98,6 @@ def submit_validation(file_path):
     try:
         response = requests.post(API_ENDPOINT, json=payload, headers=headers)
         
-        # Debug: Print response details
-        print(f"DEBUG: Gazelle API Response Status: {response.status_code}")
-        print(f"DEBUG: Response Headers: {dict(response.headers)}")
-        print(f"DEBUG: Response Content-Type: {response.headers.get('Content-Type', 'N/A')}")
-        
         if response.status_code == 201:
             location = response.headers.get('Location')
             if "/validations/" in location and "?privacyKey=" in location:
@@ -139,18 +111,10 @@ def submit_validation(file_path):
                     'message_type': msg_type
                 }, None
         
-        # Show detailed error if not 201
-        error_msg = f"HTTP {response.status_code}"
-        if response.headers.get('Content-Type', '').startswith('text/html'):
-            error_msg += ": Gazelle returned HTML (likely auth error or API key invalid)"
-        else:
-            error_msg += f": {response.text[:300]}"
-        
-        print(f"DEBUG: Gazelle error response: {response.text[:500]}")
-        return None, error_msg
+        return None, f"HTTP {response.status_code}: {response.text[:200]}"
     
     except Exception as e:
-        return None, f"Exception: {str(e)}"
+        return None, str(e)
 
 def check_validation_status(oid, max_wait=30):
     """Check validation status and wait for completion"""
@@ -287,27 +251,10 @@ def validate_file_with_verification(file_path, show_warnings=False):
     print(f"Status: {parsed_result['status']}")
     print(f"Errors: {parsed_result['error_count']} (MANDATORY: {len(parsed_result['mandatory_errors'])})")
     print(f"Warnings: {parsed_result['warning_count']}")
-
-    if parsed_result['status'] in ['UNDEFINED', 'UNKNOWN'] and parsed_result['error_count'] == 0:
-        try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-                content = f.read()
-            suspects = find_suspect_characters(content)
-            if suspects:
-                print("\n⚠️  Gazelle returned UNDEFINED with 0 errors. Suspect characters found:")
-                for i, item in enumerate(suspects, 1):
-                    print(f"  {i}. Index {item['index']}, Code {item['code']}, Char {item['char']}")
-                    print(f"     Context: {item['context']}")
-            else:
-                print("\n⚠️  Gazelle returned UNDEFINED with 0 errors. No suspect control characters found.")
-        except Exception as e:
-            print(f"\n⚠️  Could not scan for suspect characters: {e}")
     
     # Build report URL
     report_url = f"{BASE_URL}/evs/report.seam?oid={result['oid']}&privacyKey={result['privacy_key']}"
     print(f"\n🔗 Report: {report_url}")
-
-    open_browser = os.getenv('OPEN_REPORT_BROWSER', '1').lower() in ['1', 'true', 'yes']
     
     if parsed_result['status'] == 'PASSED':
         print(f"\n✅ ✅ ✅ VALIDATION PASSED! ✅ ✅ ✅")
@@ -330,8 +277,7 @@ def validate_file_with_verification(file_path, show_warnings=False):
         elif parsed_result['warnings'] and not show_warnings:
             print(f"\n💡 TIP: Use --warnings flag to see {parsed_result['warning_count']} optional warnings")
         
-        if open_browser:
-            webbrowser.open(report_url)
+        webbrowser.open(report_url)
         return True
     
     else:
@@ -345,8 +291,7 @@ def validate_file_with_verification(file_path, show_warnings=False):
                 print(f"    Issue: {error['description']}")
         
         print(f"\n⚠️  File is NOT yet correct - additional fixes needed")
-        if open_browser:
-            webbrowser.open(report_url)
+        webbrowser.open(report_url)
         return False
 
 def main():
