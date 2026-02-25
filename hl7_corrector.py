@@ -77,76 +77,12 @@ class HL7MessageCorrector:
             })
         return content
     
-    def _fix_xml_encoding_characters(self, content):
-        """
-        ⚠️ WARNING: THIS METHOD IS DISABLED - IT CREATES INVALID XML
-        
-        Problem: This method converts &amp; to & which makes validation work
-        BUT creates malformed XML that Gazelle's report viewer cannot display.
-        
-        The real issue is a Gazelle bug:
-        - Gazelle's XML→ER7 converter cannot handle proper XML entity encoding (&amp;)
-        - But Gazelle's report viewer REQUIRES proper XML escaping
-        
-        Solution: Files must keep &amp; (valid XML). If Gazelle validation fails,
-        it's a Gazelle parser bug that they need to fix.
-        """
-        original_content = content
-        
-        # Issue 1: MSH.2 encoding characters should be literal, not XML entities
-        # Pattern: <MSH.2>^~\&amp;</MSH.2> should be <MSH.2>^~\&</MSH.2>
-        pattern = r'(<MSH\.2>\^~\\)&amp;(</MSH\.2>)'
-        if re.search(pattern, content):
-            content = re.sub(pattern, r'\1&\2', content)
-            self.corrections_made.append({
-                'type': 'XML_ENCODING_FIX',
-                'field': 'MSH.2',
-                'description': 'Fixed encoding characters from ^~\\&amp; to ^~\\&',
-                'reason': 'Gazelle XML→ER7 converter fails when &amp; appears in encoding field',
-                'original': '^~\\&amp;',
-                'corrected': '^~\\&',
-                'critical': True
-            })
-        
-        # Issue 2: Detect other suspicious XML entity patterns in data fields
-        # Look for multiple consecutive &amp; patterns (likely double-encoding)
-        suspicious_patterns = [
-            (r'&amp;amp;', '&amp;', 'Double-encoded ampersand'),
-            (r'&lt;', '<', 'XML-escaped less-than in data'),
-            (r'&gt;', '>', 'XML-escaped greater-than in data'),
-        ]
-        
-        for old_pattern, replacement, description in suspicious_patterns:
-            # Only apply in data fields (not in XML tags)
-            # Search between > and < to avoid corrupting XML structure
-            matches = list(re.finditer(f'(>)({re.escape(old_pattern)})(<)', content))
-            if matches:
-                content = re.sub(f'(>)({re.escape(old_pattern)})(<)', f'\\1{replacement}\\3', content)
-                self.corrections_made.append({
-                    'type': 'XML_ENTITY_FIX',
-                    'pattern': old_pattern,
-                    'description': f'Fixed suspicious XML entity: {description}',
-                    'count': len(matches),
-                    'reason': 'Gazelle parser has issues with over-escaped entities',
-                    'critical': False
-                })
-        
-        if content != original_content:
-            # Log summary of all encoding fixes
-            encoding_fixes = [c for c in self.corrections_made if 'ENCODING' in c.get('type', '')]
-            if encoding_fixes:
-                print(f"DEBUG: Applied {len(encoding_fixes)} XML encoding fixes")
-        
-        return content
-    
     def _ensure_xml_declaration(self, content):
         """Ensure proper XML declaration at start"""
         if not content.strip().startswith('<?xml'):
             content = '<?xml version="1.0" encoding="utf-8"?>\n' + content
             self.corrections_made.append({
                 'type': 'XML_DECLARATION',
-                'old_value': '(missing)',
-                'new_value': '<?xml version="1.0" encoding="utf-8"?>',
                 'description': 'Added XML declaration header',
                 'reason': 'Required for proper XML parsing',
                 'critical': True
@@ -224,8 +160,7 @@ class HL7MessageCorrector:
                         'type': 'FIELD_INSERTION',
                         'field': 'Name of Coding System (CE.3)',
                         'location': 'SCH-6.3',
-                        'old_value': '(empty)',
-                        'new_value': 'HL70276',
+                        'value': 'HL70276',
                         'description': 'Filled empty required field with appointment reason code system',
                         'reason': 'SCH-6.3 is required when SCH-6 is present'
                     })
@@ -286,17 +221,11 @@ class HL7MessageCorrector:
             
             # Fix 3: Missing required components (e.g., OBX-3.3, OBR-4.3)
             elif error_type == 'Usage' and 'missing' in description.lower():
-                if re.search(r':[A-Z]{3}\[\d+\]-\d+\[\d+\]$', location):
-                    content = self._fix_missing_field(content, location, description)
-                else:
-                    content = self._fix_missing_component(content, location, description)
+                content = self._fix_missing_component(content, location, description)
             
             # Fix 4: Other missing components with different error types
             elif 'required' in description.lower() and 'missing' in description.lower():
-                if re.search(r':[A-Z]{3}\[\d+\]-\d+\[\d+\]$', location):
-                    content = self._fix_missing_field(content, location, description)
-                else:
-                    content = self._fix_missing_component(content, location, description)
+                content = self._fix_missing_component(content, location, description)
         
         return content
     
@@ -311,64 +240,24 @@ class HL7MessageCorrector:
         field_num = match.group(2)
         
         # Check if this is a known fixable field
-        if segment == 'SCH' and field_num in ['16', '20']:
-            # SCH-16: Filler Contact Person, SCH-20: Entered By Person
-            xcn_label = 'Filler Contact Person' if field_num == '16' else 'Entered By Person'
-
-            # Fill empty XCN.1 with a placeholder value
-            xcn_pattern = rf'(<{segment}\.{field_num}>.*?<XCN\.1>)(\s*)(</XCN\.1>)'
-            replaced = False
-
-            def add_xcn_value(match):
-                nonlocal replaced
-                if match.group(2).strip() == '':
-                    replaced = True
+        if segment == 'SCH' and field_num == '20':
+            # SCH-20: Entered By Person - can add empty XCN structure
+            pattern = rf'(<{segment}\.{field_num}>)(\s*)(</\w+\.\d+>)'
+            if re.search(pattern, content):
+                # Field exists but is empty - fill with minimal structure
+                def add_empty_xcn(match):
                     self.corrections_made.append({
                         'type': 'GAZELLE_FIX',
-                        'field': f'{segment}-{field_num} ({xcn_label})',
+                        'field': f'{segment}-{field_num} (Entered By Person)',
                         'location': location,
-                        'old_value': '(empty)',
-                        'new_value': 'SYSTEM',
-                        'description': f'Filled required field {segment}-{field_num} with placeholder XCN.1',
+                        'value': 'SYSTEM^AUTO^CORRECTOR',
+                        'description': f'Added placeholder for missing required field {segment}-{field_num}',
                         'reason': description,
                         'source': 'Gazelle Error Report'
                     })
-                    return f'{match.group(1)}SYSTEM{match.group(3)}'
-                return match.group(0)
-
-            content = re.sub(xcn_pattern, add_xcn_value, content, flags=re.DOTALL)
-
-            # Handle self-closing XCN.1 tags if present
-            if not replaced:
-                xcn_self_closing = rf'(<{segment}\.{field_num}>.*?<XCN\.1\s*/>)'
-                if re.search(xcn_self_closing, content, flags=re.DOTALL):
-                    content = re.sub(
-                        r'<XCN\.1\s*/>',
-                        '<XCN.1>SYSTEM</XCN.1>',
-                        content,
-                        flags=re.DOTALL
-                    )
-                    self.corrections_made.append({
-                        'type': 'GAZELLE_FIX',
-                        'field': f'{segment}-{field_num} ({xcn_label})',
-                        'location': location,
-                        'value': 'SYSTEM',
-                        'description': f'Filled required field {segment}-{field_num} with placeholder XCN.1',
-                        'reason': description,
-                        'source': 'Gazelle Error Report'
-                    })
-
-            # Also fill required family/given names if empty
-            field_block_pattern = rf'(<{segment}\.{field_num}>[\s\S]*?</{segment}\.{field_num}>)'
-
-            def fix_xcn_block(match):
-                block = match.group(1)
-                block = re.sub(r'<FN\.1\s*/>', '<FN.1>AUTO</FN.1>', block)
-                block = re.sub(r'<FN\.1>\s*</FN\.1>', '<FN.1>AUTO</FN.1>', block)
-                block = re.sub(r'<XCN\.3>\s*</XCN\.3>', '<XCN.3>AUTO</XCN.3>', block)
-                return block
-
-            content = re.sub(field_block_pattern, fix_xcn_block, content, flags=re.DOTALL)
+                    return f'{match.group(1)}SYSTEM^AUTO^CORRECTOR{match.group(3)}'
+                
+                content = re.sub(pattern, add_empty_xcn, content)
         
         return content
     
@@ -411,19 +300,25 @@ class HL7MessageCorrector:
         
         # Check if the code itself is valid but the code system is wrong
         is_code_valid = is_valid_code(full_table, invalid_value)
-        codesystem_fixed = False
-
-        def fix_codesystem(new_codesystem):
-            """Replace invalid code system in CE.3 with expected code system."""
-            nonlocal codesystem_fixed
-            codesys_pattern = rf'(<CE\.3>){re.escape(invalid_codesystem)}(</CE\.3>)'
+        
+        if is_code_valid and invalid_codesystem and invalid_codesystem != full_table:
+            # The code is correct, but the code system field is wrong
+            print(f"DEBUG:   Code '{invalid_value}' is VALID in {full_table}, but code system '{invalid_codesystem}' is WRONG")
+            print(f"DEBUG:   Need to fix code system field from '{invalid_codesystem}' to '{expected_codesystem or full_table}'")
+            
+            # Prefer expected code system if provided in the error description
+            new_codesystem = expected_codesystem or full_table
+            
+            # Find and replace the code system field (usually CE.3)
+            # Pattern: <CE.1>OTH</CE.1>...<CE.3>L</CE.3>
+            codesys_pattern = f'(<CE\\.3>){re.escape(invalid_codesystem)}(</CE\\.3>)'
             if re.search(codesys_pattern, content):
                 print(f"DEBUG:   Found CE.3 with value '{invalid_codesystem}', replacing with '{new_codesystem}'")
                 old_len = len(content)
-                updated = re.sub(codesys_pattern, rf'\1{new_codesystem}\2', content)
-                new_len = len(updated)
+                content = re.sub(codesys_pattern, rf'\1{new_codesystem}\2', content)
+                new_len = len(content)
                 print(f"DEBUG:   Replacement complete. Content size: {old_len} -> {new_len} bytes")
-
+                
                 self.corrections_made.append({
                     'type': 'GAZELLE_FIX',
                     'field': f'Code system at {location}',
@@ -436,23 +331,9 @@ class HL7MessageCorrector:
                     'reason': description,
                     'source': 'HL7 Code Tables (Data-Driven)'
                 })
-                codesystem_fixed = True
-                return updated
-
-            print(f"DEBUG:   Could not find CE.3 pattern with '{invalid_codesystem}'")
-            return None
-        
-        if is_code_valid and invalid_codesystem and invalid_codesystem != full_table:
-            # The code is correct, but the code system field is wrong
-            print(f"DEBUG:   Code '{invalid_value}' is VALID in {full_table}, but code system '{invalid_codesystem}' is WRONG")
-            print(f"DEBUG:   Need to fix code system field from '{invalid_codesystem}' to '{expected_codesystem or full_table}'")
-            
-            # Prefer expected code system if provided in the error description
-            new_codesystem = expected_codesystem or full_table
-            
-            updated_content = fix_codesystem(new_codesystem)
-            if updated_content is not None:
-                return updated_content
+                return content
+            else:
+                print(f"DEBUG:   Could not find CE.3 pattern with '{invalid_codesystem}'")
         
         # If code is not valid, find replacement
         if not is_code_valid:
@@ -507,13 +388,6 @@ class HL7MessageCorrector:
                         'reason': description,
                         'source': 'HL7 Code Tables (Data-Driven)'
                     })
-                    # If code system is also invalid, fix it after updating code value
-                    if invalid_codesystem:
-                        new_codesystem = expected_codesystem or full_table
-                        if new_codesystem and invalid_codesystem != new_codesystem and not codesystem_fixed:
-                            updated_content = fix_codesystem(new_codesystem)
-                            if updated_content is not None:
-                                content = updated_content
                 else:
                     print(f"DEBUG:   Could not find where to replace '{invalid_value}' in content")
             else:
@@ -627,58 +501,6 @@ class HL7MessageCorrector:
                 return match.group(0)
             
             content = re.sub(pattern, add_coding_system, content, flags=re.DOTALL)
-
-        elif segment == 'SCH' and field_num in ['16', '20'] and component in ['2', '3']:
-            # SCH-16/SCH-20: XCN.2 (family name) and XCN.3 (given name)
-            xcn_label = 'Filler Contact Person' if field_num == '16' else 'Entered By Person'
-
-            if component == '2':
-                # XCN.2 -> FN.1 (family name)
-                pattern = rf'(<{segment}\.{field_num}>.*?<XCN\.2>.*?<FN\.1>)(\s*)(</FN\.1>)'
-
-                def add_family_name(match):
-                    if match.group(2).strip() == '':
-                        self.corrections_made.append({
-                            'type': 'GAZELLE_FIX',
-                            'field': f'{segment}-{field_num}.2 (Family name)',
-                            'location': location,
-                            'value': 'AUTO',
-                            'description': f'Added missing family name for {xcn_label}',
-                            'reason': description,
-                            'source': 'Gazelle Error Report'
-                        })
-                        return f'{match.group(1)}AUTO{match.group(3)}'
-                    return match.group(0)
-
-                content = re.sub(pattern, add_family_name, content, flags=re.DOTALL)
-
-                # Handle self-closing FN.1
-                content = re.sub(
-                    r'<FN\.1\s*/>',
-                    '<FN.1>AUTO</FN.1>',
-                    content,
-                    flags=re.DOTALL
-                )
-
-            if component == '3':
-                # XCN.3 (given name)
-                pattern = rf'(<{segment}\.{field_num}>.*?<XCN\.3>)(\s*)(</XCN\.3>)'
-
-                def add_given_name(match):
-                    if match.group(2).strip() == '':
-                        self.corrections_made.append({
-                            'type': 'GAZELLE_FIX',
-                            'field': f'{segment}-{field_num}.3 (Given name)',
-                            'location': location,
-                            'value': 'AUTO',
-                            'description': f'Added missing given name for {xcn_label}',
-                            'reason': description,
-                            'source': 'Gazelle Error Report'
-                        })
-                        return f'{match.group(1)}AUTO{match.group(3)}'
-                    return match.group(0)
-
-                content = re.sub(pattern, add_given_name, content, flags=re.DOTALL)
         
         return content
     
