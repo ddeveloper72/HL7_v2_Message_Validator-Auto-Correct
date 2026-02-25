@@ -35,20 +35,20 @@ Connect to your Azure SQL Database and run the schema:
 
 **Option A: Azure Portal Query Editor**
 1. Go to https://portal.azure.com
-2. Navigate to your database: `gazelle-healthlink`
+2. Navigate to your database: `<your-database-name>`
 3. Click "Query editor"
 4. Login with your credentials
 5. Copy and paste contents of `database_schema.sql`
 6. Click "Run"
 
 **Option B: SQL Server Management Studio (SSMS)**
-1. Connect to: `myfreesqldbserver72.database.windows.net`
+1. Connect to: `<your-sql-server>.database.windows.net`
 2. Open `database_schema.sql`
 3. Execute
 
 **Option C: Command Line (sqlcmd)**
 ```bash
-sqlcmd -S myfreesqldbserver72.database.windows.net -d gazelle-healthlink -U developer -P AeDnaa@5036089 -i database_schema.sql
+sqlcmd -S <your-sql-server>.database.windows.net -d <your-database-name> -U <your-username> -P <your-password> -i database_schema.sql
 ```
 
 ### 4. Configure Azure AD App Registration
@@ -57,7 +57,7 @@ Your app registration needs the correct redirect URI:
 
 1. Go to https://portal.azure.com
 2. Navigate to **Azure Active Directory** → **App registrations**
-3. Find your app (Client ID: `7e0d895a-bc09-4d96-bd57-6fd039573f45`)
+3. Find your app (Client ID: `<your-azure-ad-client-id>`)
 4. Go to **Authentication**
 5. Add redirect URI: `http://localhost:5000/auth/callback`
 6. For production, add: `https://your-app-name.azurewebsites.net/auth/callback`
@@ -98,8 +98,8 @@ gunicorn dashboard_app:app --bind 0.0.0.0:5000 --timeout 120
 **Error: "Login failed for user"**
 ```bash
 # Verify credentials in .env
-AZURE_SQL_USERNAME=developer
-AZURE_SQL_PASSWORD=AeDnaa@5036089
+AZURE_SQL_USERNAME=<your-sql-username>
+AZURE_SQL_PASSWORD=<your-sql-password>
 ```
 
 **Error: "SSL Provider: The certificate chain was issued by an authority that is not trusted"**

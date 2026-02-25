@@ -1,8 +1,8 @@
 -- Add OriginalFileContent column to existing ValidationHistory table
 -- Run this on Azure SQL Database to add file storage capability
 
-USE [gazelle-healthlink];
-GO
+-- USE [your-database-name];
+-- GO
 
 -- Check if column already exists
 IF NOT EXISTS (
