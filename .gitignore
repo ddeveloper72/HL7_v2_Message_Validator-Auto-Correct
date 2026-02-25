@@ -89,3 +89,4 @@ cli_test/
 
 # Old simple app (superseded by dashboard_app.py)
 app.py
+HL7_v2_Message_Validator-Auto-Correct.code-workspace
