@@ -487,7 +487,7 @@ flowchart TB
             Gunicorn[Gunicorn WSGI Server<br/>2 Workers]
             Flask[Flask Application<br/>Python 3.12.4]
             FreeTDS[FreeTDS Driver<br/>Azure SQL Connectivity]
-            Health[/health Endpoint<br/>Monitoring]
+            Health["Health Endpoint<br/>/health monitoring"]
             
             Gunicorn --> Flask
             Flask --> FreeTDS
