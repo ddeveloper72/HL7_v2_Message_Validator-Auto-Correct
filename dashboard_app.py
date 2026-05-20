@@ -5,7 +5,7 @@ Web interface for validating HL7 messages and viewing reports
 from flask import Flask, render_template, request, send_file, session, redirect, url_for, jsonify, make_response
 import os
 import markdown
-from datetime import datetime
+from datetime import datetime, date
 import json
 from pathlib import Path
 from io import BytesIO
@@ -343,11 +343,71 @@ def get_sample_reports(show_all=False):
 
 # ==================== API KEY VALIDITY CHECK ====================
 
-def check_api_key_validity():
+def check_api_key_validity(user_id=None):
     """
-    Check if the Gazelle API key is valid based on dates in .env file
+    Check if the Gazelle API key is valid based on user's dates in database
+    Falls back to .env dates if user_id not provided or database not available
     Returns: dict with status, days_remaining, and message
     """
+    # Try to get dates from user's database record
+    if user_id and USE_DATABASE:
+        try:
+            validity_info = db.get_user_api_key_validity(user_id)
+            if validity_info and validity_info['valid_to']:
+                valid_to = validity_info['valid_to']
+                valid_from = validity_info['valid_from']
+                
+                # If valid_to is already a date object, use it directly
+                if isinstance(valid_to, date):
+                    valid_to_date = valid_to
+                else:
+                    # Otherwise parse it
+                    valid_to_date = datetime.strptime(str(valid_to), '%Y-%m-%d').date()
+                
+                today = datetime.now().date()
+                days_remaining = (valid_to_date - today).days
+                
+                if days_remaining < 0:
+                    return {
+                        'status': 'expired',
+                        'days_remaining': days_remaining,
+                        'message': f'API key expired {abs(days_remaining)} days ago',
+                        'badge_class': 'bg-danger',
+                        'valid_to': valid_to_date.strftime('%Y-%m-%d'),
+                        'valid_from': valid_from.strftime('%Y-%m-%d') if valid_from else None
+                    }
+                elif days_remaining == 0:
+                    return {
+                        'status': 'expiring_today',
+                        'days_remaining': 0,
+                        'message': 'API key expires TODAY',
+                        'badge_class': 'bg-danger',
+                        'valid_to': valid_to_date.strftime('%Y-%m-%d'),
+                        'valid_from': valid_from.strftime('%Y-%m-%d') if valid_from else None
+                    }
+                elif days_remaining <= 7:
+                    return {
+                        'status': 'expiring_soon',
+                        'days_remaining': days_remaining,
+                        'message': f'API key expires in {days_remaining} days',
+                        'badge_class': 'bg-warning',
+                        'valid_to': valid_to_date.strftime('%Y-%m-%d'),
+                        'valid_from': valid_from.strftime('%Y-%m-%d') if valid_from else None
+                    }
+                else:
+                    return {
+                        'status': 'valid',
+                        'days_remaining': days_remaining,
+                        'message': f'API key valid for {days_remaining} days',
+                        'badge_class': 'bg-success',
+                        'valid_to': valid_to_date.strftime('%Y-%m-%d'),
+                        'valid_from': valid_from.strftime('%Y-%m-%d') if valid_from else None
+                    }
+        except Exception as e:
+            print(f"Warning: Could not get API key validity from database: {e}")
+            # Fall through to env-based check
+    
+    # Fallback to .env file dates (for backward compatibility or local mode)
     valid_from_str = os.getenv('GAZELLE_API_KEY_VALID_FROM')
     valid_to_str = os.getenv('GAZELLE_API_KEY_VALID_TO')
     
@@ -402,7 +462,7 @@ def check_api_key_validity():
         return {
             'status': 'error',
             'days_remaining': None,
-            'message': f'Invalid date format in .env file',
+            'message': f'Invalid date format',
             'badge_class': 'bg-secondary'
         }
 
@@ -609,6 +669,18 @@ def profile():
             api_key = db.get_user_api_key(user_id)
             has_api_key = api_key is not None
             
+            # Get API key validity dates
+            validity_info = db.get_user_api_key_validity(user_id)
+            api_key_valid_from = None
+            api_key_valid_to = None
+            
+            if validity_info:
+                if validity_info['valid_from']:
+                    # Convert date to string for template
+                    api_key_valid_from = validity_info['valid_from'].strftime('%Y-%m-%d') if isinstance(validity_info['valid_from'], date) else str(validity_info['valid_from'])
+                if validity_info['valid_to']:
+                    api_key_valid_to = validity_info['valid_to'].strftime('%Y-%m-%d') if isinstance(validity_info['valid_to'], date) else str(validity_info['valid_to'])
+            
             # Get user statistics
             stats = db.get_user_statistics(user_id)
             
@@ -629,15 +701,21 @@ def profile():
                 # Fallback to session/defaults
                 has_api_key = 'api_key' in session and session['api_key']
                 stats = {'total': 0, 'passed': 0, 'failed': 0, 'undefined': 0}
+                api_key_valid_from = None
+                api_key_valid_to = None
                 
         except Exception as e:
             print(f"   ⚠️ Error loading profile data: {e}")
             # Fallback to session-based data
             has_api_key = 'api_key' in session and session['api_key']
             stats = {'total': 0, 'passed': 0, 'failed': 0, 'undefined': 0}
+            api_key_valid_from = None
+            api_key_valid_to = None
     else:
         # Local mode: use session-based API key
         has_api_key = 'api_key' in session and session['api_key']
+        api_key_valid_from = None
+        api_key_valid_to = None
         
         # Calculate stats from in-memory results
         stats = {
@@ -651,19 +729,26 @@ def profile():
                          user_email=session.get('user_email') or session.get('email'),
                          user_name=session.get('user_name') or session.get('display_name'),
                          has_api_key=has_api_key,
-                         stats=stats)
+                         stats=stats,
+                         api_key_valid_from=api_key_valid_from,
+                         api_key_valid_to=api_key_valid_to)
 
 @app.route('/set-api-key-db', methods=['POST'])
 @login_required
 @limiter.limit("10 per minute")
 def set_api_key_db():
-    """Save user's Gazelle API key to database (encrypted)"""
+    """Save user's Gazelle API key and validity dates to database (encrypted)"""
     user_id = session['user_id']
     api_key = request.form.get('api_key', '').strip()
+    valid_from_str = request.form.get('valid_from', '').strip()
+    valid_to_str = request.form.get('valid_to', '').strip()
     
     # Input validation
     if not api_key:
         return jsonify({'success': False, 'message': 'API key required'}), 400
+    
+    if not valid_to_str:
+        return jsonify({'success': False, 'message': 'API key expiration date required'}), 400
     
     if len(api_key) > 256:
         return jsonify({'success': False, 'message': 'API key too long (max 256 characters)'}), 400
@@ -672,11 +757,32 @@ def set_api_key_db():
     if not re.match(r'^[A-Za-z0-9_\-\.]+$', api_key):
         return jsonify({'success': False, 'message': 'Invalid API key format'}), 400
     
+    # Parse and validate dates
+    valid_from = None
+    valid_to = None
+    
     try:
-        # Save API key (to database if enabled, or just session in local mode)
+        if valid_from_str:
+            valid_from = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
+        
+        valid_to = datetime.strptime(valid_to_str, '%Y-%m-%d').date()
+        
+        # Check if expiration date is in the past
+        if valid_to < datetime.now().date():
+            return jsonify({'success': False, 'message': 'API key expiration date is in the past'}), 400
+        
+        # Check if valid_from is after valid_to
+        if valid_from and valid_from > valid_to:
+            return jsonify({'success': False, 'message': 'Creation date cannot be after expiration date'}), 400
+            
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Invalid date format. Please use YYYY-MM-DD'}), 400
+    
+    try:
+        # Save API key with validity dates (to database if enabled, or just session in local mode)
         if USE_DATABASE:
             ip_address = request.remote_addr
-            db.set_user_api_key(user_id, api_key, ip_address)
+            db.set_user_api_key(user_id, api_key, valid_from, valid_to, ip_address)
         
         # Store in session for immediate use (both modes)
         session['api_key'] = api_key
@@ -804,8 +910,8 @@ def dashboard():
         passed_count = sum(1 for r in reports if r.get('status') == 'PASSED')
         failed_count = sum(1 for r in reports if r.get('status') == 'FAILED')
     
-    # Check API key validity
-    api_key_validity = check_api_key_validity()
+    # Check API key validity (pass user_id for per-user dates)
+    api_key_validity = check_api_key_validity(user_id)
     
     return render_template('dashboard.html', 
                          reports=reports,

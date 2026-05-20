@@ -147,13 +147,14 @@ class DatabaseManager:
             conn.close()
     
     def get_user_by_id(self, user_id):
-        """Get user by ID"""
+        """Get user by ID with API key validity dates"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
         try:
             cursor.execute("""
-                SELECT UserID, Email, AzureADObjectID, DisplayName, EncryptedAPIKey, CreatedDate
+                SELECT UserID, Email, AzureADObjectID, DisplayName, EncryptedAPIKey, CreatedDate,
+                       APIKeyValidFrom, APIKeyValidTo
                 FROM Users WHERE UserID = ? AND IsActive = 1
             """, user_id)
             return cursor.fetchone()
@@ -161,8 +162,8 @@ class DatabaseManager:
             cursor.close()
             conn.close()
     
-    def set_user_api_key(self, user_id, api_key, ip_address=None):
-        """Set or update user's Gazelle API key (encrypted), or clear if None"""
+    def set_user_api_key(self, user_id, api_key, valid_from=None, valid_to=None, ip_address=None):
+        """Set or update user's Gazelle API key (encrypted) with validity dates, or clear if None"""
         # Handle clearing the API key
         if api_key is None:
             encrypted_key = None
@@ -175,10 +176,14 @@ class DatabaseManager:
         cursor = conn.cursor()
         
         try:
-            # Update user's API key
+            # Update user's API key and validity dates
             cursor.execute("""
-                UPDATE Users SET EncryptedAPIKey = ? WHERE UserID = ?
-            """, (encrypted_key, user_id))
+                UPDATE Users 
+                SET EncryptedAPIKey = ?,
+                    APIKeyValidFrom = ?,
+                    APIKeyValidTo = ?
+                WHERE UserID = ?
+            """, (encrypted_key, valid_from, valid_to, user_id))
             
             # Log the action
             cursor.execute("""
@@ -223,6 +228,28 @@ class DatabaseManager:
             result = cursor.fetchone()
             if result and result[0]:
                 return self.decrypt_api_key(result[0])
+            return None
+        finally:
+            cursor.close()
+            conn.close()
+    
+    def get_user_api_key_validity(self, user_id):
+        """Get user's API key validity dates"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute("""
+                SELECT APIKeyValidFrom, APIKeyValidTo 
+                FROM Users 
+                WHERE UserID = ?
+            """, user_id)
+            result = cursor.fetchone()
+            if result:
+                return {
+                    'valid_from': result[0],
+                    'valid_to': result[1]
+                }
             return None
         finally:
             cursor.close()
