@@ -18,6 +18,7 @@ env/
 
 # Flask
 instance/
+flask_session/
 
 # IDE
 .vscode/
