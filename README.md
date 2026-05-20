@@ -146,81 +146,275 @@ See [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) for detailed setup.
 
 The HL7 v2 Message Validator operates in two distinct architectural modes, supporting both standalone development and enterprise multi-user deployments.
 
-![Target Architecture](docs/architecture/target_architecture.png)
-
 #### Local Mode Architecture
-```
-┌─────────────┐
-│   Browser   │
-└──────┬──────┘
-       │ HTTP
-       v
-┌─────────────────────────────────────┐
-│     Flask Application (Local)       │
-│  ┌─────────────────────────────┐   │
-│  │  Dashboard & Upload UI      │   │
-│  │  Auto-Correction Engine     │   │
-│  │  PDF Report Generator       │   │
-│  └─────────────┬───────────────┘   │
-│                │                    │
-│  ┌─────────────v───────────────┐   │
-│  │  Session Storage (File)     │   │
-│  │  Temporary File Storage     │   │
-│  └─────────────────────────────┘   │
-└──────────────┬──────────────────────┘
-               │ REST API
-               v
-     ┌─────────────────────┐
-     │   Gazelle EVS API   │
-     │ (HL7 v2 Validation) │
-     └─────────────────────┘
+
+```mermaid
+flowchart TB
+    User[👤 User Browser]
+    
+    subgraph Flask["Flask Application (Local Mode)"]
+        UI[Dashboard & Upload UI]
+        Engine[Auto-Correction Engine]
+        PDF[PDF Report Generator]
+        Session[(Session Storage<br/>File-based)]
+        Storage[(Temporary Storage<br/>uploads/ processed/)]
+        
+        UI --> Engine
+        Engine --> PDF
+        UI --> Session
+        Engine --> Storage
+    end
+    
+    Gazelle[☁️ Gazelle EVS API<br/>HL7 v2 Validation]
+    
+    User -->|HTTP| UI
+    Engine -->|REST API| Gazelle
+    
+    style Flask fill:#e1f5ff
+    style Gazelle fill:#fff4e6
+    style User fill:#f3e5f5
 ```
 
 #### Production Mode Architecture
-```
-┌─────────────┐
-│   Browser   │
-└──────┬──────┘
-       │ HTTPS
-       v
-┌──────────────────────────────────────────────┐
-│    Flask Application (Production)            │
-│  ┌──────────────────────────────────────┐   │
-│  │  Azure AD Authentication Layer       │   │
-│  │  Multi-User Session Management       │   │
-│  └──────────────┬───────────────────────┘   │
-│                 │                            │
-│  ┌──────────────v───────────────────────┐   │
-│  │  Dashboard & Upload UI               │   │
-│  │  Auto-Correction Engine              │   │
-│  │  PDF Report Generator                │   │
-│  └──────────┬──────────────┬────────────┘   │
-│             │              │                 │
-│             │              └─────────────┐   │
-│             │                            │   │
-│  ┌──────────v───────────────┐  ┌────────v───v─────────┐
-│  │  Encrypted API Key Store │  │  Validation History  │
-│  │  User Profile Manager    │  │  User Statistics     │
-│  └──────────────────────────┘  └──────────────────────┘
-└──────────────┬─────────────────────┬────────────────────┘
-               │                     │
-               │ REST API            │ TDS Protocol
-               v                     v
-     ┌─────────────────────┐  ┌─────────────────┐
-     │   Gazelle EVS API   │  │  Azure SQL DB   │
-     │ (HL7 v2 Validation) │  │ (Encrypted)     │
-     └─────────────────────┘  └─────────────────┘
+
+```mermaid
+flowchart TB
+    User[👤 User Browser]
+    
+    subgraph Flask["Flask Application (Production Mode)"]
+        Auth[🔐 Azure AD Authentication]
+        Session[Multi-User Session Manager]
+        
+        UI[Dashboard & Upload UI]
+        Engine[Auto-Correction Engine]
+        PDF[PDF Report Generator]
+        
+        APIStore[Encrypted API Key Store]
+        Profile[User Profile Manager]
+        History[Validation History]
+        Stats[User Statistics]
+        
+        Auth --> Session
+        Session --> UI
+        UI --> Engine
+        Engine --> PDF
+        Engine --> APIStore
+        Engine --> History
+        UI --> Profile
+        Profile --> Stats
+    end
+    
+    AzureAD[☁️ Azure AD<br/>Enterprise SSO]
+    Gazelle[☁️ Gazelle EVS API<br/>HL7 v2 Validation]
+    AzureSQL[(🗄️ Azure SQL Database<br/>Encrypted)]
+    
+    User -->|HTTPS| Auth
+    Auth <-->|OAuth2| AzureAD
+    Engine -->|REST API| Gazelle
+    APIStore <-->|TDS Protocol| AzureSQL
+    History <-->|TDS Protocol| AzureSQL
+    Profile <-->|TDS Protocol| AzureSQL
+    Stats <-->|TDS Protocol| AzureSQL
+    
+    style Flask fill:#e1f5ff
+    style AzureAD fill:#fff4e6
+    style Gazelle fill:#fff4e6
+    style AzureSQL fill:#e8f5e9
+    style User fill:#f3e5f5
 ```
 
 ### Operational Flows
 
-| Flow | Description | Diagram |
-|------|-------------|---------|
-| **File Upload & Validation** | User uploads HL7 XML file, system validates against Gazelle EVS, displays results | ![Upload Flow](docs/architecture/upload_flow.png) |
-| **Auto-Correction Workflow** | System detects validation errors, applies corrections, re-validates automatically | ![Correction Flow](docs/architecture/correction_flow.png) |
-| **PDF Report Generation** | Generate professional validation reports with error details and corrections | ![PDF Flow](docs/architecture/pdf_flow.png) |
-| **User Authentication (Production)** | Azure AD OAuth2 flow with session management and user profile creation | ![Auth Flow](docs/architecture/auth_flow.png) |
-| **API Key Management** | Per-user encrypted API key storage with validity tracking | ![API Key Flow](docs/architecture/api_key_flow.png) |
+#### 1. File Upload & Validation Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Web Interface
+    participant Flask as Flask App
+    participant Storage as File Storage
+    participant Gazelle as Gazelle EVS API
+    
+    User->>UI: Upload HL7 XML file
+    UI->>Flask: POST /upload
+    Flask->>Storage: Save to uploads/
+    Flask->>Flask: Detect message type (ORU^R01, ADT^A01, etc.)
+    Flask->>Flask: Base64 encode content
+    Flask->>Gazelle: POST /validations (validator OID + content)
+    Gazelle-->>Flask: 201 Created (validation OID + privacy key)
+    
+    loop Poll for results (max 30s)
+        Flask->>Gazelle: GET /validations/{oid}/report
+        Gazelle-->>Flask: Validation status
+    end
+    
+    Gazelle-->>Flask: DONE_PASSED / DONE_FAILED_WITH_ERRORS
+    Flask->>Flask: Parse report (errors, warnings, counts)
+    Flask-->>UI: Display results with error details
+    UI-->>User: Show validation report
+```
+
+#### 2. Auto-Correction Workflow
+
+```mermaid
+flowchart TB
+    Start([Validation Failed]) --> Analyze[Analyze Error Types]
+    
+    Analyze --> BOM{BOM Issues?}
+    BOM -->|Yes| RemoveBOM[Remove UTF-8 BOM]
+    BOM -->|No| XML
+    RemoveBOM --> XML
+    
+    XML{XML Declaration<br/>Issues?}
+    XML -->|Yes| FixXML[Add/Fix XML Header]
+    XML -->|No| Code
+    FixXML --> Code
+    
+    Code{Code Table<br/>Errors?}
+    Code -->|Yes| FixCodes[Validate & Fix HL7 Codes]
+    Code -->|No| Fields
+    FixCodes --> Fields
+    
+    Fields{Required Fields<br/>Empty?}
+    Fields -->|Yes| PopulateFields[Populate Mandatory Fields]
+    Fields -->|No| Segments
+    PopulateFields --> Segments
+    
+    Segments{Segment Order<br/>Issues?}
+    Segments -->|Yes| ReorderSegs[Reorder per HL7 Spec]
+    Segments -->|No| Length
+    ReorderSegs --> Length
+    
+    Length{Field Length<br/>Violations?}
+    Length -->|Yes| TruncateFields[Truncate Oversized Fields]
+    Length -->|No| Save
+    TruncateFields --> Save
+    
+    Save[Save Corrected File to processed/]
+    Save --> Revalidate[Submit for Re-validation]
+    Revalidate --> Result{Validation<br/>Result?}
+    
+    Result -->|PASSED| Success([✅ Display Success])
+    Result -->|FAILED| Partial([⚠️ Partial Correction<br/>Show Remaining Errors])
+    
+    style Start fill:#ffebee
+    style Success fill:#e8f5e9
+    style Partial fill:#fff3e0
+```
+
+#### 3. PDF Report Generation Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Dashboard
+    participant Flask as Flask App
+    participant ReportLab as ReportLab Engine
+    participant Browser as User Browser
+    
+    User->>UI: Click "Export PDF"
+    UI->>Flask: GET /export-pdf/{validation_id}
+    Flask->>Flask: Retrieve validation data
+    Flask->>Flask: Extract errors, warnings, metadata
+    
+    Flask->>ReportLab: Create PDF document
+    ReportLab->>ReportLab: Add header (title, logo, date)
+    ReportLab->>ReportLab: Add summary table (status, counts)
+    ReportLab->>ReportLab: Add error details section
+    ReportLab->>ReportLab: Add corrections applied section
+    ReportLab->>ReportLab: Add Gazelle report link
+    ReportLab-->>Flask: PDF BytesIO buffer
+    
+    Flask-->>Browser: Download PDF (application/pdf)
+    Browser-->>User: Save/Open PDF report
+```
+
+#### 4. User Authentication Flow (Production Mode)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Browser
+    participant Flask as Flask App
+    participant AzureAD as Azure AD
+    participant DB as Azure SQL Database
+    
+    User->>Browser: Access https://app.com
+    Browser->>Flask: GET /
+    Flask->>Flask: Check session
+    Flask-->>Browser: Redirect to /landing
+    
+    Browser->>Flask: GET /landing
+    Flask-->>Browser: Show landing page
+    
+    User->>Browser: Click "Login with Microsoft"
+    Browser->>Flask: GET /login
+    Flask->>AzureAD: Redirect to OAuth2 authorization URL
+    
+    AzureAD->>User: Show Microsoft login
+    User->>AzureAD: Enter credentials
+    AzureAD-->>Flask: Redirect with authorization code
+    
+    Flask->>AzureAD: Exchange code for access token
+    AzureAD-->>Flask: Access token + user info (email, name, OID)
+    
+    Flask->>DB: Check if user exists (by email)
+    
+    alt User exists
+        Flask->>DB: UPDATE Users SET LastLoginDate = NOW()
+    else New user
+        Flask->>DB: INSERT INTO Users (email, name, AzureAD OID)
+    end
+    
+    DB-->>Flask: UserID
+    Flask->>Flask: Create encrypted session
+    Flask-->>Browser: Redirect to /dashboard
+    Browser-->>User: Show dashboard
+```
+
+#### 5. API Key Management Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Profile as Profile Page
+    participant Flask as Flask App
+    participant Crypto as Fernet Encryption
+    participant DB as Azure SQL Database
+    participant Dashboard as Dashboard
+    
+    User->>Profile: Navigate to Profile
+    Profile->>Flask: GET /profile
+    Flask->>DB: SELECT APIKeyValidFrom, APIKeyValidTo FROM Users
+    DB-->>Flask: Existing dates (if any)
+    Flask-->>Profile: Display form with existing dates
+    
+    User->>Profile: Enter API key + validity dates
+    Note over User,Profile: Creation: 2026-05-20<br/>Expiration: 2026-06-18
+    
+    Profile->>Flask: POST /set-api-key-db
+    Flask->>Flask: Validate date format (YYYY-MM-DD)
+    Flask->>Flask: Check expiration not in past
+    Flask->>Flask: Check creation before expiration
+    
+    Flask->>Crypto: Encrypt API key (AES-256)
+    Crypto-->>Flask: Encrypted key
+    
+    Flask->>DB: UPDATE Users SET<br/>EncryptedAPIKey, APIKeyValidFrom, APIKeyValidTo
+    DB-->>Flask: Success
+    
+    Flask->>DB: INSERT INTO APIKeyAuditLog (action, timestamp, IP)
+    Flask-->>Profile: Success message
+    
+    User->>Dashboard: View dashboard
+    Dashboard->>Flask: GET /dashboard
+    Flask->>DB: SELECT APIKeyValidTo FROM Users
+    DB-->>Flask: 2026-06-18
+    Flask->>Flask: Calculate days remaining (29 days)
+    Flask->>Flask: Determine badge color (green)
+    Flask-->>Dashboard: Display "Valid until 2026-06-18" badge
+    Dashboard-->>User: Show API key status
+```
 
 ### Component Details
 
@@ -252,52 +446,111 @@ The HL7 v2 Message Validator operates in two distinct architectural modes, suppo
 
 ### Security Architecture
 
-```
-┌─────────────────────────────────────┐
-│       Security Layers               │
-├─────────────────────────────────────┤
-│  ✓ CSRF Protection (Flask-WTF)     │
-│  ✓ Rate Limiting (Flask-Limiter)   │
-│  ✓ Input Sanitization (Bleach)     │
-│  ✓ SQL Injection Prevention        │
-│  ✓ Encrypted Sessions (Fernet)     │
-│  ✓ API Key Encryption (AES-256)    │
-│  ✓ HTTPS/TLS (Production)          │
-│  ✓ Secure Headers (CSP, HSTS)      │
-└─────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Security["🔒 Security Layers"]
+        direction TB
+        CSRF[CSRF Protection<br/>Flask-WTF]
+        Rate[Rate Limiting<br/>Flask-Limiter]
+        Sanitize[Input Sanitization<br/>Bleach]
+        SQL[SQL Injection Prevention<br/>Parameterized Queries]
+        Session[Encrypted Sessions<br/>Fernet]
+        APIKey[API Key Encryption<br/>AES-256]
+        TLS[HTTPS/TLS<br/>Production]
+        Headers[Secure Headers<br/>CSP, HSTS, X-Frame-Options]
+        
+        CSRF --> Rate
+        Rate --> Sanitize
+        Sanitize --> SQL
+        SQL --> Session
+        Session --> APIKey
+        APIKey --> TLS
+        TLS --> Headers
+    end
+    
+    Request[🌐 HTTP Request] --> Security
+    Security --> Application[✅ Secured Application]
+    
+    style Security fill:#e8f5e9
+    style Request fill:#ffebee
+    style Application fill:#e1f5ff
 ```
 
 ### Deployment Architectures
 
 #### Docker Deployment
-```
-Docker Host
-├── hl7-validator container
-│   ├── Gunicorn (WSGI server, 2 workers)
-│   ├── Flask application
-│   ├── FreeTDS (Azure SQL driver)
-│   └── Health check endpoint (/health)
-├── Volume mounts
-│   ├── ./uploads → /app/uploads
-│   ├── ./processed → /app/processed
-│   └── ./flask_session → /app/flask_session
-└── Network
-    ├── Port 5000:5000
-    └── Azure SQL (external, TLS)
+
+```mermaid
+flowchart TB
+    subgraph DockerHost["🐳 Docker Host"]
+        subgraph Container["hl7-validator Container"]
+            Gunicorn[Gunicorn WSGI Server<br/>2 Workers]
+            Flask[Flask Application<br/>Python 3.12.4]
+            FreeTDS[FreeTDS Driver<br/>Azure SQL Connectivity]
+            Health[/health Endpoint<br/>Monitoring]
+            
+            Gunicorn --> Flask
+            Flask --> FreeTDS
+            Flask --> Health
+        end
+        
+        subgraph Volumes["📁 Volume Mounts"]
+            Uploads[./uploads]
+            Processed[./processed]
+            Sessions[./flask_session]
+        end
+        
+        Container -.->|Mount| Uploads
+        Container -.->|Mount| Processed
+        Container -.->|Mount| Sessions
+    end
+    
+    Browser[👤 Browser] -->|Port 5000:5000| Gunicorn
+    FreeTDS -->|TLS/TDS| AzureSQL[(☁️ Azure SQL<br/>External)]
+    
+    style DockerHost fill:#e3f2fd
+    style Container fill:#fff3e0
+    style Volumes fill:#f3e5f5
+    style AzureSQL fill:#e8f5e9
 ```
 
 #### Heroku Deployment
-```
-Heroku Dyno
-├── Web process (Gunicorn)
-├── FreeTDS (Aptfile)
-├── Python 3.12.4
-└── Buildpacks
-    ├── heroku/python
-    └── FreeTDS buildpack
-```
 
-## 🏗️ Architecture
+```mermaid
+flowchart TB
+    subgraph Heroku["☁️ Heroku Platform"]
+        subgraph Dyno["Web Dyno"]
+            Process[Gunicorn Process<br/>--timeout 120]
+            Python[Python 3.12.4 Runtime]
+            FreeTDS_H[FreeTDS<br/>via Aptfile]
+            App[Flask Application]
+            
+            Process --> Python
+            Python --> App
+            App --> FreeTDS_H
+        end
+        
+        subgraph Buildpacks["📦 Buildpacks"]
+            PythonBP[heroku/python]
+            FreeTDS_BP[FreeTDS Buildpack]
+        end
+        
+        Buildpacks -.->|Build| Dyno
+    end
+    
+    ConfigVars[⚙️ Config Vars<br/>Environment Variables]
+    
+    Internet[🌐 Internet] -->|HTTPS| Heroku
+    FreeTDS_H -->|TLS/TDS| AzureSQL[(☁️ Azure SQL)]
+    FreeTDS_H -->|HTTPS| Gazelle[(☁️ Gazelle EVS API)]
+    ConfigVars -.->|Inject| Dyno
+    
+    style Heroku fill:#e1f5ff
+    style Dyno fill:#fff3e0
+    style Buildpacks fill:#f3e5f5
+    style AzureSQL fill:#e8f5e9
+    style Gazelle fill:#fff4e6
+```
 
 ### Technology Stack
 - **Backend:** Flask 3.0.0, Python 3.12.4
