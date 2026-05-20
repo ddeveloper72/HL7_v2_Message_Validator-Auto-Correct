@@ -60,10 +60,37 @@ direct_*.py
 recreate_*.py
 generate_*.py
 find_*.py
-auto_*.py
+auto_validate*.py
+validate_with_*.py
 add_*.py
 remove_*.py
 ERROR_ANALYSIS.py
+
+# Migration and deployment scripts (archived after initial setup)
+apply_*.py
+init_database.py
+deploy_to_*.py
+*.original.py
+*_original.py
+add_*.sql
+alter_*.sql
+update_*.sql
+verify_*.bat
+
+# Development markdown (archived)
+*_REPORT.md
+*_CHECKLIST.md
+*_COMPLETE.md
+*_GUIDE.md
+*_SUMMARY.md
+*_FEATURE.md
+SESSION_*.md
+TESTING_*.md
+BUG_FIX_*.md
+DEPLOYMENT_*.md
+IMPLEMENTATION_*.md
+SECURITY_AUDIT*.md
+SECURITY_FIXES*.md
 
 # Log files
 *.log
