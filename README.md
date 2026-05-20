@@ -140,6 +140,163 @@ AZURE_SQL_PASSWORD=...
 
 See [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) for detailed setup.
 
+## 🏗️ Target Architecture
+
+### System Overview
+
+The HL7 v2 Message Validator operates in two distinct architectural modes, supporting both standalone development and enterprise multi-user deployments.
+
+![Target Architecture](docs/architecture/target_architecture.png)
+
+#### Local Mode Architecture
+```
+┌─────────────┐
+│   Browser   │
+└──────┬──────┘
+       │ HTTP
+       v
+┌─────────────────────────────────────┐
+│     Flask Application (Local)       │
+│  ┌─────────────────────────────┐   │
+│  │  Dashboard & Upload UI      │   │
+│  │  Auto-Correction Engine     │   │
+│  │  PDF Report Generator       │   │
+│  └─────────────┬───────────────┘   │
+│                │                    │
+│  ┌─────────────v───────────────┐   │
+│  │  Session Storage (File)     │   │
+│  │  Temporary File Storage     │   │
+│  └─────────────────────────────┘   │
+└──────────────┬──────────────────────┘
+               │ REST API
+               v
+     ┌─────────────────────┐
+     │   Gazelle EVS API   │
+     │ (HL7 v2 Validation) │
+     └─────────────────────┘
+```
+
+#### Production Mode Architecture
+```
+┌─────────────┐
+│   Browser   │
+└──────┬──────┘
+       │ HTTPS
+       v
+┌──────────────────────────────────────────────┐
+│    Flask Application (Production)            │
+│  ┌──────────────────────────────────────┐   │
+│  │  Azure AD Authentication Layer       │   │
+│  │  Multi-User Session Management       │   │
+│  └──────────────┬───────────────────────┘   │
+│                 │                            │
+│  ┌──────────────v───────────────────────┐   │
+│  │  Dashboard & Upload UI               │   │
+│  │  Auto-Correction Engine              │   │
+│  │  PDF Report Generator                │   │
+│  └──────────┬──────────────┬────────────┘   │
+│             │              │                 │
+│             │              └─────────────┐   │
+│             │                            │   │
+│  ┌──────────v───────────────┐  ┌────────v───v─────────┐
+│  │  Encrypted API Key Store │  │  Validation History  │
+│  │  User Profile Manager    │  │  User Statistics     │
+│  └──────────────────────────┘  └──────────────────────┘
+└──────────────┬─────────────────────┬────────────────────┘
+               │                     │
+               │ REST API            │ TDS Protocol
+               v                     v
+     ┌─────────────────────┐  ┌─────────────────┐
+     │   Gazelle EVS API   │  │  Azure SQL DB   │
+     │ (HL7 v2 Validation) │  │ (Encrypted)     │
+     └─────────────────────┘  └─────────────────┘
+```
+
+### Operational Flows
+
+| Flow | Description | Diagram |
+|------|-------------|---------|
+| **File Upload & Validation** | User uploads HL7 XML file, system validates against Gazelle EVS, displays results | ![Upload Flow](docs/architecture/upload_flow.png) |
+| **Auto-Correction Workflow** | System detects validation errors, applies corrections, re-validates automatically | ![Correction Flow](docs/architecture/correction_flow.png) |
+| **PDF Report Generation** | Generate professional validation reports with error details and corrections | ![PDF Flow](docs/architecture/pdf_flow.png) |
+| **User Authentication (Production)** | Azure AD OAuth2 flow with session management and user profile creation | ![Auth Flow](docs/architecture/auth_flow.png) |
+| **API Key Management** | Per-user encrypted API key storage with validity tracking | ![API Key Flow](docs/architecture/api_key_flow.png) |
+
+### Component Details
+
+#### Flask Application Layer
+- **Dashboard** - Validation history, statistics, and file management
+- **Upload Interface** - Drag-drop file upload with batch processing
+- **Auto-Correction Engine** - Intelligent HL7 error detection and fixing
+- **PDF Generator** - ReportLab-based professional report creation
+- **Authentication** - Azure AD integration (production mode)
+
+#### Data Persistence Layer
+**Local Mode:**
+- File-based session storage (`flask_session/`)
+- Temporary file storage (`uploads/`, `processed/`)
+
+**Production Mode:**
+- Azure SQL Database (persistent validation history)
+- Encrypted API key storage with per-user validity dates
+- User profiles and statistics
+- Audit logs
+
+#### External Services
+- **Gazelle EVS API** - HL7 v2.4 validation service
+  - Supports 13+ Healthlink message types
+  - REST API with persistent report URLs
+  - OID-based validator selection
+- **Azure AD** (Production) - Enterprise SSO authentication
+- **Azure SQL** (Production) - Managed database service
+
+### Security Architecture
+
+```
+┌─────────────────────────────────────┐
+│       Security Layers               │
+├─────────────────────────────────────┤
+│  ✓ CSRF Protection (Flask-WTF)     │
+│  ✓ Rate Limiting (Flask-Limiter)   │
+│  ✓ Input Sanitization (Bleach)     │
+│  ✓ SQL Injection Prevention        │
+│  ✓ Encrypted Sessions (Fernet)     │
+│  ✓ API Key Encryption (AES-256)    │
+│  ✓ HTTPS/TLS (Production)          │
+│  ✓ Secure Headers (CSP, HSTS)      │
+└─────────────────────────────────────┘
+```
+
+### Deployment Architectures
+
+#### Docker Deployment
+```
+Docker Host
+├── hl7-validator container
+│   ├── Gunicorn (WSGI server, 2 workers)
+│   ├── Flask application
+│   ├── FreeTDS (Azure SQL driver)
+│   └── Health check endpoint (/health)
+├── Volume mounts
+│   ├── ./uploads → /app/uploads
+│   ├── ./processed → /app/processed
+│   └── ./flask_session → /app/flask_session
+└── Network
+    ├── Port 5000:5000
+    └── Azure SQL (external, TLS)
+```
+
+#### Heroku Deployment
+```
+Heroku Dyno
+├── Web process (Gunicorn)
+├── FreeTDS (Aptfile)
+├── Python 3.12.4
+└── Buildpacks
+    ├── heroku/python
+    └── FreeTDS buildpack
+```
+
 ## 🏗️ Architecture
 
 ### Technology Stack
