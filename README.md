@@ -1,5 +1,10 @@
 # HL7 v2 Message Validator & Auto-Corrector
 
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Heroku-430098?style=for-the-badge)](https://hl7-v2-message-validator-a1efcbc737cd.herokuapp.com/)
+[![Python](https://img.shields.io/badge/Python-3.12.4-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0.0-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+
 A comprehensive web application for validating and auto-correcting HL7 v2 Healthlink XML files using the Gazelle EVS API. Supports both local development and enterprise deployment with Azure AD authentication.
 
 ## ✨ Features
