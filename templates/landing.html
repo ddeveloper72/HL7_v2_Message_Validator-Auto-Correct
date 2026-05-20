@@ -205,6 +205,186 @@
         </div>
     </section>
 
+    <!-- Supported Message Types Section -->
+    <section class="container mb-5">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">
+                    <i class="bi bi-file-earmark-medical"></i> Supported HL7 v2 Message Types
+                </h2>
+                <p class="lead text-muted">
+                    Comprehensive validation and auto-correction for Healthlink message profiles
+                </p>
+                <p class="text-muted">
+                    <small>
+                        <i class="bi bi-link-45deg"></i> 
+                        All validators configured from <a href="https://testing.ehealthireland.ie" target="_blank" class="text-decoration-none">Gazelle EVS</a> Healthlink profiles
+                    </small>
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Patient Administration -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-person-badge"></i> Patient Admin</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>ADT^A01</strong><br>
+                                <small class="text-muted">Patient Admission (HL-1)</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>ADT^A03</strong><br>
+                                <small class="text-muted">Patient Discharge (HL-5)</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>ADT^A04</strong><br>
+                                <small class="text-muted">Patient Registration</small>
+                            </li>
+                            <li class="mb-0">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>ADT^A08</strong><br>
+                                <small class="text-muted">Patient Update</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Laboratory Messages -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-clipboard2-pulse"></i> Laboratory</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>ORU^R01</strong><br>
+                                <small class="text-muted">Lab Results (HL-12)</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>ORU^R03</strong><br>
+                                <small class="text-muted">Unsolicited Observation</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>OML^O21</strong><br>
+                                <small class="text-muted">Lab Order (HL-13)</small>
+                            </li>
+                            <li class="mb-0">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>ORL^O22</strong><br>
+                                <small class="text-muted">Order Response (HL-11)</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinical Messages -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-hospital"></i> Clinical</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>REF^I12</strong><br>
+                                <small class="text-muted">Discharge Summary (HL-3)</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>RRI^R12</strong><br>
+                                <small class="text-muted">Radiology Results (HL-9)</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>VXU^V04</strong><br>
+                                <small class="text-muted">Vaccination (HL-16)</small>
+                            </li>
+                            <li class="mb-0">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>SIU^S12</strong><br>
+                                <small class="text-muted">Appointment (HL-8)</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Messages -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-secondary">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-gear"></i> System</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                <strong>ACK^GENERIC</strong><br>
+                                <small class="text-muted">General Acknowledgement (HL-2)</small>
+                            </li>
+                        </ul>
+                        <div class="alert alert-light mt-3 mb-0">
+                            <small>
+                                <i class="bi bi-info-circle text-primary"></i>
+                                <strong>Need another message type?</strong><br>
+                                Register additional validators in your <a href="https://testing.ehealthireland.ie" target="_blank">Gazelle EVS account</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Correction Capabilities -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-wrench-adjustable text-primary"></i> Auto-Correction Capabilities
+                        </h5>
+                        <p class="card-text">
+                            For all supported message types, the auto-corrector can fix:
+                        </p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul>
+                                    <li>UTF-8 BOM removal</li>
+                                    <li>XML declaration errors</li>
+                                    <li>Invalid HL7 table codes</li>
+                                    <li>Missing required fields</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul>
+                                    <li>Message type validation</li>
+                                    <li>Segment ordering</li>
+                                    <li>Field length violations</li>
+                                    <li>Date format standardization</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- How It Works Section -->
     <section class="stats-section">
         <div class="container">

@@ -139,6 +139,40 @@
                 <i class="bi bi-cloud-upload"></i> Upload HL7 Files for Validation
             </h2>
 
+            <!-- Supported Message Types -->
+            <div class="alert alert-info mb-4">
+                <h6 class="alert-heading">
+                    <i class="bi bi-info-circle-fill"></i> Supported HL7 v2 Message Types
+                </h6>
+                <p class="mb-2">This validator supports the following Healthlink message types with auto-correction capabilities:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li><strong>ORU^R01</strong> - Laboratory Results (HL-12)</li>
+                            <li><strong>ADT^A01</strong> - Patient Admission (HL-1)</li>
+                            <li><strong>ADT^A03</strong> - Patient Discharge (HL-5)</li>
+                            <li><strong>ADT^A04</strong> - Patient Registration</li>
+                            <li><strong>ADT^A08</strong> - Patient Update</li>
+                            <li><strong>ORU^R03</strong> - Unsolicited Observation</li>
+                            <li><strong>RRI^R12</strong> - Radiology Results (HL-9)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li><strong>SIU^S12</strong> - Appointment Notification (HL-8)</li>
+                            <li><strong>REF^I12</strong> - Discharge Summary/Referral (HL-3)</li>
+                            <li><strong>OML^O21</strong> - Laboratory Order (HL-13)</li>
+                            <li><strong>ORL^O22</strong> - Lab Order Response (HL-11)</li>
+                            <li><strong>VXU^V04</strong> - Vaccination Update (HL-16)</li>
+                            <li><strong>ACK^GENERIC</strong> - General Acknowledgement (HL-2)</li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="mt-2 mb-0 small">
+                    <i class="bi bi-link-45deg"></i> <em>Validators configured from <a href="https://testing.ehealthireland.ie" target="_blank" class="alert-link">Gazelle EVS</a> Healthlink profiles</em>
+                </p>
+            </div>
+
             {% if not has_api_key %}
             <div class="alert alert-warning">
                 <i class="bi bi-exclamation-triangle"></i>

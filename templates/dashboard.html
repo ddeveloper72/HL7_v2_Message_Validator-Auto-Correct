@@ -191,6 +191,52 @@
             </div>
         </div>
 
+        <!-- Supported Message Types -->
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <h6 class="alert-heading">
+                <i class="bi bi-file-earmark-medical"></i> Supported HL7 v2 Message Types for Validation & Auto-Correction
+            </h6>
+            <div class="row small">
+                <div class="col-md-3">
+                    <strong>Patient Administration:</strong>
+                    <ul class="mb-2">
+                        <li>ADT^A01 - Admission</li>
+                        <li>ADT^A03 - Discharge</li>
+                        <li>ADT^A04 - Registration</li>
+                        <li>ADT^A08 - Update</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <strong>Laboratory:</strong>
+                    <ul class="mb-2">
+                        <li>ORU^R01 - Results</li>
+                        <li>ORU^R03 - Unsolicited</li>
+                        <li>OML^O21 - Order</li>
+                        <li>ORL^O22 - Response</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <strong>Clinical:</strong>
+                    <ul class="mb-2">
+                        <li>REF^I12 - Discharge Summary</li>
+                        <li>RRI^R12 - Radiology Results</li>
+                        <li>VXU^V04 - Vaccination</li>
+                        <li>SIU^S12 - Appointment</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <strong>System:</strong>
+                    <ul class="mb-2">
+                        <li>ACK^GENERIC - Acknowledgement</li>
+                    </ul>
+                    <p class="mb-0 mt-2">
+                        <small><em>Profiles from <a href="https://testing.ehealthireland.ie" target="_blank" class="alert-link">Gazelle EVS</a></em></small>
+                    </p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <!-- API Key Expiration Alert -->
         {% if api_key_validity and api_key_validity.status in ['expired', 'expiring_today', 'expiring_soon'] %}
         <div class="alert {% if api_key_validity.status == 'expired' or api_key_validity.status == 'expiring_today' %}alert-danger{% else %}alert-warning{% endif %} alert-dismissible fade show"

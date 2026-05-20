@@ -290,12 +290,32 @@ The application automatically fixes common HL7 v2 validation errors:
 7. **Field Length Validation** - Truncates oversized fields
 8. **Date Format Standardization** - Converts to HL7 date format
 
-The corrector supports multiple HL7 message types including:
-- ORU^R01 (Observation Results)
-- ADT^A01/A03/A04/A08 (Patient Administration)
-- ORM^O01 (Order Messages)
-- RRI^I12 (Referrals)
-- And more...
+### Supported HL7 v2 Message Types
+
+The auto-corrector and validator support the following **Healthlink message profiles** (configured from [Gazelle EVS](https://testing.ehealthireland.ie)):
+
+#### Patient Administration Messages
+- **ADT^A01** - Patient Admission (HL-1)
+- **ADT^A03** - Patient Discharge (HL-5)
+- **ADT^A04** - Patient Registration
+- **ADT^A08** - Patient Information Update
+
+#### Laboratory Messages
+- **ORU^R01** - Laboratory Results (HL-12)
+- **ORU^R03** - Unsolicited Laboratory Observation
+- **OML^O21** - Laboratory Order (HL-13)
+- **ORL^O22** - Laboratory Order Response (HL-11)
+
+#### Clinical & Referral Messages
+- **REF^I12** - Discharge Summary / Patient Referral (HL-3)
+- **RRI^R12** - Radiology Results (HL-9)
+- **VXU^V04** - Vaccination Update (HL-16)
+- **SIU^S12** - Appointment Notification (HL-8)
+
+#### System Messages
+- **ACK^GENERIC** - General Acknowledgement (HL-2)
+
+**Note:** Each message type is validated against specific Healthlink message profiles registered in the Gazelle EVS system. The OID (Object Identifier) for each validator is automatically selected based on the detected message type. New message types can be added by registering additional validators in your Gazelle EVS account.
 
 ## 📊 Usage
 
@@ -507,4 +527,3 @@ This is an internal tool. For improvements or bug fixes:
 **Version:** 2.0.0  
 **Last Updated:** May 20, 2026  
 **Status:** Production Ready ✅
-
