@@ -45,6 +45,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import bleach
+from flask_session import Session
 
 # Azure AD and Database imports
 import msal
@@ -54,35 +55,80 @@ from db_utils import DatabaseManager
 from dotenv import load_dotenv
 load_dotenv()
 
+# =============================================================================
+# APPLICATION MODE CONFIGURATION
+# =============================================================================
+# Set APP_MODE in .env to control behavior:
+# - 'local' or 'development': Local dev mode (no Azure AD, no database, simplified)
+# - 'production' or 'heroku': Full Azure AD + Database integration
+# =============================================================================
+APP_MODE = os.getenv('APP_MODE', 'local').lower()
+USE_AZURE_AD = APP_MODE in ['production', 'heroku']
+USE_DATABASE = APP_MODE in ['production', 'heroku']
+
+print(f"🔧 Application Mode: {APP_MODE.upper()}")
+print(f"   - Azure AD Auth: {'ENABLED' if USE_AZURE_AD else 'DISABLED (Local Dev)'}")
+print(f"   - Database: {'Azure SQL' if USE_DATABASE else 'In-Memory Only'}")
+
 app = Flask(__name__)
 
 # Session configuration - use environment variable or fallback for development
+environment = os.environ.get('ENVIRONMENT', 'local')
 session_secret = os.environ.get('SESSION_SECRET_KEY')
+
 if not session_secret:
+    # Production/Docker environments must have SESSION_SECRET_KEY
+    if environment in ['production', 'docker'] or os.environ.get('DYNO'):
+        raise ValueError(
+            "SESSION_SECRET_KEY environment variable is required in production! "
+            "Generate one with: python -c 'import secrets; print(secrets.token_hex(32))'"
+        )
+    
     # For local development only - generate a persistent key
     if os.path.exists('.session_secret'):
         with open('.session_secret', 'r') as f:
             session_secret = f.read().strip()
     else:
         session_secret = os.urandom(32).hex()  # 32 bytes = 256 bits for strong security
-        # Don't save for Heroku - it needs to be set as an environment variable
-        if not os.environ.get('DYNO'):  # Only save locally (not on Heroku)
-            with open('.session_secret', 'w') as f:
-                f.write(session_secret)
+        with open('.session_secret', 'w') as f:
+            f.write(session_secret)
+        print(f"⚠️  Generated new session secret for local development")
 
 app.secret_key = session_secret
 
 # Configure session to be more compatible with multiple workers
-# Use HTTPS-only cookies in production (Heroku)
-app.config['SESSION_COOKIE_SECURE'] = True if os.environ.get('DYNO') else False
+# Use HTTPS-only cookies in production/Heroku, not in Docker local testing
+is_production = os.environ.get('DYNO') or (environment == 'production' and not environment == 'docker')
+app.config['SESSION_COOKIE_SECURE'] = is_production
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # No JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7  # 7 days
 app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions on disk
 app.config['SESSION_PERMANENT'] = True  # Sessions persist across browser restarts
+app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'flask_session')  # Session storage directory
+
+# Initialize Flask-Session
+Session(app)
 
 # Security configuration
 csrf = CSRFProtect(app)
+
+# CSRF error handler - return JSON for AJAX requests instead of HTML
+@app.errorhandler(400)
+def handle_csrf_error(e):
+    """Handle CSRF errors with JSON responses for AJAX"""
+    # Check if this is an AJAX request (looks for JSON or fetch requests)
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'X-CSRFToken' in request.headers:
+        return jsonify({
+            'success': False,
+            'message': 'CSRF validation failed. Please refresh the page and try again.',
+            'error': 'csrf_error'
+        }), 400
+    # For regular requests, return HTML error page
+    return render_template('error.html',
+                         error_title="Security Error",
+                         error_message="CSRF validation failed",
+                         details="Please refresh the page and try again"), 400
 
 # Rate limiting
 limiter = Limiter(
@@ -92,20 +138,26 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Azure AD Configuration
-AZURE_AD_CLIENT_ID = os.getenv('AZURE_AD_CLIENT_ID')
-AZURE_AD_CLIENT_SECRET = os.getenv('AZURE_AD_CLIENT_SECRET')
-AZURE_AD_TENANT_ID = os.getenv('AZURE_AD_TENANT_ID')
-AZURE_AD_REDIRECT_URI = os.getenv('AZURE_AD_REDIRECT_URI', 'http://localhost:5000/auth/callback')
-AZURE_AD_AUTHORITY = f'https://login.microsoftonline.com/{AZURE_AD_TENANT_ID}'
-AZURE_AD_SCOPE = ['User.Read']
+# Azure AD Configuration (only if enabled)
+if USE_AZURE_AD:
+    AZURE_AD_CLIENT_ID = os.getenv('AZURE_AD_CLIENT_ID')
+    AZURE_AD_CLIENT_SECRET = os.getenv('AZURE_AD_CLIENT_SECRET')
+    AZURE_AD_TENANT_ID = os.getenv('AZURE_AD_TENANT_ID')
+    AZURE_AD_REDIRECT_URI = os.getenv('AZURE_AD_REDIRECT_URI', 'http://localhost:5000/auth/callback')
+    AZURE_AD_AUTHORITY = f'https://login.microsoftonline.com/{AZURE_AD_TENANT_ID}'
+    AZURE_AD_SCOPE = ['User.Read']
+    
+    # Initialize database manager
+    db = DatabaseManager()
+    print("✓ Azure AD and Database initialized")
+else:
+    print("ℹ Running in LOCAL mode - Azure AD and Database disabled")
 
-# Initialize database manager
-db = DatabaseManager()
-
-# Initialize MSAL Confidential Client
+# Initialize MSAL Confidential Client (only if Azure AD enabled)
 def get_msal_app():
     """Create MSAL confidential client application"""
+    if not USE_AZURE_AD:
+        return None
     return msal.ConfidentialClientApplication(
         AZURE_AD_CLIENT_ID,
         authority=AZURE_AD_AUTHORITY,
@@ -117,8 +169,17 @@ def login_required(f):
     """Decorator to require authentication for routes"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
+        if USE_AZURE_AD:
+            # Production: require Azure AD authentication
+            if 'user_id' not in session:
+                return redirect(url_for('login'))
+        else:
+            # Local dev: auto-create session if missing
+            if 'user_id' not in session:
+                session['session_id'] = str(uuid.uuid4())
+                session['user_email'] = 'local.dev@localhost'
+                session['user_name'] = 'Local Developer'
+                session['user_id'] = 'local-dev-id'
         return f(*args, **kwargs)
     return decorated_function
 
@@ -280,6 +341,100 @@ def get_sample_reports(show_all=False):
     
     return reports
 
+# ==================== API KEY VALIDITY CHECK ====================
+
+def check_api_key_validity():
+    """
+    Check if the Gazelle API key is valid based on dates in .env file
+    Returns: dict with status, days_remaining, and message
+    """
+    valid_from_str = os.getenv('GAZELLE_API_KEY_VALID_FROM')
+    valid_to_str = os.getenv('GAZELLE_API_KEY_VALID_TO')
+    
+    if not valid_to_str:
+        return {
+            'status': 'unknown',
+            'days_remaining': None,
+            'message': 'API key expiration date not configured',
+            'badge_class': 'bg-secondary'
+        }
+    
+    try:
+        # Parse dates (expecting YYYY-MM-DD format)
+        valid_to = datetime.strptime(valid_to_str, '%Y-%m-%d').date()
+        today = datetime.now().date()
+        
+        days_remaining = (valid_to - today).days
+        
+        if days_remaining < 0:
+            return {
+                'status': 'expired',
+                'days_remaining': days_remaining,
+                'message': f'API key expired {abs(days_remaining)} days ago',
+                'badge_class': 'bg-danger',
+                'valid_to': valid_to.strftime('%Y-%m-%d')
+            }
+        elif days_remaining == 0:
+            return {
+                'status': 'expiring_today',
+                'days_remaining': 0,
+                'message': 'API key expires TODAY',
+                'badge_class': 'bg-danger',
+                'valid_to': valid_to.strftime('%Y-%m-%d')
+            }
+        elif days_remaining <= 7:
+            return {
+                'status': 'expiring_soon',
+                'days_remaining': days_remaining,
+                'message': f'API key expires in {days_remaining} days',
+                'badge_class': 'bg-warning',
+                'valid_to': valid_to.strftime('%Y-%m-%d')
+            }
+        else:
+            return {
+                'status': 'valid',
+                'days_remaining': days_remaining,
+                'message': f'API key valid for {days_remaining} days',
+                'badge_class': 'bg-success',
+                'valid_to': valid_to.strftime('%Y-%m-%d')
+            }
+    except ValueError as e:
+        return {
+            'status': 'error',
+            'days_remaining': None,
+            'message': f'Invalid date format in .env file',
+            'badge_class': 'bg-secondary'
+        }
+
+# ==================== HEALTH CHECK ====================
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Docker and monitoring"""
+    health_status = {
+        'status': 'healthy',
+        'app_mode': APP_MODE,
+        'azure_ad_enabled': USE_AZURE_AD,
+        'database_enabled': USE_DATABASE,
+        'timestamp': datetime.now().isoformat()
+    }
+    
+    # Test database connection if enabled
+    if USE_DATABASE:
+        try:
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            conn.close()
+            health_status['database'] = 'connected'
+        except Exception as e:
+            health_status['status'] = 'degraded'
+            health_status['database'] = f'error: {str(e)[:100]}'
+    
+    status_code = 200 if health_status['status'] == 'healthy' else 503
+    return jsonify(health_status), status_code
+
 # ==================== AUTHENTICATION ROUTES ====================
 
 @app.route('/')
@@ -291,6 +446,15 @@ def index():
 @csrf.exempt
 def login():
     """Initiate Azure AD login flow"""
+    # In local mode, auto-login and redirect to dashboard
+    if not USE_AZURE_AD:
+        if 'session_id' not in session:
+            session['session_id'] = str(uuid.uuid4())
+            session['user_email'] = 'local.dev@localhost'
+            session['user_name'] = 'Local Developer'
+            session['user_id'] = 'local-dev-id'
+        return redirect(url_for('dashboard'))
+    
     # Check if Azure AD is configured
     if not all([AZURE_AD_CLIENT_ID, AZURE_AD_CLIENT_SECRET, AZURE_AD_TENANT_ID]):
         return render_template('error.html', 
@@ -318,6 +482,10 @@ def login():
 @csrf.exempt
 def auth_callback():
     """Handle Azure AD callback"""
+    # In local mode, redirect to dashboard
+    if not USE_AZURE_AD:
+        return redirect(url_for('dashboard'))
+    
     code = request.args.get('code')
     if not code:
         return "Authentication failed: No authorization code", 400
@@ -338,32 +506,89 @@ def auth_callback():
     azure_ad_oid = user_info.get('oid')
     display_name = user_info.get('name')
     
-    # Create or update user in database
-    user_id = db.create_or_update_user(email, azure_ad_oid, display_name)
+    print(f"🔐 Azure AD Login Success:")
+    print(f"   Email: {email}")
+    print(f"   Display Name: {display_name}")
+    print(f"   Azure AD OID: {azure_ad_oid}")
     
-    # Store in session (mark as permanent BEFORE setting values)
-    session.permanent = True
-    session['user_id'] = user_id
-    session['email'] = email
-    session['display_name'] = display_name
-    session['azure_ad_oid'] = azure_ad_oid
-    session['logged_in_at'] = datetime.now().isoformat()
-    
-    # Load user's API key from database into session
-    api_key = db.get_user_api_key(user_id)
-    if api_key:
-        session['api_key'] = api_key
-    
-    # Store MSAL token for refresh (optional but recommended)
-    if 'access_token' in result:
-        session['access_token'] = result['access_token']
-    
-    return redirect(url_for('profile'))
+    # Try to create or update user in database with retry mechanism
+    try:
+        user_id = db.create_or_update_user(email, azure_ad_oid, display_name)
+        print(f"   User ID: {user_id}")
+        
+        # Store in session (mark as permanent BEFORE setting values)
+        session.permanent = True
+        session['user_id'] = user_id
+        session['email'] = email
+        session['display_name'] = display_name
+        session['azure_ad_oid'] = azure_ad_oid
+        session['logged_in_at'] = datetime.now().isoformat()
+        
+        print(f"   ✓ Session created with user_id: {user_id}")
+        
+        # Load user's API key from database into session
+        try:
+            api_key = db.get_user_api_key(user_id)
+            if api_key:
+                session['api_key'] = api_key
+        except Exception as e:
+            # API key load failure is non-critical, continue without it
+            print(f"   ⚠️ Could not load API key: {e}")
+        
+        # Store MSAL token for refresh (optional but recommended)
+        if 'access_token' in result:
+            session['access_token'] = result['access_token']
+        
+        return redirect(url_for('profile'))
+        
+    except pyodbc.OperationalError as e:
+        # Database timeout or connection error
+        error_msg = str(e)
+        print(f"   ❌ Database error during login: {error_msg}")
+        
+        if 'timeout' in error_msg.lower() or 'TCP Provider' in error_msg:
+            # Azure SQL cold start timeout
+            return render_template('error.html',
+                error_title="Database Connection Timeout",
+                error_message="The database is starting up after being idle. This usually takes 30-60 seconds.",
+                details="Azure SQL free tier databases pause after inactivity and need time to wake up.",
+                retry_url=url_for('login'),
+                retry_text="Retry Sign In"
+            ), 503
+        else:
+            # Other database error
+            return render_template('error.html',
+                error_title="Database Connection Error",
+                error_message="Unable to connect to the database.",
+                details=f"Please try again in a moment. If the problem persists, contact support.",
+                retry_url=url_for('login'),
+                retry_text="Retry Sign In"
+            ), 503
+            
+    except Exception as e:
+        # Unexpected error during user creation
+        print(f"   ❌ Unexpected error during login: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return render_template('error.html',
+            error_title="Login Error",
+            error_message="An unexpected error occurred while completing your sign-in.",
+            details="Please try signing in again. If the problem persists, contact support.",
+            retry_url=url_for('login'),
+            retry_text="Retry Sign In"
+        ), 500
 
 @app.route('/logout')
 def logout():
     """Logout user"""
     session.clear()
+    
+    # In local mode, just redirect to home
+    if not USE_AZURE_AD:
+        return redirect(url_for('index'))
+    
+    # In production, use Azure AD logout
     logout_url = f"{AZURE_AD_AUTHORITY}/oauth2/v2.0/logout?post_logout_redirect_uri={request.host_url}"
     return redirect(logout_url)
 
@@ -373,16 +598,58 @@ def profile():
     """User profile page with API key management"""
     user_id = session['user_id']
     
-    # Check if user has Gazelle API key
-    api_key = db.get_user_api_key(user_id)
-    has_api_key = api_key is not None
+    print(f"📄 Profile Page Access:")
+    print(f"   User ID: {user_id}")
+    print(f"   Email: {session.get('email') or session.get('user_email')}")
+    print(f"   Display Name: {session.get('display_name') or session.get('user_name')}")
     
-    # Get user statistics
-    stats = db.get_user_statistics(user_id)
+    if USE_DATABASE:
+        try:
+            # Check if user has Gazelle API key
+            api_key = db.get_user_api_key(user_id)
+            has_api_key = api_key is not None
+            
+            # Get user statistics
+            stats = db.get_user_statistics(user_id)
+            
+        except pyodbc.OperationalError as e:
+            error_msg = str(e)
+            print(f"   ❌ Database timeout on profile page: {error_msg}")
+            
+            if 'timeout' in error_msg.lower() or 'TCP Provider' in error_msg:
+                # Azure SQL cold start - show friendly error with retry
+                return render_template('error.html',
+                    error_title="Database Warming Up",
+                    error_message="The database is starting up after being idle. Please wait a moment and try again.",
+                    details="Azure SQL free tier databases pause after inactivity and take 30-60 seconds to wake up.",
+                    retry_url=url_for('profile'),
+                    retry_text="Refresh Profile"
+                ), 503
+            else:
+                # Fallback to session/defaults
+                has_api_key = 'api_key' in session and session['api_key']
+                stats = {'total': 0, 'passed': 0, 'failed': 0, 'undefined': 0}
+                
+        except Exception as e:
+            print(f"   ⚠️ Error loading profile data: {e}")
+            # Fallback to session-based data
+            has_api_key = 'api_key' in session and session['api_key']
+            stats = {'total': 0, 'passed': 0, 'failed': 0, 'undefined': 0}
+    else:
+        # Local mode: use session-based API key
+        has_api_key = 'api_key' in session and session['api_key']
+        
+        # Calculate stats from in-memory results
+        stats = {
+            'total': len(processing_results),
+            'passed': sum(1 for r in processing_results.values() if r.get('status') == 'passed'),
+            'failed': sum(1 for r in processing_results.values() if r.get('status') == 'failed'),
+            'undefined': sum(1 for r in processing_results.values() if r.get('status') == 'undefined')
+        }
     
     return render_template('profile.html',
-                         user_email=session.get('email'),
-                         user_name=session.get('display_name'),
+                         user_email=session.get('user_email') or session.get('email'),
+                         user_name=session.get('user_name') or session.get('display_name'),
                          has_api_key=has_api_key,
                          stats=stats)
 
@@ -406,17 +673,36 @@ def set_api_key_db():
         return jsonify({'success': False, 'message': 'Invalid API key format'}), 400
     
     try:
-        # Save encrypted API key to database
-        ip_address = request.remote_addr
-        db.set_user_api_key(user_id, api_key, ip_address)
+        # Save API key (to database if enabled, or just session in local mode)
+        if USE_DATABASE:
+            ip_address = request.remote_addr
+            db.set_user_api_key(user_id, api_key, ip_address)
         
-        # Also store in session for immediate use
+        # Store in session for immediate use (both modes)
         session['api_key'] = api_key
         
         return jsonify({'success': True, 'message': 'API key saved successfully'})
+        
+    except pyodbc.OperationalError as e:
+        error_msg = str(e)
+        print(f"Error saving API key (database timeout): {e}")
+        
+        if 'timeout' in error_msg.lower():
+            return jsonify({
+                'success': False, 
+                'message': 'Database is warming up. Please wait 30 seconds and try again.'
+            }), 503
+        else:
+            return jsonify({
+                'success': False, 
+                'message': 'Database connection error. Please try again.'
+            }), 503
+            
     except Exception as e:
         # Log the error but don't expose details to user
         print(f"Error saving API key: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': 'Failed to save API key. Please try again.'}), 500
 
 # ==================== DASHBOARD ROUTES ====================
@@ -431,58 +717,102 @@ def dashboard():
     # Get current session reports from temp file
     temp_reports = get_sample_reports(show_all=show_all)
     
-    # Get historical validation reports from database
+    # Get historical validation reports from database (if enabled)
     reports = []
-    try:
-        db_history = db.get_user_validation_history(user_id, limit=100)
-        # Convert database records to report format
-        for record in db_history:
-            reports.append({
-                'id': f"db_{record['id']}",  # Prefix with 'db_' to distinguish from temp file
-                'filename': record['filename'],
-                'message_type': record['message_type'],
-                'status': record['status'],
-                'report_url': record['report_url'],
-                'date': record['timestamp'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(record['timestamp'], 'strftime') else str(record['timestamp']),
-                'errors': record['error_count'],
-                'warnings': record['warning_count'],
-                'corrections_applied': record.get('corrections_applied', 0),
-                'validation_id': record['id']  # Store for auto-correct retrieval
-            })
-        print(f"DEBUG: Loaded {len(reports)} reports from database")
-    except Exception as e:
-        print(f"DEBUG: Error loading validation history from database: {e}")
-        # Fallback to temp file reports only
-        reports = temp_reports
-    
-    # Always check database for API key (source of truth)
-    api_key = db.get_user_api_key(user_id)
-    if api_key:
-        session['api_key'] = api_key
+    if USE_DATABASE:
+        try:
+            db_history = db.get_user_validation_history(user_id, limit=100)
+            # Convert database records to report format
+            for record in db_history:
+                reports.append({
+                    'id': f"db_{record['id']}",  # Prefix with 'db_' to distinguish from temp file
+                    'filename': record['filename'],
+                    'message_type': record['message_type'],
+                    'status': record['status'],
+                    'report_url': record['report_url'],
+                    'date': record['timestamp'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(record['timestamp'], 'strftime') else str(record['timestamp']),
+                    'errors': record['error_count'],
+                    'warnings': record['warning_count'],
+                    'corrections_applied': record.get('corrections_applied', 0),
+                    'validation_id': record['id']  # Store for auto-correct retrieval
+                })
+            print(f"DEBUG: Loaded {len(reports)} reports from database")
+        except pyodbc.OperationalError as e:
+            error_msg = str(e)
+            print(f"DEBUG: Database timeout loading validation history: {error_msg}")
+            
+            if 'timeout' in error_msg.lower() or 'TCP Provider' in error_msg:
+                # Azure SQL cold start - show friendly error with retry
+                return render_template('error.html',
+                    error_title="Database Warming Up",
+                    error_message="The database is starting up after being idle. Please wait a moment and refresh.",
+                    details="Azure SQL free tier databases pause after inactivity and take 30-60 seconds to wake up.",
+                    retry_url=url_for('dashboard'),
+                    retry_text="Refresh Dashboard"
+                ), 503
+            else:
+                # Other database error - fall back to temp reports
+                print(f"DEBUG: Database connection error, using temp reports only")
+                reports = temp_reports
+        except Exception as e:
+            print(f"DEBUG: Error loading validation history from database: {e}")
+            # Fallback to temp file reports only
+            reports = temp_reports
+        
+        # Always check database for API key (source of truth)
+        try:
+            api_key = db.get_user_api_key(user_id)
+            if api_key:
+                session['api_key'] = api_key
+            else:
+                # Clear from session if not in database
+                session.pop('api_key', None)
+            has_api_key = api_key is not None
+        except pyodbc.OperationalError as e:
+            # Database timeout on API key fetch - use session fallback
+            print(f"DEBUG: Database timeout loading API key, using session: {e}")
+            has_api_key = 'api_key' in session and session['api_key']
+        except Exception as e:
+            print(f"DEBUG: Error loading API key from database: {e}")
+            has_api_key = 'api_key' in session and session['api_key']
+        
+        # Get user statistics from database for accurate counts
+        try:
+            db_stats = db.get_user_statistics(user_id)
+            total_files = db_stats['total']
+            passed_count = db_stats['passed']
+            failed_count = db_stats['failed']
+        except pyodbc.OperationalError as e:
+            print(f"DEBUG: Database timeout loading stats, using temp file: {e}")
+            # Fallback to temp file stats
+            total_files = len(reports)
+            passed_count = sum(1 for r in reports if r['status'] == 'PASSED')
+            failed_count = sum(1 for r in reports if r['status'] == 'FAILED')
+        except Exception as e:
+            print(f"DEBUG: Error loading stats from database: {e}")
+            # Fallback to temp file stats
+            total_files = len(reports)
+            passed_count = sum(1 for r in reports if r['status'] == 'PASSED')
+            failed_count = sum(1 for r in reports if r['status'] == 'FAILED')
     else:
-        # Clear from session if not in database
-        session.pop('api_key', None)
-    
-    has_api_key = api_key is not None
-    
-    # Get user statistics from database for accurate counts
-    try:
-        db_stats = db.get_user_statistics(user_id)
-        total_files = db_stats['total']
-        passed_count = db_stats['passed']
-        failed_count = db_stats['failed']
-    except Exception as e:
-        print(f"DEBUG: Error loading stats from database: {e}")
-        # Fallback to temp file stats
+        # Local mode: use temp file reports and session-based API key
+        reports = temp_reports
+        has_api_key = 'api_key' in session and session['api_key']
+        
+        # Calculate stats from temp file
         total_files = len(reports)
-        passed_count = sum(1 for r in reports if r['status'] == 'PASSED')
-        failed_count = sum(1 for r in reports if r['status'] == 'FAILED')
+        passed_count = sum(1 for r in reports if r.get('status') == 'PASSED')
+        failed_count = sum(1 for r in reports if r.get('status') == 'FAILED')
+    
+    # Check API key validity
+    api_key_validity = check_api_key_validity()
     
     return render_template('dashboard.html', 
                          reports=reports,
                          has_api_key=has_api_key,
-                         user_name=session.get('display_name'),
-                         user_email=session.get('email'),
+                         api_key_validity=api_key_validity,
+                         user_name=session.get('user_name') or session.get('display_name'),
+                         user_email=session.get('user_email') or session.get('email'),
                          total_files=total_files,
                          passed_count=passed_count,
                          failed_count=failed_count,
@@ -496,8 +826,11 @@ def clear_history():
     user_id = session['user_id']
     
     try:
-        # Delete all validation records from database
-        count = db.clear_user_validation_history(user_id)
+        count = 0
+        
+        # Delete from database if enabled
+        if USE_DATABASE:
+            count = db.clear_user_validation_history(user_id)
         
         # Also clear from processing_results (temp file storage)
         global processing_results
@@ -509,6 +842,10 @@ def clear_history():
             for key in keys_to_remove:
                 del processing_results[key]
             save_processing_results()
+            
+            # In local mode, count from temp file
+            if not USE_DATABASE:
+                count = len(keys_to_remove)
         
         print(f"DEBUG: Cleared {count} validation records for user {user_id}")
         
@@ -596,8 +933,8 @@ def clear_api_key():
     # Remove from session
     session.pop('api_key', None)
     
-    # Remove from database
-    if 'user_id' in session:
+    # Remove from database (if enabled)
+    if USE_DATABASE and 'user_id' in session:
         try:
             db.set_user_api_key(session['user_id'], None)
         except Exception as e:
@@ -1543,46 +1880,30 @@ def validate_file(file_id):
     
     # Run validation using our validation tool
     try:
-        # Create a temporary .env file with the API key in the project root
-        temp_env = os.path.join(os.getcwd(), '.env.temp')
+        # Run validation script with UTF-8 encoding to handle emojis
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
+        env['PYTHONUTF8'] = '1'  # Force UTF-8 mode on Windows
+        env['OPEN_REPORT_BROWSER'] = '0'
         
-        with open(temp_env, 'w') as f:
-            f.write(f"GAZELLE_API_KEY={session['api_key']}\n")
-            f.write("VERIFY_SSL=True\n")
+        # Pass API key directly as environment variable (more reliable than .env file swapping)
+        env['GAZELLE_API_KEY'] = session['api_key']
         
-        # Temporarily rename original .env and use temp one
-        original_env = os.path.join(os.getcwd(), '.env')
-        backup_env = None
-        if os.path.exists(original_env):
-            backup_env = os.path.join(os.getcwd(), '.env.backup')
-            os.rename(original_env, backup_env)
-        os.rename(temp_env, original_env)
+        # Debug: Print API key length (not the actual key for security)
+        print(f"DEBUG: Passing API key to validation script (length: {len(session['api_key'])} chars)")
         
-        try:
-            # Run validation script with UTF-8 encoding to handle emojis
-            env = os.environ.copy()
-            env['PYTHONIOENCODING'] = 'utf-8'
-            env['PYTHONUTF8'] = '1'  # Force UTF-8 mode on Windows
-            env['OPEN_REPORT_BROWSER'] = '0'
-            
-            python_executable = sys.executable or shutil.which('python') or 'python'
-            script_path = os.path.join(os.getcwd(), 'validate_with_verification.py')
-            result = subprocess.run(
-                [python_executable, script_path, filepath, '--warnings'],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                cwd=os.getcwd(),
-                env=env,
-                encoding='utf-8',
-                errors='replace'
-            )
-        finally:
-            # Restore original .env
-            if os.path.exists(original_env):
-                os.remove(original_env)
-            if backup_env and os.path.exists(backup_env):
-                os.rename(backup_env, original_env)
+        python_executable = sys.executable or shutil.which('python') or 'python'
+        script_path = os.path.join(os.getcwd(), 'validate_with_verification.py')
+        result = subprocess.run(
+            [python_executable, script_path, filepath, '--warnings'],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=os.getcwd(),
+            env=env,
+            encoding='utf-8',
+            errors='replace'
+        )
         
         # Parse output to get validation results
         # Combine stdout and stderr since error details might be in either

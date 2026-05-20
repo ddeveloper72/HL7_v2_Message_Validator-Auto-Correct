@@ -18,8 +18,9 @@ class DatabaseManager:
         self.database = os.getenv('AZURE_SQL_DATABASE')
         self.username = os.getenv('AZURE_SQL_USERNAME')
         self.password = os.getenv('AZURE_SQL_PASSWORD')
-        # Use FreeTDS driver on Heroku, ODBC Driver 18 locally
-        self.driver = os.getenv('DB_DRIVER', 'FreeTDS' if os.getenv('DYNO') else 'ODBC Driver 18 for SQL Server')
+        
+        # Determine driver and path based on environment
+        self.driver = self._get_driver()
         
         # Encryption key for API keys (generate once and store securely)
         encryption_key = os.getenv('ENCRYPTION_KEY')
@@ -31,12 +32,36 @@ class DatabaseManager:
         
         self.cipher = Fernet(encryption_key.encode() if isinstance(encryption_key, str) else encryption_key)
     
+    def _get_driver(self):
+        """Determine ODBC driver based on environment"""
+        # Check for explicit driver configuration
+        explicit_driver = os.getenv('DB_DRIVER')
+        if explicit_driver:
+            return explicit_driver
+        
+        # Auto-detect environment
+        if os.getenv('ENVIRONMENT') == 'docker':
+            return 'FreeTDS'
+        elif os.getenv('DYNO'):  # Heroku
+            return 'FreeTDS'
+        else:  # Local development (Windows/Mac)
+            return 'ODBC Driver 18 for SQL Server'
+    
     def get_connection(self):
         """Create and return a database connection"""
         if self.driver == 'FreeTDS':
-            # FreeTDS connection for Heroku - use direct driver path with encryption
+            # Determine FreeTDS driver path based on environment
+            if os.getenv('ENVIRONMENT') == 'docker':
+                driver_path = '/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so'
+            elif os.getenv('DYNO'):  # Heroku
+                driver_path = '/app/.apt/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so'
+            else:
+                # Fallback - try system FreeTDS
+                driver_path = '/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so'
+            
+            # FreeTDS connection string
             connection_string = (
-                f'DRIVER=/app/.apt/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so;'
+                f'DRIVER={driver_path};'
                 f'SERVER={self.server};'
                 f'PORT=1433;'
                 f'DATABASE={self.database};'
@@ -45,6 +70,8 @@ class DatabaseManager:
                 f'TDS_Version=8.0;'
                 f'Encrypt=yes;'
                 f'TrustServerCertificate=no;'
+                f'Connection Timeout=60;'
+                f'Login Timeout=60;'
             )
         else:
             # Microsoft ODBC Driver for local development
@@ -56,7 +83,8 @@ class DatabaseManager:
                 f'PWD={self.password};'
                 f'Encrypt=yes;'
                 f'TrustServerCertificate=no;'
-                f'Connection Timeout=30;'
+                f'Connection Timeout=60;'
+                f'Login Timeout=60;'
             )
         return pyodbc.connect(connection_string)
     

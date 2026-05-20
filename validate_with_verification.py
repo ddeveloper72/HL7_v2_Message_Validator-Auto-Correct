@@ -64,6 +64,13 @@ def detect_message_type(content):
 
 def submit_validation(file_path):
     """Submit file for validation and return validation OID"""
+    # Check if API key is set
+    if not API_KEY:
+        return None, "GAZELLE_API_KEY not set in environment. Please set your API key."
+    
+    if len(API_KEY) < 10:  # Basic sanity check
+        return None, f"GAZELLE_API_KEY appears invalid (length: {len(API_KEY)}). Expected a longer key."
+    
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
@@ -95,8 +102,16 @@ def submit_validation(file_path):
         "Authorization": f"GazelleAPIKey {API_KEY}"
     }
     
+    # Debug: Show API key info (not the actual key for security)
+    print(f"   DEBUG: API Key length: {len(API_KEY)} characters")
+    print(f"   DEBUG: API Key starts with: {API_KEY[:8]}...")
+    print(f"   DEBUG: Authorization header: GazelleAPIKey {API_KEY[:8]}...")
+    
     try:
         response = requests.post(API_ENDPOINT, json=payload, headers=headers)
+        
+        # Debug: Show response details
+        print(f"   DEBUG: Response status: {response.status_code}")
         
         if response.status_code == 201:
             location = response.headers.get('Location')
@@ -111,7 +126,14 @@ def submit_validation(file_path):
                     'message_type': msg_type
                 }, None
         
-        return None, f"HTTP {response.status_code}: {response.text[:200]}"
+        # More detailed error message
+        error_msg = f"HTTP {response.status_code}"
+        if response.status_code == 401:
+            error_msg += ": Authentication failed. Please check your Gazelle API key."
+        else:
+            error_msg += f": {response.text[:200]}"
+        
+        return None, error_msg
     
     except Exception as e:
         return None, str(e)
@@ -216,7 +238,8 @@ def validate_file_with_verification(file_path, show_warnings=False):
     
     if error:
         print(f"❌ Submission failed: {error}")
-        return False, None
+        print(f"\n❌ FAILED: Cannot validate - submission error")
+        return False  # Return just False, not tuple
     
     print(f"✅ Submitted successfully")
     print(f"GAZELLE_OID={result['oid']}")  # Parseable format for dashboard app
@@ -229,7 +252,8 @@ def validate_file_with_verification(file_path, show_warnings=False):
     
     if error:
         print(f"❌ Failed to get validation report: {error}")
-        return False, None
+        print(f"\n❌ FAILED: Cannot retrieve validation results")
+        return False  # Return just False, not tuple
     
     print(f"✅ Validation completed")
     
@@ -239,7 +263,8 @@ def validate_file_with_verification(file_path, show_warnings=False):
     
     if error:
         print(f"❌ Failed to parse results: {error}")
-        return False, None
+        print(f"\n❌ FAILED: Cannot parse validation report")
+        return False  # Return just False, not tuple
     
     # Step 4: Output detailed errors in JSON format for dashboard to parse
     print(f"GAZELLE_ERRORS_JSON={json.dumps(parsed_result.get('mandatory_errors', []))}")  # Parseable JSON format
