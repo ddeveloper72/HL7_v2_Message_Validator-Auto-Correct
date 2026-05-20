@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Environment and secrets
+.env
+.session_secret
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+!README.md
+dev_notes/
+
+# Test files
+cli_test/
+test_*.py
+*_test.py
+
+# Temporary and runtime files
+uploads/*
+!uploads/.gitkeep
+processed/*
+!processed/.gitkeep
+flask_session/*
+*.log
+*.tmp
+
+# Heroku specific
+Procfile
+Aptfile
+runtime.txt
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Reports and samples (keep structure, exclude large test files)
+Healthlink Tests/*.xml
+Healthlink Tests/*.txt
+
+# Configuration data (if large)
+Gazelle_Configuration_Data/*.xml
+
+# Other
+.DS_Store
+Thumbs.db
