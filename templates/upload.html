@@ -135,9 +135,44 @@
                 </div>
 
                 <section id="progressContainer" class="hidden border-t border-slate-200 pt-6" aria-labelledby="progress-heading" aria-live="polite">
-                    <h2 id="progress-heading" class="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                        <i data-lucide="loader-circle" class="h-5 w-5 animate-spin text-brand-600" aria-hidden="true"></i> Processing Files
-                    </h2>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <h2 id="progress-heading" class="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                                    <i id="progressSpinner" data-lucide="loader-circle" class="h-5 w-5 animate-spin text-brand-600" aria-hidden="true"></i>
+                                    <i id="progressCompleteIcon" data-lucide="circle-check" class="hidden h-5 w-5 text-emerald-600" aria-hidden="true"></i>
+                                    <span id="progressStatusText">Preparing files</span>
+                                </h2>
+                                <p id="progressCurrentFile" class="mt-1 truncate text-sm text-slate-600">Preparing the selected files for upload.</p>
+                            </div>
+                            <span id="progressPercent" class="text-2xl font-semibold tabular-nums text-brand-700">0%</span>
+                        </div>
+
+                        <div id="batchProgressBar" class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-200" role="progressbar"
+                            aria-label="Batch processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                            <div id="batchProgressFill" class="h-full rounded-full bg-brand-600 transition-[width] duration-300 ease-out" style="width: 0%"></div>
+                        </div>
+
+                        <dl class="mt-4 grid grid-cols-3 gap-2 text-center sm:max-w-lg sm:text-left">
+                            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Selected</dt>
+                                <dd id="selectedFileCount" class="mt-1 text-lg font-semibold tabular-nums text-slate-900">0</dd>
+                            </div>
+                            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Uploaded</dt>
+                                <dd id="uploadedFileCount" class="mt-1 text-lg font-semibold tabular-nums text-cyan-700">0</dd>
+                            </div>
+                            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Processed</dt>
+                                <dd id="processedFileCount" class="mt-1 text-lg font-semibold tabular-nums text-emerald-700">0</dd>
+                            </div>
+                        </dl>
+
+                        <div id="processingCompleteMessage" class="mt-4 hidden items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+                            <i data-lucide="circle-check" class="h-4 w-4" aria-hidden="true"></i>
+                            All files processed. Opening the dashboard...
+                        </div>
+                    </div>
                     <div id="processingList" class="mt-4 space-y-3"></div>
                 </section>
             </div>
@@ -287,23 +322,44 @@
 
             const progressContainer = document.getElementById('progressContainer');
             const processingList = document.getElementById('processingList');
+            const batchProgress = {
+                total: selectedFiles.length,
+                uploaded: 0,
+                completed: 0,
+                currentIndex: 0,
+                currentFile: '',
+                currentPhase: 'Preparing',
+                currentUploaded: false
+            };
 
             progressContainer.classList.remove('hidden');
             processingList.innerHTML = '';
             uploadButtonContainer.classList.add('hidden');
             uploadButtonContainer.classList.remove('flex');
+            updateBatchProgress(batchProgress);
+            progressContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-            for (const file of selectedFiles) {
-                await processFile(file);
+            for (let index = 0; index < selectedFiles.length; index += 1) {
+                const file = selectedFiles[index];
+                batchProgress.currentIndex = index + 1;
+                batchProgress.currentFile = file.name;
+                batchProgress.currentPhase = 'Uploading';
+                batchProgress.currentUploaded = false;
+                updateBatchProgress(batchProgress);
+                await processFile(file, batchProgress);
+                batchProgress.completed += 1;
+                batchProgress.currentPhase = 'Completed';
+                batchProgress.currentUploaded = false;
+                updateBatchProgress(batchProgress);
             }
 
+            showBatchComplete(batchProgress);
             setTimeout(() => {
-                alert('All files processed! Redirecting to dashboard...');
                 window.location.href = '/dashboard';
-            }, 2000);
+            }, 1800);
         });
 
-        async function processFile(file) {
+        async function processFile(file, batchProgress) {
             const processingList = document.getElementById('processingList');
             const itemId = 'file-' + Date.now();
             const autoCorrect = autoCorrectCheckbox.checked;
@@ -335,6 +391,10 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    batchProgress.uploaded += 1;
+                    batchProgress.currentPhase = 'Validating';
+                    batchProgress.currentUploaded = true;
+                    updateBatchProgress(batchProgress);
                     updateStatus(itemId, 'processing', 'Validating with Gazelle...');
 
                     const validateResponse = await fetch('/validate/' + result.file_id, {
@@ -348,7 +408,9 @@
                     const validateResult = await validateResponse.json();
 
                     if (validateResult.success) {
-                        updateStatus(itemId, 'success', `${validateResult.status} - ${validateResult.errors} errors, ${validateResult.warnings} warnings`);
+                        const errors = validateResult.errors ?? 0;
+                        const warnings = validateResult.warnings ?? 0;
+                        updateStatus(itemId, 'success', `${validateResult.status} - ${errors} errors, ${warnings} warnings`);
                     } else {
                         updateStatus(itemId, 'error', 'Validation failed: ' + validateResult.message);
                     }
@@ -358,6 +420,46 @@
             } catch (error) {
                 updateStatus(itemId, 'error', 'Error: ' + error.message);
             }
+        }
+
+        function updateBatchProgress(batchProgress) {
+            const completedUnits = batchProgress.completed + (batchProgress.currentUploaded ? 0.5 : 0);
+            const percent = batchProgress.total > 0
+                ? Math.round((completedUnits / batchProgress.total) * 100)
+                : 0;
+            const statusText = batchProgress.currentIndex > 0
+                ? `Processing file ${batchProgress.currentIndex} of ${batchProgress.total}`
+                : `Preparing ${batchProgress.total} selected files`;
+            const currentFile = batchProgress.currentFile
+                ? `${batchProgress.currentPhase}: ${batchProgress.currentFile}`
+                : 'Preparing the selected files for upload.';
+
+            document.getElementById('progressStatusText').textContent = statusText;
+            document.getElementById('progressCurrentFile').textContent = currentFile;
+            document.getElementById('progressPercent').textContent = percent + '%';
+            document.getElementById('selectedFileCount').textContent = batchProgress.total;
+            document.getElementById('uploadedFileCount').textContent = batchProgress.uploaded;
+            document.getElementById('processedFileCount').textContent = batchProgress.completed;
+
+            const progressBar = document.getElementById('batchProgressBar');
+            progressBar.setAttribute('aria-valuenow', String(percent));
+            document.getElementById('batchProgressFill').style.width = percent + '%';
+        }
+
+        function showBatchComplete(batchProgress) {
+            batchProgress.currentIndex = batchProgress.total;
+            batchProgress.currentFile = '';
+            batchProgress.currentPhase = 'Completed';
+            batchProgress.currentUploaded = false;
+            updateBatchProgress(batchProgress);
+            document.getElementById('progressStatusText').textContent = `${batchProgress.total} of ${batchProgress.total} files processed`;
+            document.getElementById('progressCurrentFile').textContent = 'Processing completed successfully.';
+            document.getElementById('progressSpinner').classList.add('hidden');
+            document.getElementById('progressCompleteIcon').classList.remove('hidden');
+            const completeMessage = document.getElementById('processingCompleteMessage');
+            completeMessage.classList.remove('hidden');
+            completeMessage.classList.add('flex');
+            renderIcons();
         }
 
         function updateStatus(itemId, status, message) {

@@ -883,6 +883,7 @@ def set_api_key_db():
 # ==================== DASHBOARD ROUTES ====================
 
 @app.route('/dashboard')
+@limiter.exempt
 @login_required
 def dashboard():
     """Main dashboard showing all validation reports"""
