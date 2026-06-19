@@ -1,124 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Gazelle HL7 Validator</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-card {
-            max-width: 450px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 2rem;
-        }
-
-        .btn-microsoft {
-            background-color: #2f2f2f;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .btn-microsoft:hover {
-            background-color: #1a1a1a;
-            color: white;
-        }
-
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .feature-list li {
-            padding: 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .feature-icon {
-            color: #667eea;
-            font-size: 20px;
-        }
-    </style>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    {% include '_design_system.html' %}
 </head>
+<body class="min-h-screen bg-slate-950 text-slate-900 antialiased">
+    <main class="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(8,145,178,0.24),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(14,116,144,0.18),transparent_42%)]"></div>
+        <div class="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-cyan-950/30">
+            <header class="bg-gradient-to-br from-slate-900 via-slate-800 to-brand-900 px-8 py-9 text-center text-white">
+                <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-cyan-400/10 ring-1 ring-cyan-300/25">
+                    <i data-lucide="shield-check" class="size-8 text-cyan-300" aria-hidden="true"></i>
+                </div>
+                <h1 class="text-2xl font-semibold tracking-tight">Gazelle HL7 Validator</h1>
+                <p class="mt-2 text-sm text-slate-300">Validate and auto-correct HL7 v2 messages</p>
+            </header>
 
-<body>
-    <div class="login-card">
-        <div class="card-header text-center">
-            <h1 class="mb-2">🏥</h1>
-            <h3 class="mb-0">Gazelle HL7 Validator</h3>
-            <p class="mb-0 mt-2">Validate & Auto-Correct HL7 v2 Messages</p>
-        </div>
-        <div class="card-body p-4">
-            <div class="mb-4">
-                <h5 class="mb-3">Features:</h5>
-                <ul class="feature-list">
-                    <li>
-                        <span class="feature-icon">✅</span>
-                        <span>Validate HL7 v2 messages with Gazelle EVS</span>
+            <div class="px-8 py-8">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Included capabilities</h2>
+                <ul class="mt-5 space-y-4 text-sm text-slate-700">
+                    {% for icon, text in [
+                        ('badge-check', 'Validate HL7 v2 messages with Gazelle EVS'),
+                        ('wrench', 'Automatic error correction (10+ fix types)'),
+                        ('chart-no-axes-combined', 'Track validation history and statistics'),
+                        ('file-text', 'Export reports as PDF'),
+                        ('lock-keyhole', 'Secure encrypted API key storage')
+                    ] %}
+                    <li class="flex items-start gap-3">
+                        <span class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-brand-600">
+                            <i data-lucide="{{ icon }}" class="size-4" aria-hidden="true"></i>
+                        </span>
+                        <span>{{ text }}</span>
                     </li>
-                    <li>
-                        <span class="feature-icon">🔧</span>
-                        <span>Automatic error correction (10+ fix types)</span>
-                    </li>
-                    <li>
-                        <span class="feature-icon">📊</span>
-                        <span>Track validation history & statistics</span>
-                    </li>
-                    <li>
-                        <span class="feature-icon">📄</span>
-                        <span>Export reports as PDF</span>
-                    </li>
-                    <li>
-                        <span class="feature-icon">🔒</span>
-                        <span>Secure encrypted API key storage</span>
-                    </li>
+                    {% endfor %}
                 </ul>
-            </div>
 
-            <div class="d-grid mb-3">
-                <a href="{{ url_for('login') }}" class="btn btn-microsoft btn-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                        viewBox="0 0 16 16">
-                        <path d="M0 0h7.5v7.5H0V0zm8.5 0H16v7.5H8.5V0zM0 8.5h7.5V16H0V8.5zm8.5 0H16V16H8.5V8.5z" />
-                    </svg>
+                <a href="{{ url_for('login') }}" class="mt-8 flex w-full items-center justify-center gap-3 rounded-xl bg-slate-900 px-5 py-3.5 font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
+                    <i data-lucide="panels-top-left" class="size-5" aria-hidden="true"></i>
                     Sign in with Microsoft
                 </a>
+                <p class="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
+                    <i data-lucide="lock" class="size-3.5" aria-hidden="true"></i>
+                    Secure authentication with Azure AD
+                </p>
             </div>
 
-            <div class="text-center text-muted">
-                <small>Secure authentication with Azure AD</small>
-            </div>
+            <footer class="border-t border-slate-100 bg-slate-50 px-8 py-4 text-center text-xs text-slate-500">
+                Powered by Gazelle EVS and Azure
+            </footer>
         </div>
-        <div class="card-footer text-center text-muted bg-light">
-            <small>Powered by Gazelle EVS & Azure</small>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </main>
 </body>
-
 </html>

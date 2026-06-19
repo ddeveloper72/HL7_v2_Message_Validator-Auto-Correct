@@ -1,157 +1,83 @@
-/* Gazelle HL7 v2 Validator - Custom Styles */
-
 :root {
-    --primary-color: #0d6efd;
-    --success-color: #198754;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #0dcaf0;
+    color-scheme: light;
+    --page-bg: #f1f5f9;
+    --panel: #ffffff;
+    --border: #cbd5e1;
+    --text: #0f172a;
+    --muted: #475569;
+    --accent: #0e7490;
 }
+
+html { scroll-behavior: smooth; }
 
 body {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
-.card {
-    border: none;
-    border-radius: 15px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+[hidden], [x-cloak] { display: none !important; }
+
+[data-lucide] {
+    width: 1rem;
+    height: 1rem;
+    stroke-width: 1.8;
 }
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+button, a, input, select, textarea { transition: border-color 150ms, background-color 150ms, color 150ms, box-shadow 150ms; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgb(8 145 178 / 0.24);
+    outline-offset: 2px;
 }
 
-.card-header {
-    border-radius: 15px 15px 0 0 !important;
-    border: none;
-    padding: 1.5rem;
+.drop-zone.dragover {
+    border-color: #0891b2 !important;
+    background: #ecfeff !important;
 }
 
-.btn {
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.3s ease;
+.app-spinner {
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 2px solid #cbd5e1;
+    border-top-color: #0891b2;
+    border-radius: 999px;
+    animation: spin 700ms linear infinite;
 }
 
-.btn-lg {
-    padding: 0.75rem 1.5rem;
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.fade-in { animation: fade-in 220ms ease-out; }
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
+.report-content { color: #334155; line-height: 1.7; }
+.report-content h1, .report-content h2, .report-content h3 { color: #0f172a; font-weight: 700; line-height: 1.25; }
+.report-content h1 { margin: 2rem 0 1rem; font-size: 1.75rem; }
+.report-content h2 { margin: 1.75rem 0 0.75rem; border-bottom: 1px solid #cbd5e1; padding-bottom: 0.5rem; font-size: 1.3rem; }
+.report-content h3 { margin: 1.25rem 0 0.5rem; font-size: 1.05rem; }
+.report-content p, .report-content ul, .report-content ol { margin: 0.75rem 0; }
+.report-content ul, .report-content ol { padding-left: 1.5rem; }
+.report-content ul { list-style: disc; }
+.report-content ol { list-style: decimal; }
+.report-content code { border-radius: 0.25rem; background: #f1f5f9; padding: 0.15rem 0.35rem; color: #be123c; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
+.report-content pre { overflow-x: auto; border: 1px solid #334155; border-radius: 0.5rem; background: #0f172a; padding: 1rem; color: #e2e8f0; }
+.report-content pre code { background: transparent; padding: 0; color: inherit; }
+.report-content table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+.report-content th, .report-content td { border: 1px solid #cbd5e1; padding: 0.65rem 0.75rem; text-align: left; vertical-align: top; }
+.report-content th { background: #e2e8f0; color: #0f172a; font-weight: 700; }
+.report-content blockquote { border-left: 3px solid #0891b2; background: #ecfeff; margin: 1rem 0; padding: 0.75rem 1rem; }
 
-.form-control:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #e2e8f0; }
+::-webkit-scrollbar-thumb { border: 2px solid #e2e8f0; border-radius: 999px; background: #94a3b8; }
 
-#validationReport {
-    font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-}
-
-#rawResponseContent {
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-    color: #333;
-}
-
-.alert {
-    border-radius: 10px;
-    border: none;
-}
-
-.spinner-border {
-    animation: spinner-border 0.75s linear infinite;
-}
-
-/* Status badges */
-.status-success {
-    background-color: var(--success-color);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    display: inline-block;
-}
-
-.status-error {
-    background-color: var(--danger-color);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    display: inline-block;
-}
-
-.status-warning {
-    background-color: var(--warning-color);
-    color: #000;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    display: inline-block;
-}
-
-/* File input styling */
-.form-control[type="file"] {
-    border: 2px dashed #dee2e6;
-    padding: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.form-control[type="file"]:hover {
-    border-color: var(--primary-color);
-    background-color: #f8f9fa;
-}
-
-/* Accordion styling */
-.accordion-button:not(.collapsed) {
-    background-color: #e7f1ff;
-    color: var(--primary-color);
-}
-
-.accordion-button:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
-/* Footer styling */
-footer {
-    background-color: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-}
-
-/* Animation for results appearance */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .display-4 {
-        font-size: 2rem;
-    }
-    
-    .card-body {
-        padding: 1rem;
-    }
+@media print {
+    .no-print { display: none !important; }
+    body { background: white; }
 }

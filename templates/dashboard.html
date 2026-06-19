@@ -7,671 +7,286 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Gazelle HL7 v2 Validation Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --success-color: #27ae60;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-        }
-
-        body {
-            background-color: #ecf0f1;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar-brand {
-            font-weight: bold;
-            font-size: 1.5rem;
-        }
-
-        .stats-card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stats-icon {
-            font-size: 2.5rem;
-            opacity: 0.8;
-        }
-
-        .report-card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .report-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .status-badge {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .status-passed {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .status-failed {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .btn-action {
-            margin: 5px;
-        }
-
-        .api-key-section {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-        }
-
-        .api-key-status {
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .api-key-active {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .api-key-inactive {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .filter-section {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfeff', 100: '#cffafe', 500: '#0891b2', 600: '#0e7490',
+                            700: '#0f6476', 900: '#164e63'
+                        }
+                    },
+                    boxShadow: { panel: '0 8px 20px rgb(15 23 42 / 0.07)' }
+                }
+            }
+        };
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
 </head>
 
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-dark">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">
-                <i class="bi bi-file-medical"></i> Gazelle HL7 v2 Validation Dashboard
+<body class="min-h-screen bg-slate-100 font-sans text-slate-800 antialiased">
+    <nav class="border-b border-slate-800 bg-slate-900 text-white">
+        <div class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <span class="flex items-center gap-2 text-base font-semibold tracking-tight sm:text-lg">
+                <i data-lucide="file-heart" class="h-5 w-5 text-cyan-400"></i>
+                Gazelle HL7 v2 Validation Dashboard
             </span>
-            <div class="d-flex align-items-center">
-                <a href="{{ url_for('upload_page') }}" class="btn btn-success me-2">
-                    <i class="bi bi-cloud-upload"></i> Upload Files
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+                <a href="{{ url_for('upload_page') }}" class="inline-flex items-center gap-1.5 border border-teal-500 bg-teal-600 px-3 py-2 font-medium text-white transition hover:bg-teal-700">
+                    <i data-lucide="cloud-upload" class="h-4 w-4"></i> Upload Files
                 </a>
-                <a href="{{ url_for('profile') }}" class="btn btn-outline-light me-2">
-                    <i class="bi bi-person-circle"></i> Profile
+                <a href="{{ url_for('profile') }}" class="inline-flex items-center gap-1.5 border border-slate-600 px-3 py-2 font-medium transition hover:border-slate-400 hover:bg-slate-800">
+                    <i data-lucide="circle-user-round" class="h-4 w-4"></i> Profile
                 </a>
-                <span class="text-white me-3">
-                    <i class="bi bi-person"></i> {{ user_name or user_email }}
+                <span class="inline-flex items-center gap-1.5 px-2 text-slate-300">
+                    <i data-lucide="user" class="h-4 w-4"></i> {{ user_name or user_email }}
                 </span>
-                <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Logout
+                <a href="{{ url_for('logout') }}" class="inline-flex items-center gap-1.5 border border-slate-600 px-3 py-2 font-medium transition hover:border-slate-400 hover:bg-slate-800">
+                    <i data-lucide="log-out" class="h-4 w-4"></i> Logout
                 </a>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid mt-4">
-        <!-- API Key Section -->
-        <div class="api-key-section">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h5 class="mb-3">
-                        <i class="bi bi-key-fill"></i> Gazelle API Configuration
-                    </h5>
-                    {% if has_api_key %}
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="api-key-status api-key-active">
-                            <i class="bi bi-check-circle-fill me-2"></i> API Key Active
+    <main class="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+        <section class="border border-slate-200 bg-white p-5 shadow-panel">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-700">
+                        <i data-lucide="key-round" class="h-4 w-4 text-brand-600"></i> Gazelle API Configuration
+                    </h2>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        {% if has_api_key %}
+                        <span class="inline-flex items-center gap-1.5 border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                            <i data-lucide="circle-check" class="h-3.5 w-3.5"></i> API Key Active
                         </span>
                         {% if api_key_validity %}
-                        <span class="badge {{ api_key_validity.badge_class }}">
+                        <span class="inline-flex items-center gap-1.5 border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700" data-validity-class="{{ api_key_validity.badge_class }}">
                             {% if api_key_validity.status == 'expired' %}
-                            <i class="bi bi-x-circle"></i> {{ api_key_validity.message }}
+                            <i data-lucide="circle-x" class="h-3.5 w-3.5 text-red-600"></i> {{ api_key_validity.message }}
                             {% elif api_key_validity.status == 'expiring_today' %}
-                            <i class="bi bi-exclamation-triangle-fill"></i> {{ api_key_validity.message }}
+                            <i data-lucide="triangle-alert" class="h-3.5 w-3.5 text-amber-600"></i> {{ api_key_validity.message }}
                             {% elif api_key_validity.status == 'expiring_soon' %}
-                            <i class="bi bi-clock-fill"></i> {{ api_key_validity.message }}
+                            <i data-lucide="clock" class="h-3.5 w-3.5 text-amber-600"></i> {{ api_key_validity.message }}
                             {% elif api_key_validity.status == 'valid' %}
-                            <i class="bi bi-check-circle"></i> Valid until {{ api_key_validity.valid_to }}
+                            <i data-lucide="circle-check" class="h-3.5 w-3.5 text-emerald-600"></i> Valid until {{ api_key_validity.valid_to }}
                             {% else %}
-                            <i class="bi bi-question-circle"></i> {{ api_key_validity.message }}
+                            <i data-lucide="circle-help" class="h-3.5 w-3.5 text-slate-500"></i> {{ api_key_validity.message }}
                             {% endif %}
                         </span>
                         {% endif %}
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5 border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
+                            <i data-lucide="circle-x" class="h-3.5 w-3.5"></i> API Key Not Set
+                        </span>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <span class="api-key-status api-key-inactive">
-                        <i class="bi bi-x-circle-fill me-2"></i> API Key Not Set
-                    </span>
-                    {% endif %}
                 </div>
-                <div class="col-md-6 text-end">
+                <div>
                     {% if not has_api_key %}
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#apiKeyModal">
-                        <i class="bi bi-plus-circle"></i> Set API Key
+                    <button class="inline-flex items-center gap-1.5 border border-brand-600 bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700" data-modal-open="apiKeyModal">
+                        <i data-lucide="circle-plus" class="h-4 w-4"></i> Set API Key
                     </button>
                     {% else %}
-                    <button class="btn btn-outline-danger" onclick="clearApiKey()">
-                        <i class="bi bi-trash"></i> Clear API Key
+                    <button class="inline-flex items-center gap-1.5 border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50" onclick="clearApiKey()">
+                        <i data-lucide="trash-2" class="h-4 w-4"></i> Clear API Key
                     </button>
                     {% endif %}
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Supported Message Types -->
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <h6 class="alert-heading">
-                <i class="bi bi-file-earmark-medical"></i> Supported HL7 v2 Message Types for Validation &
-                Auto-Correction
-            </h6>
-            <div class="row small">
-                <div class="col-md-3">
-                    <strong>Patient Administration:</strong>
-                    <ul class="mb-2">
-                        <li>ADT^A01 - Admission</li>
-                        <li>ADT^A03 - Discharge</li>
-                        <li>ADT^A04 - Registration</li>
-                        <li>ADT^A08 - Update</li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <strong>Laboratory:</strong>
-                    <ul class="mb-2">
-                        <li>ORU^R01 - Results</li>
-                        <li>ORU^R03 - Unsolicited</li>
-                        <li>OML^O21 - Order</li>
-                        <li>ORL^O22 - Response</li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <strong>Clinical:</strong>
-                    <ul class="mb-2">
-                        <li>REF^I12 - Discharge Summary</li>
-                        <li>RRI^R12 - Radiology Results</li>
-                        <li>VXU^V04 - Vaccination</li>
-                        <li>SIU^S12 - Appointment</li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <strong>System:</strong>
-                    <ul class="mb-2">
-                        <li>ACK^GENERIC - Acknowledgement</li>
-                    </ul>
-                    <p class="mb-0 mt-2">
-                        <small><em>Profiles from <a href="https://testing.ehealthireland.ie" target="_blank"
-                                    class="alert-link">Gazelle EVS</a></em></small>
-                    </p>
-                </div>
+        <section class="relative border border-cyan-200 bg-cyan-50 p-5 text-cyan-950" role="alert">
+            <h2 class="flex items-center gap-2 pr-8 text-sm font-semibold">
+                <i data-lucide="notebook-tabs" class="h-4 w-4 text-brand-600"></i>
+                Supported HL7 v2 Message Types for Validation &amp; Auto-Correction
+            </h2>
+            <div class="mt-4 grid gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                <div><strong>Patient Administration:</strong><ul class="mt-1 space-y-1 text-cyan-900"><li>ADT^A01 - Admission</li><li>ADT^A03 - Discharge</li><li>ADT^A04 - Registration</li><li>ADT^A08 - Update</li></ul></div>
+                <div><strong>Laboratory:</strong><ul class="mt-1 space-y-1 text-cyan-900"><li>ORU^R01 - Results</li><li>ORU^R03 - Unsolicited</li><li>OML^O21 - Order</li><li>ORL^O22 - Response</li></ul></div>
+                <div><strong>Clinical:</strong><ul class="mt-1 space-y-1 text-cyan-900"><li>REF^I12 - Discharge Summary</li><li>RRI^R12 - Radiology Results</li><li>VXU^V04 - Vaccination</li><li>SIU^S12 - Appointment</li></ul></div>
+                <div><strong>System:</strong><ul class="mt-1 space-y-1 text-cyan-900"><li>ACK^GENERIC - Acknowledgement</li></ul><p class="mt-2 italic">Profiles from <a href="https://testing.ehealthireland.ie" target="_blank" class="font-semibold underline hover:text-brand-700">Gazelle EVS</a></p></div>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+            <button type="button" class="absolute right-3 top-3 p-1 text-cyan-700 hover:bg-cyan-100" data-alert-dismiss aria-label="Close"><i data-lucide="x" class="h-4 w-4"></i></button>
+        </section>
 
-        <!-- API Key Expiration Alert -->
         {% if api_key_validity and api_key_validity.status in ['expired', 'expiring_today', 'expiring_soon'] %}
-        <div class="alert {% if api_key_validity.status == 'expired' or api_key_validity.status == 'expiring_today' %}alert-danger{% else %}alert-warning{% endif %} alert-dismissible fade show"
-            role="alert">
-            <h5 class="alert-heading">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                {% if api_key_validity.status == 'expired' %}
-                API Key Expired
-                {% elif api_key_validity.status == 'expiring_today' %}
-                API Key Expires Today
-                {% else %}
-                API Key Expiring Soon
-                {% endif %}
-            </h5>
-            <p class="mb-2">{{ api_key_validity.message }}</p>
-            <hr>
-            <p class="mb-0">
-                <i class="bi bi-info-circle"></i>
-                Please generate a new API key from the
-                <a href="https://testing.ehealthireland.ie/evs/administration/apiKeyManagement.seam" target="_blank"
-                    class="alert-link">
-                    Gazelle EVS Portal <i class="bi bi-box-arrow-up-right"></i>
-                </a>
-                and update your configuration.
+        <section class="relative border p-5 {% if api_key_validity.status == 'expired' or api_key_validity.status == 'expiring_today' %}border-red-200 bg-red-50 text-red-900{% else %}border-amber-200 bg-amber-50 text-amber-900{% endif %}" role="alert">
+            <h2 class="flex items-center gap-2 pr-8 text-sm font-semibold"><i data-lucide="triangle-alert" class="h-4 w-4"></i>
+                {% if api_key_validity.status == 'expired' %}API Key Expired{% elif api_key_validity.status == 'expiring_today' %}API Key Expires Today{% else %}API Key Expiring Soon{% endif %}
+            </h2>
+            <p class="mt-2 text-sm">{{ api_key_validity.message }}</p>
+            <p class="mt-3 flex flex-wrap items-center gap-1 border-t border-current/20 pt-3 text-sm"><i data-lucide="info" class="h-4 w-4"></i> Please generate a new API key from the
+                <a href="https://testing.ehealthireland.ie/evs/administration/apiKeyManagement.seam" target="_blank" class="inline-flex items-center gap-1 font-semibold underline">Gazelle EVS Portal <i data-lucide="external-link" class="h-3.5 w-3.5"></i></a> and update your configuration.
             </p>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+            <button type="button" class="absolute right-3 top-3 p-1 hover:bg-black/5" data-alert-dismiss aria-label="Close"><i data-lucide="x" class="h-4 w-4"></i></button>
+        </section>
         {% endif %}
 
-        <!-- Statistics Cards -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card stats-card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title mb-1">Total Files</h6>
-                                <h2 class="mb-0">{{ total_files }}</h2>
-                            </div>
-                            <i class="bi bi-files stats-icon"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card stats-card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title mb-1">Passed</h6>
-                                <h2 class="mb-0">{{ passed_count }}</h2>
-                            </div>
-                            <i class="bi bi-check-circle stats-icon"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card stats-card bg-danger text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title mb-1">Failed</h6>
-                                <h2 class="mb-0">{{ failed_count }}</h2>
-                            </div>
-                            <i class="bi bi-x-circle stats-icon"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <section class="grid gap-4 sm:grid-cols-3">
+            <div class="border border-slate-200 bg-white p-5 shadow-panel"><div class="flex items-center justify-between"><div><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Files</p><p class="mt-1 text-3xl font-bold text-slate-900">{{ total_files }}</p></div><span class="border border-cyan-200 bg-cyan-50 p-3 text-brand-600"><i data-lucide="files" class="h-6 w-6"></i></span></div></div>
+            <div class="border border-slate-200 bg-white p-5 shadow-panel"><div class="flex items-center justify-between"><div><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Passed</p><p class="mt-1 text-3xl font-bold text-emerald-700">{{ passed_count }}</p></div><span class="border border-emerald-200 bg-emerald-50 p-3 text-emerald-600"><i data-lucide="circle-check" class="h-6 w-6"></i></span></div></div>
+            <div class="border border-slate-200 bg-white p-5 shadow-panel"><div class="flex items-center justify-between"><div><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Failed</p><p class="mt-1 text-3xl font-bold text-red-700">{{ failed_count }}</p></div><span class="border border-red-200 bg-red-50 p-3 text-red-600"><i data-lucide="circle-x" class="h-6 w-6"></i></span></div></div>
+        </section>
 
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Search files...">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select" id="statusFilter">
-                        <option value="">All Status</option>
-                        <option value="PASSED">Passed</option>
-                        <option value="FAILED">Failed</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select" id="typeFilter">
-                        <option value="">All Message Types</option>
-                        <option value="ORU">ORU^R01</option>
-                        <option value="SIU">SIU^S12</option>
-                    </select>
-                </div>
+        <section class="border border-slate-200 bg-white p-4 shadow-panel">
+            <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <label class="relative lg:col-span-2"><span class="sr-only">Search files</span><i data-lucide="search" class="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400"></i><input type="text" class="w-full border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-cyan-100" id="searchInput" placeholder="Search files..."></label>
+                <label><span class="sr-only">Filter by status</span><select class="w-full border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-cyan-100" id="statusFilter"><option value="">All Status</option><option value="PASSED">Passed</option><option value="FAILED">Failed</option></select></label>
+                <label><span class="sr-only">Filter by message type</span><select class="w-full border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-cyan-100" id="typeFilter"><option value="">All Message Types</option><option value="ORU">ORU^R01</option><option value="SIU">SIU^S12</option></select></label>
             </div>
-        </div>
+        </section>
 
-        <!-- Reports List -->
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h4 class="mb-0">
-                        <i class="bi bi-file-earmark-text"></i> Validation Reports
-                    </h4>
-                    <div>
-                        {% if reports|length > 0 %}
-                        <button class="btn btn-sm btn-outline-danger me-2" onclick="clearAllHistory()">
-                            <i class="bi bi-trash"></i> Clear All History
-                        </button>
-                        {% endif %}
-                        {% if show_all %}
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-person"></i> Show My Session Only
-                        </a>
-                        {% else %}
-                        <a href="{{ url_for('dashboard', show_all=1) }}" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-people"></i> Show All Sessions
-                        </a>
-                        {% endif %}
-                    </div>
+        <section>
+            <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900"><i data-lucide="file-text" class="h-5 w-5 text-brand-600"></i> Validation Reports</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% if reports|length > 0 %}<button class="inline-flex items-center gap-1.5 border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50" onclick="clearAllHistory(event)"><i data-lucide="trash-2" class="h-3.5 w-3.5"></i> Clear All History</button>{% endif %}
+                    {% if show_all %}<a href="{{ url_for('dashboard') }}" class="inline-flex items-center gap-1.5 border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><i data-lucide="user" class="h-3.5 w-3.5"></i> Show My Session Only</a>
+                    {% else %}<a href="{{ url_for('dashboard', show_all=1) }}" class="inline-flex items-center gap-1.5 border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><i data-lucide="users" class="h-3.5 w-3.5"></i> Show All Sessions</a>{% endif %}
                 </div>
             </div>
-        </div>
 
-        <div class="row" id="reportsContainer" data-reports-container>
-            {% for report in reports %}
-            <div class="col-md-6 col-lg-4 report-item" data-filename="{{ report.filename|lower }}"
-                data-status="{{ report.status }}" data-type="{{ report.message_type[:3] }}">
-                <div class="card report-card">
-                    <div class="card-header bg-white">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">
-                                <i class="bi bi-file-medical-fill text-primary"></i>
-                                {{ report.filename }}
-                            </h6>
-                            <span class="status-badge status-{{ report.status|lower }}">
-                                {% if report.status == 'PASSED' %}
-                                <i class="bi bi-check-circle-fill"></i>
-                                {% else %}
-                                <i class="bi bi-x-circle-fill"></i>
-                                {% endif %}
-                                {{ report.status }}
-                            </span>
-                        </div>
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3" id="reportsContainer" data-reports-container>
+                {% for report in reports %}
+                <article class="report-item min-w-0 border border-slate-200 bg-white shadow-panel" data-filename="{{ report.filename|lower }}" data-status="{{ report.status }}" data-type="{{ report.message_type[:3] }}">
+                    <header class="flex items-start justify-between gap-3 border-b border-slate-200 p-4">
+                        <h3 class="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-900"><i data-lucide="file-heart" class="h-4 w-4 shrink-0 text-brand-600"></i><span class="truncate">{{ report.filename }}</span></h3>
+                        <span class="inline-flex shrink-0 items-center gap-1 border px-2 py-1 text-[11px] font-bold {% if report.status == 'PASSED' %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-red-200 bg-red-50 text-red-700{% endif %}">
+                            {% if report.status == 'PASSED' %}<i data-lucide="circle-check" class="h-3 w-3"></i>{% else %}<i data-lucide="circle-x" class="h-3 w-3"></i>{% endif %} {{ report.status }}
+                        </span>
+                    </header>
+                    <div class="space-y-2 p-4 text-sm">
+                        <p><strong class="font-medium text-slate-600">Message Type:</strong> <span class="ml-1 border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{{ report.message_type }}</span></p>
+                        <p><strong class="font-medium text-slate-600">Date:</strong> <span class="ml-1 text-xs text-slate-500">{{ report.date }}</span></p>
+                        <div class="grid grid-cols-2 gap-2 pt-2 text-center"><div class="border border-slate-200 bg-slate-50 p-2"><span class="block text-[11px] uppercase tracking-wide text-slate-500">Errors</span><strong class="text-red-700">{{ report.errors }}</strong></div><div class="border border-slate-200 bg-slate-50 p-2"><span class="block text-[11px] uppercase tracking-wide text-slate-500">Warnings</span><strong class="text-amber-700">{{ report.warnings }}</strong></div></div>
                     </div>
-                    <div class="card-body">
-                        <p class="mb-2">
-                            <strong>Message Type:</strong>
-                            <span class="badge bg-info">{{ report.message_type }}</span>
-                        </p>
-                        <p class="mb-2">
-                            <strong>Date:</strong>
-                            <small class="text-muted">{{ report.date }}</small>
-                        </p>
-                        <div class="row text-center mt-3">
-                            <div class="col-6">
-                                <div class="p-2 bg-light rounded">
-                                    <small class="text-muted d-block">Errors</small>
-                                    <strong class="text-danger">{{ report.errors }}</strong>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 bg-light rounded">
-                                    <small class="text-muted d-block">Warnings</small>
-                                    <strong class="text-warning">{{ report.warnings }}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-white">
-                        <div class="d-flex flex-wrap justify-content-center">
-                            <a href="{{ url_for('view_report', report_id=report.id) }}"
-                                class="btn btn-sm btn-primary btn-action">
-                                <i class="bi bi-eye"></i> View Report
-                            </a>
-                            <a href="{{ url_for('export_pdf', report_id=report.id) }}"
-                                class="btn btn-sm btn-outline-danger btn-action">
-                                <i class="bi bi-file-pdf"></i> Export PDF
-                            </a>
-                            {% if report.corrected_path %}
-                            <a href="{{ url_for('download_corrected', report_id=report.id) }}"
-                                class="btn btn-sm btn-success btn-action">
-                                <i class="bi bi-download"></i> Download
-                            </a>
-                            {% endif %}
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-action"
-                                onclick="deleteReport('{{ report.id }}')">
-                                <i class="bi bi-x-lg"></i> Dismiss
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                    <footer class="flex flex-wrap gap-2 border-t border-slate-200 p-3">
+                        <a href="{{ url_for('view_report', report_id=report.id) }}" class="inline-flex items-center gap-1 border border-brand-600 bg-brand-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"><i data-lucide="eye" class="h-3.5 w-3.5"></i> View Report</a>
+                        <a href="{{ url_for('export_pdf', report_id=report.id) }}" class="inline-flex items-center gap-1 border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"><i data-lucide="file-down" class="h-3.5 w-3.5"></i> Export PDF</a>
+                        {% if report.corrected_path %}<a href="{{ url_for('download_corrected', report_id=report.id) }}" class="inline-flex items-center gap-1 border border-emerald-600 bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"><i data-lucide="download" class="h-3.5 w-3.5"></i> Download</a>{% endif %}
+                        <button type="button" class="inline-flex items-center gap-1 border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" onclick="deleteReport('{{ report.id }}')"><i data-lucide="x" class="h-3.5 w-3.5"></i> Dismiss</button>
+                    </footer>
+                </article>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
+        </section>
 
         {% if total_files == 0 %}
-        <div class="row">
-            <div class="col-12">
-                <div class="alert alert-info text-center">
-                    <i class="bi bi-info-circle"></i>
-                    No validation reports available. Upload HL7 files to get started.
-                </div>
-            </div>
-        </div>
+        <div class="flex items-center justify-center gap-2 border border-cyan-200 bg-cyan-50 p-4 text-center text-sm text-cyan-900"><i data-lucide="info" class="h-4 w-4"></i> No validation reports available. Upload HL7 files to get started.</div>
         {% endif %}
-    </div>
+    </main>
 
-    <!-- API Key Modal -->
-    <div class="modal fade" id="apiKeyModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-key-fill"></i> Set Gazelle API Key
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i>
-                        Your API key is stored only for this session and is never saved permanently.
-                    </div>
-                    <form id="apiKeyForm">
-                        <div class="mb-3">
-                            <label for="apiKeyInput" class="form-label">Gazelle API Key</label>
-                            <input type="password" class="form-control" id="apiKeyInput"
-                                placeholder="Enter your Gazelle API key" required>
-                            <small class="form-text text-muted">
-                                Get your API key from your Gazelle account profile
-                            </small>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="setApiKey()">
-                        <i class="bi bi-check-circle"></i> Set API Key
-                    </button>
-                </div>
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 p-4" id="apiKeyModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="apiKeyModalTitle">
+        <div class="w-full max-w-md border border-slate-200 bg-white shadow-2xl" role="document">
+            <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                <h2 class="flex items-center gap-2 text-base font-semibold text-slate-900" id="apiKeyModalTitle"><i data-lucide="key-round" class="h-4 w-4 text-brand-600"></i> Set Gazelle API Key</h2>
+                <button type="button" class="p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800" data-modal-dismiss aria-label="Close"><i data-lucide="x" class="h-4 w-4"></i></button>
             </div>
+            <div class="space-y-4 p-5">
+                <div class="flex gap-2 border border-cyan-200 bg-cyan-50 p-3 text-xs text-cyan-900"><i data-lucide="info" class="h-4 w-4 shrink-0"></i> Your API key is stored only for this session and is never saved permanently.</div>
+                <form id="apiKeyForm"><label for="apiKeyInput" class="mb-1.5 block text-sm font-medium text-slate-700">Gazelle API Key</label><input type="password" class="w-full border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-cyan-100" id="apiKeyInput" placeholder="Enter your Gazelle API key" required><small class="mt-1.5 block text-xs text-slate-500">Get your API key from your Gazelle account profile</small></form>
+            </div>
+            <div class="flex justify-end gap-2 border-t border-slate-200 px-5 py-4"><button type="button" class="border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-modal-dismiss>Cancel</button><button type="button" class="inline-flex items-center gap-1.5 border border-brand-600 bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700" onclick="setApiKey()"><i data-lucide="circle-check" class="h-4 w-4"></i> Set API Key</button></div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Update current time
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) window.lucide.createIcons();
+
+            const modal = document.getElementById('apiKeyModal');
+            const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); document.getElementById('apiKeyInput').focus(); };
+            const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); document.body.classList.remove('overflow-hidden'); };
+
+            document.querySelectorAll('[data-modal-open="apiKeyModal"]').forEach(button => button.addEventListener('click', openModal));
+            document.querySelectorAll('[data-modal-dismiss]').forEach(button => button.addEventListener('click', closeModal));
+            document.querySelectorAll('[data-alert-dismiss]').forEach(button => button.addEventListener('click', () => button.closest('[role="alert"]').remove()));
+            modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+            document.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+        });
+
         function updateTime() {
             const timeElement = document.querySelector('#currentTime span');
-            if (timeElement) {
-                const now = new Date();
-                timeElement.textContent = now.toLocaleString();
-            }
+            if (timeElement) { timeElement.textContent = new Date().toLocaleString(); }
         }
         updateTime();
         setInterval(updateTime, 1000);
 
-        // Auto-refresh reports
         let autoRefreshInterval = null;
-
         function autoRefreshReports() {
             const reportsContainer = document.querySelector('[data-reports-container]');
-            if (!reportsContainer) {
-                return;
-            }
-
-            fetch(window.location.pathname + window.location.search)
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const newDoc = parser.parseFromString(html, 'text/html');
-                    const newContainer = newDoc.querySelector('[data-reports-container]');
-                    if (!newContainer) {
-                        return;
-                    }
-
-                    if (reportsContainer.innerHTML !== newContainer.innerHTML) {
-                        reportsContainer.innerHTML = newContainer.innerHTML;
-                        filterReports();
-                    }
-                })
-                .catch(() => { });
+            if (!reportsContainer) return;
+            fetch(window.location.pathname + window.location.search).then(response => response.text()).then(html => {
+                const newDoc = new DOMParser().parseFromString(html, 'text/html');
+                const newContainer = newDoc.querySelector('[data-reports-container]');
+                if (!newContainer) return;
+                if (reportsContainer.innerHTML !== newContainer.innerHTML) {
+                    reportsContainer.innerHTML = newContainer.innerHTML;
+                    filterReports();
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }).catch(() => { });
         }
+        function startAutoRefresh() { if (!autoRefreshInterval) autoRefreshInterval = setInterval(autoRefreshReports, 3000); }
+        function stopAutoRefresh() { if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; } }
 
-        function startAutoRefresh() {
-            if (!autoRefreshInterval) {
-                autoRefreshInterval = setInterval(autoRefreshReports, 3000);
-            }
-        }
-
-        function stopAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-            }
-        }
-
-        // Filter functionality
         const searchInput = document.getElementById('searchInput');
         const statusFilter = document.getElementById('statusFilter');
         const typeFilter = document.getElementById('typeFilter');
         function filterReports() {
-            const reportItems = document.querySelectorAll('.report-item');
             const searchTerm = searchInput.value.toLowerCase();
             const statusValue = statusFilter.value;
             const typeValue = typeFilter.value;
-
-            reportItems.forEach(item => {
-                const filename = item.dataset.filename;
-                const status = item.dataset.status;
-                const type = item.dataset.type;
-
-                const matchesSearch = filename.includes(searchTerm);
-                const matchesStatus = !statusValue || status === statusValue;
-                const matchesType = !typeValue || type === typeValue;
-
-                if (matchesSearch && matchesStatus && matchesType) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
+            document.querySelectorAll('.report-item').forEach(item => {
+                const matchesSearch = item.dataset.filename.includes(searchTerm);
+                const matchesStatus = !statusValue || item.dataset.status === statusValue;
+                const matchesType = !typeValue || item.dataset.type === typeValue;
+                item.style.display = matchesSearch && matchesStatus && matchesType ? '' : 'none';
             });
         }
-
         searchInput.addEventListener('input', filterReports);
         statusFilter.addEventListener('change', filterReports);
         typeFilter.addEventListener('change', filterReports);
-
         window.addEventListener('load', startAutoRefresh);
         window.addEventListener('beforeunload', stopAutoRefresh);
 
-        // API Key management
         function setApiKey() {
             const apiKey = document.getElementById('apiKeyInput').value;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            fetch('/set-api-key', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': csrfToken
-                },
-                body: `api_key=${encodeURIComponent(apiKey)}`
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                });
+            fetch('/set-api-key', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken }, body: `api_key=${encodeURIComponent(apiKey)}` })
+                .then(response => response.json()).then(data => { if (data.success) location.reload(); else alert('Error: ' + data.message); });
         }
-
         function clearApiKey() {
             if (confirm('Are you sure you want to clear your API key?')) {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                fetch('/clear-api-key', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        location.reload();
-                    });
+                fetch('/clear-api-key', { method: 'POST', headers: { 'X-CSRFToken': csrfToken } }).then(response => response.json()).then(() => location.reload());
             }
         }
-
         function deleteReport(reportId) {
-            if (!confirm('Dismiss this validation report?')) {
-                return;
-            }
-
+            if (!confirm('Dismiss this validation report?')) return;
             const formData = new FormData();
             formData.append('csrf_token', '{{ csrf_token() }}');
-
-            fetch(`/delete-report/${reportId}`, {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    alert('Error deleting report');
-                    console.error(error);
-                });
+            fetch(`/delete-report/${reportId}`, { method: 'POST', body: formData }).then(response => response.json()).then(data => {
+                if (data.success) location.reload(); else alert('Error: ' + data.message);
+            }).catch(error => { alert('Error deleting report'); console.error(error); });
         }
-
-        function clearAllHistory() {
-            if (!confirm('⚠️ WARNING: This will permanently delete ALL your validation history.\n\nThis action cannot be undone.\n\nAre you absolutely sure?')) {
-                return;
-            }
-
-            // Show loading indicator
+        function clearAllHistory(event) {
+            if (!confirm('WARNING: This will permanently delete ALL your validation history.\n\nThis action cannot be undone.\n\nAre you absolutely sure?')) return;
             const btn = event.target.closest('button');
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Deleting...';
-
+            btn.innerHTML = '<i data-lucide="loader-circle" class="h-3.5 w-3.5 animate-spin"></i> Deleting...';
+            if (window.lucide) window.lucide.createIcons();
             const formData = new FormData();
             formData.append('csrf_token', '{{ csrf_token() }}');
-
-            fetch('/clear-history', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`✅ Successfully deleted ${data.count} validation record(s)`);
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                        btn.disabled = false;
-                        btn.innerHTML = originalText;
-                    }
-                })
-                .catch(error => {
-                    alert('Error clearing history. Please try again.');
-                    console.error(error);
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
-                });
+            fetch('/clear-history', { method: 'POST', body: formData }).then(response => response.json()).then(data => {
+                if (data.success) { alert(`Successfully deleted ${data.count} validation record(s)`); location.reload(); }
+                else { alert('Error: ' + data.message); btn.disabled = false; btn.innerHTML = originalText; if (window.lucide) window.lucide.createIcons(); }
+            }).catch(error => { alert('Error clearing history. Please try again.'); console.error(error); btn.disabled = false; btn.innerHTML = originalText; if (window.lucide) window.lucide.createIcons(); });
         }
     </script>
 </body>

@@ -1,207 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gazelle HL7 v2 Validator</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% include '_design_system.html' %}
+    <style>
+        /* Dynamic result markup is created by static/scripts.js. */
+        #validationStatus .alert { margin-top: .75rem; border-radius: .75rem; border-width: 1px; padding: 1rem; }
+        #validationStatus .alert h5, #validationStatus .alert h6 { font-weight: 700; }
+        #validationStatus .alert-success { border-color: #a7f3d0; background: #ecfdf5; color: #065f46; }
+        #validationStatus .alert-danger { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+        #validationStatus .alert-warning { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+        #validationStatus .alert-info { border-color: #a5f3fc; background: #ecfeff; color: #155e75; }
+        #validationStatus ul { margin-top: .5rem; list-style: disc; padding-left: 1.25rem; }
+        #validationStatus .text-muted { color: #64748b; }
+        #validationStatus .d-block { display: block; }
+        #validationStatus .mt-2 { margin-top: .5rem; }
+        #validationStatus .mb-0 { margin-bottom: 0; }
+        .fade-in { animation: fade-in .25s ease-out; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } }
+    </style>
 </head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <header class="border-b border-slate-200 bg-white">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+            <a href="/" class="flex items-center gap-3 font-semibold tracking-tight">
+                <span class="flex size-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+                    <i data-lucide="shield-check" class="size-5" aria-hidden="true"></i>
+                </span>
+                Gazelle HL7 v2 Validator
+            </a>
+            <span class="hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex">
+                <span class="size-2 rounded-full bg-emerald-500"></span>
+                Gazelle EVS connected
+            </span>
+        </div>
+    </header>
 
-<body>
-    <div class="container py-5">
-        <!-- Header -->
-        <div class="row mb-5">
-            <div class="col-12 text-center">
-                <h1 class="display-4 mb-3">
-                    <i class="bi bi-shield-check text-primary"></i>
-                    Gazelle HL7 v2 Validator
-                </h1>
-                <p class="lead text-muted">
-                    Validate HL7 v2 Healthlink files before submission to the Healthlink system
-                </p>
-            </div>
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+        <div class="mb-8 text-center">
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600">Message quality workspace</p>
+            <h1 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Validate before you submit</h1>
+            <p class="mx-auto mt-3 max-w-2xl text-base leading-7 text-slate-600">Validate HL7 v2 Healthlink files before submission to the Healthlink system.</p>
         </div>
 
-        <!-- Upload Card -->
-        <div class="row justify-content-center mb-4">
-            <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-file-earmark-arrow-up"></i>
-                            Upload HL7 v2 XML File
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="uploadForm" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="fileInput" class="form-label">Select XML File</label>
-                                <input class="form-control form-control-lg" type="file" id="fileInput" accept=".xml"
-                                    required>
-                                <div class="form-text">
-                                    Only XML files are accepted (max size: 16MB)
-                                </div>
-                            </div>
+        <section class="mx-auto mb-6 max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-panel">
+            <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-900 px-6 py-4 text-white">
+                <i data-lucide="file-up" class="size-5 text-cyan-300" aria-hidden="true"></i>
+                <h2 class="font-semibold">Upload HL7 v2 XML file</h2>
+            </div>
+            <div class="p-6 sm:p-8">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <label for="fileInput" class="block text-sm font-semibold text-slate-800">Select XML file</label>
+                    <input class="mt-2 block w-full cursor-pointer rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-600 file:mr-4 file:border-0 file:bg-brand-600 file:px-5 file:py-3 file:font-semibold file:text-white hover:file:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2" type="file" id="fileInput" accept=".xml" required>
+                    <p class="mt-2 text-xs text-slate-500">Only XML files are accepted (max size: 16MB).</p>
 
-                            <div class="mb-3 form-check">
-                                <input class="form-check-input" type="checkbox" id="autoCorrectCheckbox">
-                                <label class="form-check-label" for="autoCorrectCheckbox">
-                                    <strong>Auto-correct on upload</strong>
-                                    <br>
-                                    <small class="text-muted">If errors are found, automatically apply corrections (up to 5 iterations)</small>
-                                </label>
-                            </div>
+                    <label for="autoCorrectCheckbox" class="mt-6 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-cyan-300">
+                        <input class="mt-0.5 size-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" type="checkbox" id="autoCorrectCheckbox">
+                        <span>
+                            <strong class="block text-sm text-slate-800">Auto-correct on upload</strong>
+                            <small class="mt-1 block leading-5 text-slate-500">If errors are found, automatically apply corrections (up to 5 iterations).</small>
+                        </span>
+                    </label>
 
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary btn-lg" id="validateBtn">
-                                    <i class="bi bi-check-circle"></i>
-                                    Validate File
-                                </button>
-                            </div>
-                        </form>
+                    <button type="submit" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50" id="validateBtn">
+                        <i data-lucide="circle-check" class="size-5" aria-hidden="true"></i>
+                        Validate file
+                    </button>
+                </form>
 
-                        <hr class="my-4">
-
-                        <div class="text-center">
-                            <button type="button" class="btn btn-outline-secondary" id="validateSampleBtn">
-                                <i class="bi bi-file-earmark-text"></i>
-                                Validate Sample File (vin.xml)
-                            </button>
-                        </div>
-                    </div>
+                <div class="my-6 flex items-center gap-4" aria-hidden="true"><span class="h-px flex-1 bg-slate-200"></span><span class="text-xs uppercase tracking-wider text-slate-400">or</span><span class="h-px flex-1 bg-slate-200"></span></div>
+                <div class="text-center">
+                    <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-brand-500 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50" id="validateSampleBtn">
+                        <i data-lucide="file-code-2" class="size-4" aria-hidden="true"></i>
+                        Validate sample file (vin.xml)
+                    </button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Loading Spinner -->
-        <div class="row justify-content-center mb-4" id="loadingSpinner" style="display: none;">
-            <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center py-5">
-                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="lead">Validating your file...</p>
-                        <p class="text-muted">This may take a few moments</p>
+        <section class="mx-auto mb-6 max-w-3xl rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-panel" id="loadingSpinner" style="display: none;" aria-live="polite">
+            <i data-lucide="loader-circle" class="mx-auto size-10 animate-spin text-brand-600" aria-hidden="true"></i>
+            <p class="mt-4 font-semibold text-slate-900">Validating your file...</p>
+            <p class="mt-1 text-sm text-slate-500">This may take a few moments.</p>
+        </section>
+
+        <section id="resultsContainer" style="display: none;" class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-panel">
+            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-900 px-6 py-4 text-white" id="resultsHeader">
+                <h2 class="flex items-center gap-2 font-semibold"><i data-lucide="file-check-2" class="size-5 text-cyan-300" aria-hidden="true"></i>Validation results</h2>
+                <button type="button" class="rounded-lg p-2 text-slate-300 transition hover:bg-white/10 hover:text-white" id="closeResults" aria-label="Close results"><i data-lucide="x" class="size-4" aria-hidden="true"></i></button>
+            </div>
+            <div class="space-y-6 p-6 sm:p-8">
+                <div class="flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900" id="fileInfo">
+                    <i data-lucide="file" class="size-4 shrink-0" aria-hidden="true"></i><strong>File:</strong> <span id="fileName" class="truncate"></span>
+                </div>
+                <div id="validationStatus"></div>
+
+                <div id="reportUrlSection" style="display: none;">
+                    <label for="reportUrl" class="block text-sm font-semibold text-slate-800">Full report URL</label>
+                    <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+                        <input type="text" class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600" id="reportUrl" readonly>
+                        <button class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand-500 hover:text-brand-700" type="button" id="copyUrlBtn"><i data-lucide="clipboard" class="size-4" aria-hidden="true"></i>Copy</button>
+                        <a class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700" id="openReportBtn" href="#" target="_blank" rel="noopener"><i data-lucide="external-link" class="size-4" aria-hidden="true"></i>Open</a>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Results Card -->
-        <div class="row justify-content-center" id="resultsContainer" style="display: none;">
-            <div class="col-lg-10">
-                <div class="card shadow-sm">
-                    <div class="card-header d-flex justify-content-between align-items-center" id="resultsHeader">
-                        <h5 class="mb-0">
-                            <i class="bi bi-file-earmark-check"></i>
-                            Validation Results
-                        </h5>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="closeResults">
-                            <i class="bi bi-x-lg"></i>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-800">Validation report</label>
+                    <pre id="validationReport" class="mt-2 max-h-[500px] overflow-auto whitespace-pre-wrap break-words rounded-xl border border-slate-200 bg-slate-950 p-5 text-xs leading-6 text-slate-200"></pre>
+                </div>
+
+                <div class="overflow-hidden rounded-xl border border-slate-200" id="rawResponseAccordion">
+                    <h2>
+                        <button class="flex w-full items-center justify-between bg-slate-50 px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" type="button" id="rawResponseToggle" aria-expanded="false" aria-controls="rawResponse">
+                            <span class="flex items-center gap-2"><i data-lucide="square-code" class="size-4 text-brand-600" aria-hidden="true"></i>Raw API response</span>
+                            <i data-lucide="chevron-down" class="size-4 transition-transform" id="rawResponseChevron" aria-hidden="true"></i>
                         </button>
-                    </div>
-                    <div class="card-body">
-                        <!-- File Info -->
-                        <div class="alert alert-info mb-3" id="fileInfo">
-                            <strong>File:</strong> <span id="fileName"></span>
-                        </div>
-
-                        <!-- Validation Status -->
-                        <div class="mb-3" id="validationStatus"></div>
-
-                        <!-- Report URL -->
-                        <div class="mb-3" id="reportUrlSection" style="display: none;">
-                            <label class="form-label fw-bold">Full Report URL:</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="reportUrl" readonly>
-                                <button class="btn btn-outline-secondary" type="button" id="copyUrlBtn">
-                                    <i class="bi bi-clipboard"></i> Copy
-                                </button>
-                                <a class="btn btn-primary" id="openReportBtn" href="#" target="_blank">
-                                    <i class="bi bi-box-arrow-up-right"></i> Open
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Validation Report -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Validation Report:</label>
-                            <div class="card bg-light">
-                                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
-                                    <pre id="validationReport" class="mb-0"
-                                        style="white-space: pre-wrap; word-wrap: break-word;"></pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Raw Response (collapsible) -->
-                        <div class="accordion" id="rawResponseAccordion">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#rawResponse">
-                                        <i class="bi bi-code-square me-2"></i>
-                                        Raw API Response
-                                    </button>
-                                </h2>
-                                <div id="rawResponse" class="accordion-collapse collapse"
-                                    data-bs-parent="#rawResponseAccordion">
-                                    <div class="accordion-body">
-                                        <pre id="rawResponseContent" class="mb-0"
-                                            style="white-space: pre-wrap; word-wrap: break-word;"></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    </h2>
+                    <div id="rawResponse" hidden>
+                        <pre id="rawResponseContent" class="max-h-96 overflow-auto whitespace-pre-wrap break-words border-t border-slate-200 bg-slate-950 p-5 text-xs leading-6 text-slate-200"></pre>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Error Alert -->
-        <div class="row justify-content-center" id="errorContainer" style="display: none;">
-            <div class="col-lg-8">
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <h5 class="alert-heading">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        Error
-                    </h5>
-                    <p id="errorMessage"></p>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
+        <section id="errorContainer" style="display: none;" class="mx-auto mt-6 max-w-3xl rounded-xl border border-red-200 bg-red-50 p-5 text-red-900" role="alert">
+            <div class="flex items-start justify-between gap-4">
+                <div><h2 class="flex items-center gap-2 font-semibold"><i data-lucide="triangle-alert" class="size-5" aria-hidden="true"></i>Error</h2><p id="errorMessage" class="mt-2 text-sm"></p></div>
+                <button type="button" id="closeError" class="rounded-md p-1 hover:bg-red-100" aria-label="Dismiss error"><i data-lucide="x" class="size-4" aria-hidden="true"></i></button>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <!-- Footer -->
-    <footer class="text-center text-muted py-4 mt-5">
-        <div class="container">
-            <p class="mb-1">
-                <i class="bi bi-info-circle"></i>
-                Connected to your Gazelle EVS instance
-            </p>
-            <p class="small mb-0">
-                Gazelle HL7 v2 Validator - VS Code Integration
-            </p>
-        </div>
+    <footer class="border-t border-slate-200 bg-white py-6 text-center text-sm text-slate-500">
+        <p class="flex items-center justify-center gap-2"><i data-lucide="info" class="size-4" aria-hidden="true"></i>Connected to your Gazelle EVS instance</p>
+        <p class="mt-1 text-xs">Gazelle HL7 v2 Validator - VS Code Integration</p>
     </footer>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggle = document.getElementById('rawResponseToggle');
+            const panel = document.getElementById('rawResponse');
+            const chevron = document.getElementById('rawResponseChevron');
+            const iconMap = {
+                'bi-check': 'check',
+                'bi-check-circle': 'circle-check',
+                'bi-x-circle': 'circle-x',
+                'bi-tools': 'wrench'
+            };
+            const hydrateResultIcons = function (root) {
+                const icons = [];
+                if (root.nodeType === Node.ELEMENT_NODE && root.matches('i.bi')) icons.push(root);
+                if (root.querySelectorAll) icons.push(...root.querySelectorAll('i.bi'));
+                icons.forEach(function (icon) {
+                    const match = Object.keys(iconMap).find(function (name) { return icon.classList.contains(name); });
+                    if (!match) return;
+                    icon.removeAttribute('class');
+                    icon.setAttribute('data-lucide', iconMap[match]);
+                });
+                if (icons.length && window.lucide) window.lucide.createIcons();
+            };
+            new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    mutation.addedNodes.forEach(hydrateResultIcons);
+                });
+            }).observe(document.getElementById('validationStatus'), { childList: true, subtree: true });
+            document.getElementById('copyUrlBtn').addEventListener('click', function () {
+                setTimeout(function () { hydrateResultIcons(document.getElementById('copyUrlBtn')); }, 0);
+            });
+            toggle.addEventListener('click', function () {
+                const opening = panel.hidden;
+                panel.hidden = !opening;
+                toggle.setAttribute('aria-expanded', String(opening));
+                chevron.classList.toggle('rotate-180', opening);
+            });
+            document.getElementById('closeError').addEventListener('click', function () {
+                document.getElementById('errorContainer').style.display = 'none';
+            });
+        });
+    </script>
 </body>
-
 </html>

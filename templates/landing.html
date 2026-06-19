@@ -1,545 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HL7 v2 Message Validator & Auto-Correct</title>
+    <title>HL7 v2 Message Validator &amp; Auto-Correct</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
-    <style>
-        .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 100px 0;
-            margin-bottom: 60px;
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            color: #667eea;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card {
-            transition: transform 0.3s ease;
-            height: 100%;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .cta-button {
-            padding: 15px 40px;
-            font-size: 1.2rem;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-        }
-
-        .cta-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .stats-section {
-            background-color: #f8f9fa;
-            padding: 60px 0;
-            margin: 60px 0;
-        }
-
-        .stat-number {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-    </style>
+    {% include '_design_system.html' %}
 </head>
-
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-shield-check text-primary"></i>
-                <strong>HL7 Validator</strong>
+<body class="bg-white text-slate-900 antialiased">
+    <nav class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <a class="flex items-center gap-2.5 font-semibold tracking-tight" href="/">
+                <span class="flex size-9 items-center justify-center rounded-lg bg-brand-600 text-white"><i data-lucide="shield-check" class="size-5" aria-hidden="true"></i></span>
+                HL7 Validator
             </a>
-            <div class="ms-auto">
-                <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-box-arrow-in-right"></i> Sign In
-                </a>
-            </div>
+            <a href="{{ url_for('login') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-500 hover:text-brand-700">
+                <i data-lucide="log-in" class="size-4" aria-hidden="true"></i>Sign in
+            </a>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-7">
-                    <h1 class="display-3 fw-bold mb-4">
-                        Validate HL7 v2 Messages with Confidence
-                    </h1>
-                    <p class="lead mb-4">
-                        Ensure your Healthlink HL7 v2 messages meet validation standards before submission.
-                        Our intelligent auto-correction system helps fix errors automatically, saving you time and
-                        reducing rejections.
-                    </p>
-                    <a href="{{ url_for('login') }}" class="btn btn-light btn-lg cta-button">
-                        <i class="bi bi-microsoft"></i> Sign In with Microsoft
+    <main>
+        <section class="relative overflow-hidden bg-slate-950 text-white">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(8,145,178,0.25),transparent_35%)]"></div>
+            <div class="relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 sm:py-28 lg:grid-cols-[1.2fr_.8fr] lg:px-8">
+                <div>
+                    <p class="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Healthlink message quality</p>
+                    <h1 class="max-w-4xl text-4xl font-semibold tracking-tight sm:text-6xl">Validate HL7 v2 messages with confidence</h1>
+                    <p class="mt-6 max-w-2xl text-lg leading-8 text-slate-300">Ensure your Healthlink HL7 v2 messages meet validation standards before submission. Intelligent auto-correction helps resolve errors, saving time and reducing rejections.</p>
+                    <a href="{{ url_for('login') }}" class="mt-8 inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-6 py-3.5 font-semibold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-300">
+                        <i data-lucide="panels-top-left" class="size-5" aria-hidden="true"></i>Sign in with Microsoft
                     </a>
                 </div>
-                <div class="col-lg-5 text-center">
-                    <i class="bi bi-file-earmark-check" style="font-size: 15rem; opacity: 0.9;"></i>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="container mb-5">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold mb-3">Why Use Our Validator?</h2>
-                <p class="lead text-muted">Powerful features designed for healthcare developers</p>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            <!-- Feature 1 -->
-            <div class="col-md-4">
-                <div class="card feature-card shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <i class="bi bi-lightning-charge feature-icon"></i>
-                        <h4 class="fw-bold mb-3">Instant Validation</h4>
-                        <p class="text-muted">
-                            Validate your HL7 v2 XML files against Gazelle EVS standards in seconds.
-                            Get detailed reports with errors, warnings, and compliance status.
-                        </p>
+                <div class="hidden justify-self-center lg:block">
+                    <div class="flex size-64 items-center justify-center rounded-[2.5rem] border border-cyan-300/20 bg-white/5 shadow-2xl shadow-cyan-950/30 backdrop-blur">
+                        <i data-lucide="file-check-2" class="size-36 text-cyan-300" stroke-width="1.25" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <!-- Feature 2 -->
-            <div class="col-md-4">
-                <div class="card feature-card shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <i class="bi bi-wrench-adjustable feature-icon"></i>
-                        <h4 class="fw-bold mb-3">AI-Assisted Auto-Correction</h4>
-                        <p class="text-muted">
-                            AI-powered auto-correction engine fixes common errors automatically.
-                            Iterative validation ensures your message passes all checks.
-                        </p>
-                        <p class="text-muted mb-0">
-                            <small><i class="bi bi-info-circle"></i> Uses AI technology - see transparency notice
-                                below</small>
-                        </p>
-                    </div>
+        <section class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <p class="text-sm font-semibold uppercase tracking-wider text-brand-600">Built for healthcare developers</p>
+                <h2 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Why use our validator?</h2>
+            </div>
+            <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {% for icon, title, description in [
+                    ('zap', 'Instant Validation', 'Validate HL7 v2 XML files against Gazelle EVS standards in seconds, with detailed errors, warnings, and compliance status.'),
+                    ('wrench', 'AI-Assisted Auto-Correction', 'Fix common errors automatically and validate iteratively to help your message pass all checks.'),
+                    ('history', 'Validation History', 'Track validations, download corrected files, and export detailed PDF reports at any time.'),
+                    ('shield-lock', 'Secure and Private', 'Azure AD authentication and encrypted Azure SQL storage keep your files protected.'),
+                    ('file-text', 'PDF Reports', 'Export professional reports with detailed error analysis for documentation and compliance records.'),
+                    ('chart-no-axes-combined', 'Analytics Dashboard', 'Review pass and fail rates, error trends, and message type breakdowns at a glance.')
+                ] %}
+                <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-panel transition hover:-translate-y-1 hover:border-cyan-200">
+                    <span class="flex size-11 items-center justify-center rounded-xl bg-cyan-50 text-brand-600"><i data-lucide="{{ icon }}" class="size-5" aria-hidden="true"></i></span>
+                    <h3 class="mt-5 text-lg font-semibold">{{ title }}</h3>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">{{ description }}</p>
+                    {% if title == 'AI-Assisted Auto-Correction' %}<p class="mt-3 flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="info" class="size-3.5" aria-hidden="true"></i>Uses AI technology; see the transparency notice below.</p>{% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="border-y border-slate-200 bg-slate-50">
+            <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <div class="mx-auto flex size-11 items-center justify-center rounded-xl bg-cyan-100 text-brand-700"><i data-lucide="file-heart" class="size-5" aria-hidden="true"></i></div>
+                    <h2 class="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Supported HL7 v2 message types</h2>
+                    <p class="mt-3 text-slate-600">Comprehensive validation and auto-correction for Healthlink message profiles.</p>
+                    <p class="mt-2 text-sm text-slate-500">All validators are configured from <a href="https://testing.ehealthireland.ie" target="_blank" rel="noopener" class="font-medium text-brand-700 hover:underline">Gazelle EVS</a> Healthlink profiles.</p>
                 </div>
-            </div>
 
-            <!-- Feature 3 -->
-            <div class="col-md-4">
-                <div class="card feature-card shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <i class="bi bi-clock-history feature-icon"></i>
-                        <h4 class="fw-bold mb-3">Validation History</h4>
-                        <p class="text-muted">
-                            Track all your validations with complete history. Download corrected files
-                            and export detailed PDF reports anytime.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 4 -->
-            <div class="col-md-4">
-                <div class="card feature-card shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <i class="bi bi-shield-lock feature-icon"></i>
-                        <h4 class="fw-bold mb-3">Secure & Private</h4>
-                        <p class="text-muted">
-                            Azure AD authentication ensures only authorized users access your data.
-                            All files are encrypted and stored securely in Azure SQL Database.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 5 -->
-            <div class="col-md-4">
-                <div class="card feature-card shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <i class="bi bi-file-earmark-pdf feature-icon"></i>
-                        <h4 class="fw-bold mb-3">PDF Reports</h4>
-                        <p class="text-muted">
-                            Export professional validation reports to PDF with detailed error analysis,
-                            perfect for documentation and compliance records.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 6 -->
-            <div class="col-md-4">
-                <div class="card feature-card shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <i class="bi bi-graph-up feature-icon"></i>
-                        <h4 class="fw-bold mb-3">Analytics Dashboard</h4>
-                        <p class="text-muted">
-                            View your validation statistics with pass/fail rates, error trends,
-                            and message type breakdown at a glance.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Supported Message Types Section -->
-    <section class="container mb-5">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold mb-3">
-                    <i class="bi bi-file-earmark-medical"></i> Supported HL7 v2 Message Types
-                </h2>
-                <p class="lead text-muted">
-                    Comprehensive validation and auto-correction for Healthlink message profiles
-                </p>
-                <p class="text-muted">
-                    <small>
-                        <i class="bi bi-link-45deg"></i>
-                        All validators configured from <a href="https://testing.ehealthireland.ie" target="_blank"
-                            class="text-decoration-none">Gazelle EVS</a> Healthlink profiles
-                    </small>
-                </p>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            <!-- Patient Administration -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-primary">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="bi bi-person-badge"></i> Patient Admin</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>ADT^A01</strong><br>
-                                <small class="text-muted">Patient Admission (HL-1)</small>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>ADT^A03</strong><br>
-                                <small class="text-muted">Patient Discharge (HL-5)</small>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>ADT^A04</strong><br>
-                                <small class="text-muted">Patient Registration</small>
-                            </li>
-                            <li class="mb-0">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>ADT^A08</strong><br>
-                                <small class="text-muted">Patient Update</small>
-                            </li>
+                {% set groups = [
+                    ('user-round', 'Patient Admin', [('ADT^A01','Patient Admission (HL-1)'),('ADT^A03','Patient Discharge (HL-5)'),('ADT^A04','Patient Registration'),('ADT^A08','Patient Update')]),
+                    ('flask-conical', 'Laboratory', [('ORU^R01','Lab Results (HL-12)'),('ORU^R03','Unsolicited Observation'),('OML^O21','Lab Order (HL-13)'),('ORL^O22','Order Response (HL-11)')]),
+                    ('hospital', 'Clinical', [('REF^I12','Discharge Summary (HL-3)'),('RRI^R12','Radiology Results (HL-9)'),('VXU^V04','Vaccination (HL-16)'),('SIU^S12','Appointment (HL-8)')]),
+                    ('settings', 'System', [('ACK^GENERIC','General Acknowledgement (HL-2)')])
+                ] %}
+                <div class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                    {% for icon, title, messages in groups %}
+                    <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-panel">
+                        <header class="flex items-center gap-2 border-b border-slate-200 bg-slate-900 px-5 py-4 font-semibold text-white"><i data-lucide="{{ icon }}" class="size-4 text-cyan-300" aria-hidden="true"></i>{{ title }}</header>
+                        <ul class="space-y-4 p-5">
+                            {% for code, description in messages %}
+                            <li class="flex items-start gap-2.5"><i data-lucide="circle-check" class="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden="true"></i><span><strong class="block text-sm text-slate-800">{{ code }}</strong><small class="text-slate-500">{{ description }}</small></span></li>
+                            {% endfor %}
                         </ul>
-                    </div>
+                        {% if title == 'System' %}<div class="mx-5 mb-5 rounded-lg bg-cyan-50 p-3 text-xs leading-5 text-cyan-900"><strong>Need another message type?</strong><br>Register additional validators in your <a href="https://testing.ehealthireland.ie" target="_blank" rel="noopener" class="underline">Gazelle EVS account</a>.</div>{% endif %}
+                    </article>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-8 rounded-2xl border border-cyan-200 bg-cyan-50 p-6 sm:p-8">
+                    <h3 class="flex items-center gap-2 text-lg font-semibold text-cyan-950"><i data-lucide="wrench" class="size-5 text-brand-600" aria-hidden="true"></i>Auto-correction capabilities</h3>
+                    <p class="mt-2 text-sm text-cyan-900">For all supported message types, the auto-corrector can fix:</p>
+                    <ul class="mt-5 grid gap-x-8 gap-y-3 text-sm text-slate-700 sm:grid-cols-2 lg:grid-cols-4">
+                        {% for item in ['UTF-8 BOM removal','XML declaration errors','Invalid HL7 table codes','Missing required fields','Message type validation','Segment ordering','Field length violations','Date format standardization'] %}
+                        <li class="flex items-center gap-2"><i data-lucide="check" class="size-4 shrink-0 text-brand-600" aria-hidden="true"></i>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
+        </section>
 
-            <!-- Laboratory Messages -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-success">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="bi bi-clipboard2-pulse"></i> Laboratory</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>ORU^R01</strong><br>
-                                <small class="text-muted">Lab Results (HL-12)</small>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>ORU^R03</strong><br>
-                                <small class="text-muted">Unsolicited Observation</small>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>OML^O21</strong><br>
-                                <small class="text-muted">Lab Order (HL-13)</small>
-                            </li>
-                            <li class="mb-0">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>ORL^O22</strong><br>
-                                <small class="text-muted">Order Response (HL-11)</small>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+        <section class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <div class="text-center"><h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">How it works</h2><p class="mt-3 text-slate-600">Simple, fast, and effective.</p></div>
+            <ol class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                {% for title, text in [('Sign In','Authenticate with your Microsoft account'),('Upload','Upload your HL7 v2 XML file'),('Validate','Get instant results with detailed reports'),('Download','Download corrected files or PDF reports')] %}
+                <li class="text-center"><span class="mx-auto flex size-12 items-center justify-center rounded-full bg-slate-900 text-lg font-semibold text-cyan-300">{{ loop.index }}</span><h3 class="mt-4 font-semibold">{{ title }}</h3><p class="mt-1 text-sm text-slate-500">{{ text }}</p></li>
+                {% endfor %}
+            </ol>
+        </section>
+
+        <section class="bg-brand-700">
+            <div class="mx-auto max-w-4xl px-4 py-16 text-center text-white sm:px-6">
+                <h2 class="text-3xl font-semibold tracking-tight">Ready to get started?</h2>
+                <p class="mt-3 text-cyan-100">Sign in with your Microsoft account to start validating HL7 v2 messages.</p>
+                <a href="{{ url_for('login') }}" class="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-brand-700 shadow-lg transition hover:bg-cyan-50"><i data-lucide="panels-top-left" class="size-5" aria-hidden="true"></i>Sign in with Microsoft</a>
             </div>
+        </section>
 
-            <!-- Clinical Messages -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-info">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="bi bi-hospital"></i> Clinical</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>REF^I12</strong><br>
-                                <small class="text-muted">Discharge Summary (HL-3)</small>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>RRI^R12</strong><br>
-                                <small class="text-muted">Radiology Results (HL-9)</small>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>VXU^V04</strong><br>
-                                <small class="text-muted">Vaccination (HL-16)</small>
-                            </li>
-                            <li class="mb-0">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>SIU^S12</strong><br>
-                                <small class="text-muted">Appointment (HL-8)</small>
-                            </li>
-                        </ul>
-                    </div>
+        <section class="mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8">
+            <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-panel">
+                <header class="flex items-center gap-2 bg-slate-900 px-6 py-4 font-semibold text-white"><i data-lucide="info" class="size-5 text-cyan-300" aria-hidden="true"></i>AI Transparency Notice (EU AI Act Compliance)</header>
+                <div class="space-y-6 p-6 text-sm leading-6 text-slate-600 sm:p-8">
+                    <div><h3 class="font-semibold text-slate-900">AI-Assisted Features</h3><p class="mt-1">This application uses AI-powered auto-correction technology to assist with HL7 v2 message validation. Rule-based algorithms and pattern matching identify and suggest corrections for common validation errors.</p></div>
+                    <div><h3 class="font-semibold text-slate-900">How Auto-Correction Works</h3><ul class="mt-2 grid gap-2 sm:grid-cols-2"><li><strong>Detection:</strong> Gazelle EVS validation errors are analyzed.</li><li><strong>Analysis:</strong> Rules identify correctable HL7 v2.4 issues.</li><li><strong>Correction:</strong> Suggested fixes are applied to message content.</li><li><strong>Validation:</strong> Messages are re-validated until complete or no more corrections are possible.</li></ul></div>
+                    <div><h3 class="font-semibold text-slate-900">Human Oversight and Control</h3><p class="mt-1"><strong>You maintain full control:</strong> corrections are performed at your request. Review reports, download corrected files, and verify every change before submission.</p></div>
+                    <div class="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900"><i data-lucide="triangle-alert" class="mt-0.5 size-5 shrink-0" aria-hidden="true"></i><p><strong>Important:</strong> Auto-correction may not resolve every issue. Always review corrected files and validation reports before submitting to production systems. This tool assists, but does not replace, human HL7 expertise.</p></div>
+                    <div><h3 class="font-semibold text-slate-900">Data Privacy and Security</h3><ul class="mt-2 list-disc space-y-1 pl-5"><li>Stored securely in Microsoft Azure SQL Database with encryption</li><li>Accessible only to you via Azure AD authentication</li><li>Not used for training AI models or shared with third parties</li><li>Retained in your validation history for your reference</li></ul></div>
+                    <div><h3 class="font-semibold text-slate-900">Contact and Support</h3><ul class="mt-2 list-disc space-y-1 pl-5"><li><strong>Technical Support:</strong> Contact your system administrator</li><li><strong>Data Protection:</strong> See your organization's data protection officer</li><li><strong>Feedback:</strong> Use the in-app feedback mechanisms after signing in</li></ul></div>
+                    <p class="border-t border-slate-200 pt-5 text-xs text-slate-500"><strong>EU AI Act Classification:</strong> This system is classified as "Limited Risk" AI under Regulation (EU) 2024/1689. We are committed to transparency and ensuring users are informed when interacting with AI-assisted features.</p>
                 </div>
-            </div>
+            </article>
+        </section>
+    </main>
 
-            <!-- System Messages -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-secondary">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="mb-0"><i class="bi bi-gear"></i> System</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <strong>ACK^GENERIC</strong><br>
-                                <small class="text-muted">General Acknowledgement (HL-2)</small>
-                            </li>
-                        </ul>
-                        <div class="alert alert-light mt-3 mb-0">
-                            <small>
-                                <i class="bi bi-info-circle text-primary"></i>
-                                <strong>Need another message type?</strong><br>
-                                Register additional validators in your <a href="https://testing.ehealthireland.ie"
-                                    target="_blank">Gazelle EVS account</a>
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Auto-Correction Capabilities -->
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="card bg-light">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="bi bi-wrench-adjustable text-primary"></i> Auto-Correction Capabilities
-                        </h5>
-                        <p class="card-text">
-                            For all supported message types, the auto-corrector can fix:
-                        </p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <ul>
-                                    <li>UTF-8 BOM removal</li>
-                                    <li>XML declaration errors</li>
-                                    <li>Invalid HL7 table codes</li>
-                                    <li>Missing required fields</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <ul>
-                                    <li>Message type validation</li>
-                                    <li>Segment ordering</li>
-                                    <li>Field length violations</li>
-                                    <li>Date format standardization</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works Section -->
-    <section class="stats-section">
-        <div class="container">
-            <div class="row text-center mb-5">
-                <div class="col-12">
-                    <h2 class="display-5 fw-bold mb-3">How It Works</h2>
-                    <p class="lead text-muted">Simple, fast, and effective</p>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-3 text-center mb-4">
-                    <div class="display-1 text-primary fw-bold mb-3">1</div>
-                    <h5 class="fw-bold">Sign In</h5>
-                    <p class="text-muted">Authenticate with your Microsoft account</p>
-                </div>
-                <div class="col-md-3 text-center mb-4">
-                    <div class="display-1 text-primary fw-bold mb-3">2</div>
-                    <h5 class="fw-bold">Upload</h5>
-                    <p class="text-muted">Upload your HL7 v2 XML file</p>
-                </div>
-                <div class="col-md-3 text-center mb-4">
-                    <div class="display-1 text-primary fw-bold mb-3">3</div>
-                    <h5 class="fw-bold">Validate</h5>
-                    <p class="text-muted">Get instant validation results with detailed reports</p>
-                </div>
-                <div class="col-md-3 text-center mb-4">
-                    <div class="display-1 text-primary fw-bold mb-3">4</div>
-                    <h5 class="fw-bold">Download</h5>
-                    <p class="text-muted">Download corrected files or PDF reports</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Call to Action -->
-    <section class="container text-center mb-5 pb-5">
-        <div class="row">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold mb-4">Ready to Get Started?</h2>
-                <p class="lead text-muted mb-4">
-                    Sign in with your Microsoft account to start validating HL7 v2 messages
-                </p>
-                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg cta-button">
-                    <i class="bi bi-microsoft"></i> Sign In with Microsoft
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- EU AI Act Compliance Notice -->
-    <section class="container my-5">
-        <div class="card border-primary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-info-circle"></i> AI Transparency Notice (EU AI Act Compliance)
-                </h5>
-            </div>
-            <div class="card-body">
-                <h6 class="fw-bold">AI-Assisted Features</h6>
-                <p>
-                    This application uses AI-powered auto-correction technology to assist with HL7 v2 message
-                    validation.
-                    The auto-correction feature employs rule-based algorithms and pattern matching to identify and
-                    suggest
-                    corrections for common validation errors in HL7 v2 messages.
-                </p>
-
-                <h6 class="fw-bold mt-3">How Auto-Correction Works</h6>
-                <ul>
-                    <li><strong>Detection:</strong> The system analyzes validation errors reported by Gazelle EVS API
-                    </li>
-                    <li><strong>Analysis:</strong> Automated rules identify correctable issues based on HL7 v2.4
-                        standards</li>
-                    <li><strong>Correction:</strong> Suggested fixes are applied to message segments, fields, and
-                        components</li>
-                    <li><strong>Validation:</strong> Corrected messages are re-validated iteratively until they pass or
-                        no more corrections are possible</li>
-                </ul>
-
-                <h6 class="fw-bold mt-3">Human Oversight & Control</h6>
-                <p>
-                    <strong>You maintain full control:</strong> All auto-corrections are performed at your request.
-                    You can review validation reports, download corrected files, and verify all changes before
-                    submission.
-                    The system provides detailed reports showing what corrections were applied.
-                </p>
-
-                <h6 class="fw-bold mt-3">Limitations & Recommendations</h6>
-                <div class="alert alert-warning mb-3">
-                    <strong>⚠️ Important:</strong> While our auto-correction feature can fix many common errors, it may
-                    not
-                    resolve all validation issues. Always review corrected files and validation reports before
-                    submitting
-                    to production systems. This tool is designed to assist, not replace, human expertise in HL7 message
-                    development.
-                </div>
-
-                <h6 class="fw-bold mt-3">Data Privacy & Security</h6>
-                <p>
-                    Your uploaded files and validation results are:
-                </p>
-                <ul>
-                    <li>Stored securely in Microsoft Azure SQL Database with encryption</li>
-                    <li>Accessible only to you via Azure AD authentication</li>
-                    <li>Not used for training AI models or shared with third parties</li>
-                    <li>Retained in your validation history for your reference</li>
-                </ul>
-
-                <h6 class="fw-bold mt-3">Contact & Support</h6>
-                <p>
-                    If you have questions about how this system works, wish to report issues, or need assistance:
-                </p>
-                <ul>
-                    <li><strong>Technical Support:</strong> Contact your system administrator</li>
-                    <li><strong>Data Protection:</strong> See your organization's data protection officer</li>
-                    <li><strong>Feedback:</strong> Use the in-app feedback mechanisms after signing in</li>
-                </ul>
-
-                <p class="text-muted mb-0 mt-3">
-                    <small>
-                        <strong>EU AI Act Classification:</strong> This system is classified as "Limited Risk" AI under
-                        Regulation (EU) 2024/1689 (EU Artificial Intelligence Act). We are committed to transparency
-                        and ensuring users are informed when interacting with AI-assisted features.
-                    </small>
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5><i class="bi bi-shield-check"></i> HL7 v2 Message Validator</h5>
-                    <p class="text-muted mb-0">Professional HL7 v2 validation with AI-assisted auto-correction</p>
-                    <p class="text-muted mb-0"><small>Compliant with EU AI Act (Regulation 2024/1689)</small></p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="text-muted mb-0">
-                        Powered by Gazelle EVS API
-                    </p>
-                    <p class="text-muted mb-0">
-                        <small>&copy; 2026 All rights reserved</small>
-                    </p>
-                </div>
-            </div>
+    <footer class="bg-slate-950 text-slate-400">
+        <div class="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 sm:px-6 md:flex-row md:items-end md:justify-between lg:px-8">
+            <div><h2 class="flex items-center gap-2 font-semibold text-white"><i data-lucide="shield-check" class="size-5 text-cyan-300" aria-hidden="true"></i>HL7 v2 Message Validator</h2><p class="mt-2 text-sm">Professional HL7 v2 validation with AI-assisted auto-correction</p><p class="mt-1 text-xs">Compliant with EU AI Act (Regulation 2024/1689)</p></div>
+            <div class="text-sm md:text-right"><p>Powered by Gazelle EVS API</p><p class="mt-1 text-xs">&copy; 2026 All rights reserved</p></div>
         </div>
     </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
