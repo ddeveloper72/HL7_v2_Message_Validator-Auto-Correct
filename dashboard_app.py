@@ -14,6 +14,7 @@ import shutil
 from werkzeug.utils import secure_filename
 import subprocess
 import threading
+import tempfile
 import requests
 import pyodbc
 from xml.etree import ElementTree as ET
@@ -230,10 +231,11 @@ ALLOWED_EXTENSIONS = {'txt', 'xml'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
-# Store processing results in memory + temp file (Heroku-compatible)
-# Results are stored in /tmp so they persist for the dyno lifetime
+# Store processing results in memory + a platform-appropriate temp file.
+# tempfile.gettempdir() resolves to /tmp on Heroku/Linux and to the user's
+# temporary directory on Windows.
 processing_results = {}
-RESULTS_TEMP_FILE = '/tmp/processing_results.json'
+RESULTS_TEMP_FILE = os.path.join(tempfile.gettempdir(), 'processing_results.json')
 
 def load_processing_results():
     """Load processing results from temp file"""
@@ -252,6 +254,7 @@ def load_processing_results():
 def save_processing_results():
     """Save processing results to temp file"""
     try:
+        os.makedirs(os.path.dirname(RESULTS_TEMP_FILE), exist_ok=True)
         with open(RESULTS_TEMP_FILE, 'w') as f:
             json.dump(processing_results, f)
     except Exception as e:
