@@ -15,6 +15,7 @@ from werkzeug.utils import secure_filename
 import subprocess
 import threading
 import requests
+import pyodbc
 from xml.etree import ElementTree as ET
 from auto_correct import auto_correct_and_validate
 
@@ -64,11 +65,12 @@ load_dotenv()
 # =============================================================================
 APP_MODE = os.getenv('APP_MODE', 'local').lower()
 USE_AZURE_AD = APP_MODE in ['production', 'heroku']
-USE_DATABASE = APP_MODE in ['production', 'heroku']
+DATABASE_REQUIRED = APP_MODE in ['production', 'heroku']
+USE_DATABASE = False
+db = None
 
 print(f"🔧 Application Mode: {APP_MODE.upper()}")
 print(f"   - Azure AD Auth: {'ENABLED' if USE_AZURE_AD else 'DISABLED (Local Dev)'}")
-print(f"   - Database: {'Azure SQL' if USE_DATABASE else 'In-Memory Only'}")
 
 app = Flask(__name__)
 
@@ -147,11 +149,50 @@ if USE_AZURE_AD:
     AZURE_AD_AUTHORITY = f'https://login.microsoftonline.com/{AZURE_AD_TENANT_ID}'
     AZURE_AD_SCOPE = ['User.Read']
     
-    # Initialize database manager
-    db = DatabaseManager()
-    print("✓ Azure AD and Database initialized")
+    print("✓ Azure AD initialized")
 else:
-    print("ℹ Running in LOCAL mode - Azure AD and Database disabled")
+    print("ℹ Running in LOCAL mode - Azure AD disabled")
+
+if DATABASE_REQUIRED:
+    db = DatabaseManager()
+    USE_DATABASE = True
+    print("Production database initialized")
+else:
+    local_db = DatabaseManager()
+    if local_db.is_available(timeout=2):
+        db = local_db
+        USE_DATABASE = True
+        print(f"Local SQL database available: {db.server}/{db.database}")
+    else:
+        print("Running in LOCAL mode without SQL database - using temp/session storage")
+
+print(f"   - Database: {'SQL Database' if USE_DATABASE else 'In-Memory Only'}")
+
+def ensure_local_session():
+    """Create a local developer session, using SQL user storage when available."""
+    global USE_DATABASE
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
+
+    session['user_email'] = 'local.dev@localhost'
+    session['user_name'] = 'Local Developer'
+
+    if USE_DATABASE and db:
+        try:
+            session['user_id'] = db.create_or_update_user(
+                session['user_email'],
+                'local-dev',
+                session['user_name']
+            )
+            return
+        except pyodbc.Error as e:
+            print(f"Local SQL database is not usable for sessions; falling back to temp/session storage: {e}")
+            USE_DATABASE = False
+        except Exception as e:
+            print(f"Local session database bootstrap failed; falling back to temp/session storage: {e}")
+            USE_DATABASE = False
+
+    session['user_id'] = 'local-dev-id'
 
 # Initialize MSAL Confidential Client (only if Azure AD enabled)
 def get_msal_app():
@@ -176,10 +217,7 @@ def login_required(f):
         else:
             # Local dev: auto-create session if missing
             if 'user_id' not in session:
-                session['session_id'] = str(uuid.uuid4())
-                session['user_email'] = 'local.dev@localhost'
-                session['user_name'] = 'Local Developer'
-                session['user_id'] = 'local-dev-id'
+                ensure_local_session()
         return f(*args, **kwargs)
     return decorated_function
 
@@ -508,11 +546,8 @@ def login():
     """Initiate Azure AD login flow"""
     # In local mode, auto-login and redirect to dashboard
     if not USE_AZURE_AD:
-        if 'session_id' not in session:
-            session['session_id'] = str(uuid.uuid4())
-            session['user_email'] = 'local.dev@localhost'
-            session['user_name'] = 'Local Developer'
-            session['user_id'] = 'local-dev-id'
+        if 'user_id' not in session:
+            ensure_local_session()
         return redirect(url_for('dashboard'))
     
     # Check if Azure AD is configured
@@ -624,6 +659,37 @@ def auth_callback():
                 retry_url=url_for('login'),
                 retry_text="Retry Sign In"
             ), 503
+
+    except pyodbc.Error as e:
+        # Other ODBC/database errors, such as missing tables, missing columns,
+        # invalid credentials, or an unavailable local ODBC driver.
+        error_msg = str(e)
+        print(f"   ❌ Database error during login: {error_msg}")
+
+        if 'IM002' in error_msg or 'data source name not found' in error_msg.lower():
+            error_title = "Database Driver Not Found"
+            error_message = "The configured SQL Server ODBC driver is not available on this machine."
+            details = "For local Windows, set DB_DRIVER=ODBC Driver 18 for SQL Server in .env."
+        elif 'invalid object name' in error_msg.lower() or 'invalid column name' in error_msg.lower():
+            error_title = "Database Schema Error"
+            error_message = "The Azure SQL database schema does not match what the app expects."
+            details = error_msg
+        elif 'login failed' in error_msg.lower():
+            error_title = "Database Login Failed"
+            error_message = "Azure SQL rejected the configured username or password."
+            details = "Check AZURE_SQL_USERNAME and AZURE_SQL_PASSWORD in .env."
+        else:
+            error_title = "Database Error"
+            error_message = "Unable to complete sign-in because the database returned an error."
+            details = error_msg
+
+        return render_template('error.html',
+            error_title=error_title,
+            error_message=error_message,
+            details=details,
+            retry_url=url_for('login'),
+            retry_text="Retry Sign In"
+        ), 503
             
     except Exception as e:
         # Unexpected error during user creation
@@ -1432,6 +1498,9 @@ def download_corrected(report_id):
     """Download corrected file content from database or temp file"""
     # Check if this is a database report
     if report_id.startswith('db_'):
+        if not USE_DATABASE or not db:
+            return "Database is not available", 404
+
         validation_id = int(report_id.replace('db_', ''))
         
         # Get report from database
@@ -1488,9 +1557,9 @@ def retry_auto_correct(report_id):
         if 'api_key' not in session:
             print("ERROR: API key not found in session")
             # Try to retrieve from database if user is logged in
-            if 'user_id' in session:
+            if USE_DATABASE and db and 'user_id' in session:
                 try:
-                    api_key = db.get_encrypted_api_key(session['user_id'])
+                    api_key = db.get_user_api_key(session['user_id'])
                     if api_key:
                         session['api_key'] = api_key
                         print("DEBUG: Retrieved API key from database")
@@ -1519,6 +1588,9 @@ def retry_auto_correct(report_id):
         file_info = {}  # Initialize file_info dict for both paths
         
         if is_db_report:
+            if not USE_DATABASE or not db:
+                return jsonify({'success': False, 'message': 'Database is not available'}), 404
+
             # Handle database report
             validation_id = int(report_id.replace('db_', ''))
             print(f"DEBUG: Database report - validation_id={validation_id}")
@@ -1570,7 +1642,7 @@ def retry_auto_correct(report_id):
             print(f"DEBUG: Temp file report - filepath={original_filepath}")
             
             # Try to read from database first (persistent), fall back to temp file
-            if validation_id:
+            if USE_DATABASE and db and validation_id:
                 try:
                     file_data = db.get_validation_file_content(validation_id)
                     if file_data and file_data['content']:
@@ -1822,7 +1894,7 @@ def retry_auto_correct(report_id):
             save_processing_results()
 
         # Save to database if user is authenticated (ALWAYS save for both report types)
-        if 'user_id' in session:
+        if USE_DATABASE and db and 'user_id' in session:
             try:
                 # Read the corrected file content
                 with open(final_filepath, 'rb') as f:
@@ -2276,7 +2348,7 @@ def validate_file(file_id):
         save_processing_results()
         
         # Save to database if user is authenticated
-        if 'user_id' in session:
+        if USE_DATABASE and db and 'user_id' in session:
             try:
                 # Read file content to store in database
                 with open(filepath, 'rb') as f:

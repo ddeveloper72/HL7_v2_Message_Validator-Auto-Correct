@@ -8,6 +8,8 @@ CREATE TABLE Users (
     AzureADObjectID NVARCHAR(255) UNIQUE,
     DisplayName NVARCHAR(255),
     EncryptedAPIKey NVARCHAR(MAX),  -- Encrypted Gazelle API key
+    APIKeyValidFrom DATE,
+    APIKeyValidTo DATE,
     CreatedDate DATETIME2 DEFAULT GETUTCDATE(),
     LastLoginDate DATETIME2,
     IsActive BIT DEFAULT 1,
@@ -27,6 +29,7 @@ CREATE TABLE ValidationHistory (
     WarningCount INT DEFAULT 0,
     CorrectionsApplied INT DEFAULT 0,
     OriginalFileContent VARBINARY(MAX),  -- Original file for auto-correction
+    ReportDetails NVARCHAR(MAX),  -- Rendered validation report details
     ValidationTimestamp DATETIME2 DEFAULT GETUTCDATE(),
     FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
     INDEX IX_ValidationHistory_User (UserID),

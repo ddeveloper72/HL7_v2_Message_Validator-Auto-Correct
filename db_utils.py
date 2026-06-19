@@ -14,10 +14,20 @@ class DatabaseManager:
     """Manages Azure SQL Database connections and operations"""
     
     def __init__(self):
-        self.server = os.getenv('AZURE_SQL_SERVER')
-        self.database = os.getenv('AZURE_SQL_DATABASE')
-        self.username = os.getenv('AZURE_SQL_USERNAME')
-        self.password = os.getenv('AZURE_SQL_PASSWORD')
+        self.app_mode = os.getenv('APP_MODE', 'local').lower()
+        self.environment = os.getenv('ENVIRONMENT', 'local').lower()
+        self.is_local_mode = self.app_mode in ('local', 'development', 'dev')
+
+        if self.is_local_mode:
+            self.server = os.getenv('LOCAL_SQL_SERVER', r'(localdb)\MSSQLLocalDB')
+            self.database = os.getenv('LOCAL_SQL_DATABASE', 'gazelle-healthlink')
+            self.username = os.getenv('LOCAL_SQL_USERNAME')
+            self.password = os.getenv('LOCAL_SQL_PASSWORD')
+        else:
+            self.server = os.getenv('AZURE_SQL_SERVER')
+            self.database = os.getenv('AZURE_SQL_DATABASE')
+            self.username = os.getenv('AZURE_SQL_USERNAME')
+            self.password = os.getenv('AZURE_SQL_PASSWORD')
         
         # Determine driver and path based on environment
         self.driver = self._get_driver()
@@ -34,21 +44,24 @@ class DatabaseManager:
     
     def _get_driver(self):
         """Determine ODBC driver based on environment"""
+        if self.is_local_mode:
+            return os.getenv('LOCAL_DB_DRIVER', 'ODBC Driver 18 for SQL Server')
+
+        if os.getenv('DYNO') or self.environment == 'docker':
+            return 'FreeTDS'
+
         # Check for explicit driver configuration
         explicit_driver = os.getenv('DB_DRIVER')
         if explicit_driver:
+            if explicit_driver == 'FreeTDS' and os.name == 'nt':
+                return 'ODBC Driver 18 for SQL Server'
             return explicit_driver
         
-        # Auto-detect environment
-        if os.getenv('ENVIRONMENT') == 'docker':
-            return 'FreeTDS'
-        elif os.getenv('DYNO'):  # Heroku
-            return 'FreeTDS'
-        else:  # Local development (Windows/Mac)
-            return 'ODBC Driver 18 for SQL Server'
+        return 'ODBC Driver 18 for SQL Server'
     
-    def get_connection(self):
+    def get_connection(self, timeout=None):
         """Create and return a database connection"""
+        timeout = timeout or 60
         if self.driver == 'FreeTDS':
             # Determine FreeTDS driver path based on environment
             if os.getenv('ENVIRONMENT') == 'docker':
@@ -70,23 +83,40 @@ class DatabaseManager:
                 f'TDS_Version=8.0;'
                 f'Encrypt=yes;'
                 f'TrustServerCertificate=no;'
-                f'Connection Timeout=60;'
-                f'Login Timeout=60;'
+                f'Connection Timeout={timeout};'
+                f'Login Timeout={timeout};'
             )
         else:
             # Microsoft ODBC Driver for local development
+            trust_server_certificate = os.getenv(
+                'LOCAL_SQL_TRUST_SERVER_CERTIFICATE' if self.is_local_mode else 'SQL_TRUST_SERVER_CERTIFICATE',
+                'yes' if self.is_local_mode else 'no'
+            )
+
             connection_string = (
                 f'DRIVER={{{self.driver}}};'
                 f'SERVER={self.server};'
                 f'DATABASE={self.database};'
-                f'UID={self.username};'
-                f'PWD={self.password};'
                 f'Encrypt=yes;'
-                f'TrustServerCertificate=no;'
-                f'Connection Timeout=60;'
-                f'Login Timeout=60;'
+                f'TrustServerCertificate={trust_server_certificate};'
+                f'Connection Timeout={timeout};'
+                f'Login Timeout={timeout};'
             )
+            if self.username and self.password:
+                connection_string += f'UID={self.username};PWD={self.password};'
+            else:
+                connection_string += 'Trusted_Connection=yes;'
         return pyodbc.connect(connection_string)
+
+    def is_available(self, timeout=3):
+        """Return True if the configured database can be reached quickly."""
+        try:
+            conn = self.get_connection(timeout=timeout)
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Database unavailable: {e}")
+            return False
     
     def encrypt_api_key(self, api_key):
         """Encrypt Gazelle API key"""
