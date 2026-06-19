@@ -1,38 +1,38 @@
-# 🎉 Azure AD + SQL Database Integration - COMPLETE!
+#  Azure AD + SQL Database Integration - COMPLETE!
 
-## ✅ What We Built
+##  What We Built
 
 Your Gazelle HL7 Validator now has **enterprise-grade user authentication** and **database-backed validation history**!
 
-### 🔐 Azure AD Authentication
+###  Azure AD Authentication
 - **Single Sign-On**: Users login with Microsoft accounts
 - **No Password Management**: Azure handles all authentication
 - **Secure Sessions**: 7-day persistent sessions
 - **Profile Management**: Dedicated user profile page
 
-### 💾 SQL Database Integration
+###  SQL Database Integration
 - **User Profiles**: Store email, display name, Azure AD ID
 - **Encrypted API Keys**: Gazelle API keys encrypted with Fernet cipher
 - **Validation History**: Track all validations with metadata
 - **Statistics**: Real-time user statistics (passed/failed/undefined counts)
 
-### 📊 What Gets Saved to Database
+###  What Gets Saved to Database
 
 **Minimal Storage Approach** (No file content, just metadata):
-- ✅ Filename
-- ✅ Message type (SIU_S12, ORU_R01, etc.)
-- ✅ Status (PASSED, FAILED, UNDEFINED)
-- ✅ Gazelle report URL (persistent link)
-- ✅ Error count, warning count
-- ✅ Corrections applied count
-- ✅ Timestamp
+-  Filename
+-  Message type (SIU_S12, ORU_R01, etc.)
+-  Status (PASSED, FAILED, UNDEFINED)
+-  Gazelle report URL (persistent link)
+-  Error count, warning count
+-  Corrections applied count
+-  Timestamp
 
 **What's NOT Saved** (Keeps storage minimal):
-- ❌ Full HTML/XML reports
-- ❌ Uploaded file contents
-- ❌ Detailed error lists (Gazelle URL has this)
+-  Full HTML/XML reports
+-  Uploaded file contents
+-  Detailed error lists (Gazelle URL has this)
 
-## 📁 New Files Created
+##  New Files Created
 
 1. **database_schema.sql** - Database schema with 3 tables + 1 view
 2. **db_utils.py** - Database manager class with encryption
@@ -41,7 +41,7 @@ Your Gazelle HL7 Validator now has **enterprise-grade user authentication** and 
 5. **AZURE_SETUP_GUIDE.md** - Complete setup instructions
 6. **test_db_connection.py** - Database connection test
 
-## 🔧 Files Modified
+##  Files Modified
 
 1. **requirements.txt** - Added: msal, Flask-Session, pyodbc, cryptography
 2. **dashboard_app.py** - Added:
@@ -58,7 +58,7 @@ Your Gazelle HL7 Validator now has **enterprise-grade user authentication** and 
    - Profile link
    - Logout button
 
-## 🎯 User Workflow
+##  User Workflow
 
 ### First Time User:
 1. Visit app → Redirected to login page
@@ -75,7 +75,7 @@ Your Gazelle HL7 Validator now has **enterprise-grade user authentication** and 
 3. Ready to validate immediately
 4. See validation history on dashboard
 
-## 📊 Database Tables
+##  Database Tables
 
 ### Users Table
 | Column | Type | Purpose |
@@ -102,16 +102,16 @@ Your Gazelle HL7 Validator now has **enterprise-grade user authentication** and 
 | CorrectionsApplied | INT | Auto-corrections made |
 | ValidationTimestamp | DATETIME2 | When validated |
 
-## 🔒 Security Features
+##  Security Features
 
-✅ **Encrypted API Keys**: Using Fernet symmetric encryption
-✅ **Azure AD Authentication**: Industry-standard OAuth 2.0
-✅ **No Plaintext Secrets**: All sensitive data encrypted
-✅ **Audit Logging**: API key changes tracked in APIKeyAuditLog
-✅ **Session Security**: HttpOnly, Secure, SameSite cookies
-✅ **SQL Injection Protection**: Parameterized queries
+ **Encrypted API Keys**: Using Fernet symmetric encryption
+ **Azure AD Authentication**: Industry-standard OAuth 2.0
+ **No Plaintext Secrets**: All sensitive data encrypted
+ **Audit Logging**: API key changes tracked in APIKeyAuditLog
+ **Session Security**: HttpOnly, Secure, SameSite cookies
+ **SQL Injection Protection**: Parameterized queries
 
-## 🚀 Next Steps
+##  Next Steps
 
 ### 1. Initialize Database
 Run the SQL schema on your Azure SQL Database:
@@ -140,23 +140,23 @@ python dashboard_app.py
 - Update redirect URI to production URL
 - Deploy!
 
-## 📈 What This Enables
+##  What This Enables
 
 ### For Users:
-- ✅ No manual API key entry every session
-- ✅ See their complete validation history
-- ✅ Track progress (passed/failed stats)
-- ✅ One-click access to Gazelle reports
-- ✅ Secure multi-user environment
+-  No manual API key entry every session
+-  See their complete validation history
+-  Track progress (passed/failed stats)
+-  One-click access to Gazelle reports
+-  Secure multi-user environment
 
 ### For You (Admin):
-- ✅ Know who's using the system
-- ✅ Track usage patterns
-- ✅ No shared API key needed
-- ✅ Audit trail of all activity
-- ✅ Scalable to unlimited users
+-  Know who's using the system
+-  Track usage patterns
+-  No shared API key needed
+-  Audit trail of all activity
+-  Scalable to unlimited users
 
-## 💡 Pro Tips
+##  Pro Tips
 
 ### Development:
 ```bash
@@ -173,14 +173,14 @@ FLASK_DEBUG=1 python dashboard_app.py
 - Set up backup for SQL database
 - Use managed identity for database auth
 
-## 🎊 Summary
+##  Summary
 
 You now have a **production-ready, multi-user HL7 validation platform** with:
-- 🔐 Enterprise authentication (Azure AD)
-- 💾 Persistent user data (Azure SQL)
-- 🔒 Encrypted secrets (Fernet)
-- 📊 User analytics
-- 🚀 Ready for deployment
+-  Enterprise authentication (Azure AD)
+-  Persistent user data (Azure SQL)
+-  Encrypted secrets (Fernet)
+-  User analytics
+-  Ready for deployment
 
 Total implementation time: ~30 minutes
 Lines of code added: ~800

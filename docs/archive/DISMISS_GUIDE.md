@@ -1,13 +1,13 @@
 # How to Dismiss Reports - Quick Guide
 
-## ✅ Both Features Are Now Working!
+##  Both Features Are Now Working!
 
 ### Feature 1: Dismiss Individual Reports
 
 **Where to find it:**
 - Look at any validation report card in your dashboard
 - At the bottom of each card, you'll see action buttons
-- The **"Dismiss"** button has an ❌ icon
+- The **"Dismiss"** button has an  icon
 
 **How to use:**
 1. Click the "Dismiss" button on any report
@@ -15,9 +15,9 @@
 3. Report is deleted from your history
 
 **Works for:**
-- ✅ Database reports (db_XXX)
-- ✅ Temp session reports
-- ✅ Only YOUR reports (security protected)
+-  Database reports (db_XXX)
+-  Temp session reports
+-  Only YOUR reports (security protected)
 
 ---
 
@@ -26,21 +26,21 @@
 **Where to find it:**
 - Top right of the "Validation Reports" section
 - Next to the "Show All Sessions" button
-- Red button that says **"Clear All History"** with 🗑️ icon
+- Red button that says **"Clear All History"** with  icon
 
 **Important:** Only shows if you have reports!
 
 **How to use:**
 1. Click "Clear All History" button (top right)
-2. Read the warning (⚠️ permanent action!)
+2. Read the warning ( permanent action!)
 3. Click OK to confirm
 4. All your reports deleted instantly
 
 **What it deletes:**
-- ✅ ALL validation records from database
-- ✅ ALL temp session records
-- ✅ Resets statistics to zero
-- ⚠️ CANNOT be undone!
+-  ALL validation records from database
+-  ALL temp session records
+-  Resets statistics to zero
+-  CANNOT be undone!
 
 ---
 
@@ -58,7 +58,7 @@
 
 ### "Getting 404 or 403 errors"
 **Reason:** Security protection or report not found
-**Solution:** 
+**Solution:**
 - Make sure you own the report
 - Refresh the page to reload reports
 - Check you're logged in with correct account
@@ -144,4 +144,4 @@ If dismiss still doesn't work:
 4. Verify you're logged in
 5. Try refreshing the page
 
-The backend tests all pass ✅, so it's working correctly!
+The backend tests all pass , so it's working correctly!

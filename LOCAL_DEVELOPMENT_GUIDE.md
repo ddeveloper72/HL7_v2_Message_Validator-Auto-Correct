@@ -1,166 +1,155 @@
-# Local Development Guide
+# Local development guide
 
-## Application Modes
+This guide covers the primary Flask dashboard in `dashboard_app.py` on Windows. For a shorter introduction, start with the [project README](README.md).
 
-The application supports two modes controlled by the `APP_MODE` environment variable in `.env`:
+## Prerequisites
 
-### 🧪 Local Development Mode (Current)
+- Python 3.12
+- Git
+- A Gazelle EVS API key
+- Optional: Microsoft ODBC Driver 18 for SQL Server when testing Azure SQL locally
+
+The application calls Gazelle EVS during validation, so an internet connection and access to the configured service are required.
+
+## Create the environment
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+Copy-Item .env.docker.example .env
+```
+
+Generate a session secret:
+
+```powershell
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Set the minimum local configuration in `.env`:
+
 ```env
 APP_MODE=local
+SESSION_SECRET_KEY=replace_with_the_generated_value
+GAZELLE_BASE_URL=https://testing.ehealthireland.ie
+VERIFY_SSL=true
+MAX_AUTO_CORRECT_ITERATIONS=10
 ```
 
-**Features:**
-- ✅ No Azure AD authentication (auto-login as "Local Developer")
-- ✅ No database required (in-memory sessions only)
-- ✅ No HTTPS required
-- ✅ Fast startup, no external dependencies
-- ✅ Perfect for testing validation and auto-correction features
+Do not commit `.env`.
 
-**User Info:**
-- Email: `local.dev@localhost`
-- Name: `Local Developer`
-- Session: Auto-created on first access
+## Start the application
 
----
+```powershell
+.\.venv\Scripts\Activate.ps1
+python dashboard_app.py
+```
 
-### 🚀 Production Mode
+Open <http://127.0.0.1:5000>. Local mode creates a `Local Developer` session automatically. Configure the Gazelle API key and validity dates on the profile page before validating a message.
+
+The development server reloads when application files change. If configuration, limiter state, or imported module state appears stale, stop and restart the process.
+
+## Local storage behavior
+
+Azure SQL is optional in local mode:
+
+- If the configured database is reachable, the application can use it.
+- If SQL is unavailable, the application falls back to temporary processing metadata and filesystem sessions.
+- Uploaded and corrected files are written under `uploads/` and `processed/`.
+- Temporary result metadata uses the operating system's temporary directory.
+
+Fallback storage is suitable for development, not durable production history.
+
+## Useful checks
+
+Compile the main Python modules:
+
+```powershell
+.\.venv\Scripts\python.exe -m compileall dashboard_app.py validate_with_verification.py hl7_corrector.py
+```
+
+Check the health endpoint:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/health
+```
+
+Check rendered static assets in the browser developer tools:
+
+- Tailwind Browser and Lucide should load from `cdn.jsdelivr.net`.
+- `/static/styles.css` may return `304 Not Modified`; this means the browser cache is current.
+- The console should not contain Content Security Policy errors.
+
+Use a hard refresh with `Ctrl+F5` after frontend asset changes.
+
+## Representative manual workflow
+
+1. Open the upload page.
+2. Select synthetic or approved Healthlink test messages.
+3. Enable auto-correction if required.
+4. Confirm selected, uploaded, and processed counts reach the expected totals.
+5. Review each validation status and Gazelle report.
+6. Download and inspect any corrected message.
+7. Confirm the dashboard does not repeatedly poll or return HTTP 429.
+
+Do not use real patient data unless the environment and external service workflow have been formally approved for it.
+
+## Production-mode testing
+
+Production mode requires Microsoft Entra ID, Azure SQL, a stable session secret, and a Fernet encryption key.
+
 ```env
 APP_MODE=production
-```
-
-**Features:**
-- ✅ Full Azure AD authentication (Microsoft login)
-- ✅ Azure SQL Database integration
-- ✅ Encrypted API key storage in database
-- ✅ User validation history tracking
-- ✅ Rate limiting enabled
-- ✅ Security headers enforced
-
-**Required Environment Variables:**
-```env
-# Azure AD
-AZURE_AD_CLIENT_ID=your-client-id
-AZURE_AD_CLIENT_SECRET=your-client-secret
-AZURE_AD_TENANT_ID=your-tenant-id
+AZURE_AD_CLIENT_ID=replace_me
+AZURE_AD_CLIENT_SECRET=replace_me
+AZURE_AD_TENANT_ID=replace_me
 AZURE_AD_REDIRECT_URI=http://localhost:5000/auth/callback
-
-# Azure SQL Database
-AZURE_SQL_SERVER=your-server.database.windows.net
-AZURE_SQL_DATABASE=your-database
-AZURE_SQL_USERNAME=your-username
-AZURE_SQL_PASSWORD=your-password
+AZURE_SQL_SERVER=replace_me.database.windows.net
+AZURE_SQL_DATABASE=replace_me
+AZURE_SQL_USERNAME=replace_me
+AZURE_SQL_PASSWORD=replace_me
 DB_DRIVER=ODBC Driver 18 for SQL Server
-
-# Security
-ENCRYPTION_KEY=your-fernet-encryption-key
-SESSION_SECRET_KEY=your-session-secret
+ENCRYPTION_KEY=replace_with_a_fernet_key
+SESSION_SECRET_KEY=replace_with_a_stable_secret
 ```
 
----
-
-## Switching Modes
-
-### 1. Switch to Production Mode
-```powershell
-# Update .env file
-(Get-Content .env) -replace 'APP_MODE=local', 'APP_MODE=production' | Set-Content .env
-
-# Restart Flask
-python dashboard_app.py
-```
-
-### 2. Switch to Local Mode
-```powershell
-# Update .env file
-(Get-Content .env) -replace 'APP_MODE=production', 'APP_MODE=local' | Set-Content .env
-
-# Restart Flask
-python dashboard_app.py
-```
-
----
-
-## Running the Application
-
-### Start Flask Development Server
-```bash
-# Activate venv
-.venv\Scripts\activate.bat
-
-# Run app
-python dashboard_app.py
-```
-
-**Access:** http://127.0.0.1:5000
-
-### With Gunicorn (Production-like)
-```bash
-gunicorn dashboard_app:app --bind 0.0.0.0:5000 --timeout 120 --workers 2
-```
-
----
-
-## Testing Different Configurations
-
-### Test Local Mode Features
-1. File upload and validation
-2. Auto-correction
-3. PDF export (ReportLab)
-4. Session persistence (file-based)
-5. No authentication required
-
-### Test Production Mode Features
-1. Azure AD login flow
-2. Database connection
-3. API key encryption/storage
-4. User validation history
-5. Rate limiting
-6. Security headers
-
----
+The redirect URI must exactly match the URI registered in Microsoft Entra ID.
 
 ## Troubleshooting
 
-### Database Connection Issues (Production Mode)
+### PowerShell blocks virtual-environment activation
+
+Use the interpreter directly:
+
 ```powershell
-# Test database connectivity
-python -c "from db_utils import DatabaseManager; db = DatabaseManager(); conn = db.get_connection(); print('✓ Database connected!'); conn.close()"
+.\.venv\Scripts\python.exe dashboard_app.py
 ```
 
-### ODBC Driver Issues
-- Windows: Install [ODBC Driver 18 for SQL Server](https://go.microsoft.com/fwlink/?linkid=2249004)
-- Verify: Run `odbcad32.exe` → Check "Drivers" tab
+### ReportLab is unavailable
 
-### Azure AD Issues (Production Mode)
-- Verify redirect URI in Azure Portal matches `AZURE_AD_REDIRECT_URI`
-- Check client secret hasn't expired
-- Ensure app has `User.Read` permission
-
----
-
-## Current Configuration
-
-✅ **Mode:** LOCAL
-✅ **Database:** In-Memory Only
-✅ **Auth:** Auto-Login (No Azure AD)
-✅ **PDF:** ReportLab (Working)
-✅ **Dependencies:** All installed
-
-**Quick Check:**
-```bash
-python dashboard_app.py
-# Look for startup message:
-# 🔧 Application Mode: LOCAL
-#    - Azure AD Auth: DISABLED (Local Dev)
-#    - Database: In-Memory Only
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip show reportlab
 ```
 
----
+### Azure SQL cannot connect
 
-## Docker Deployment (Next Steps)
+- Confirm the ODBC driver is installed.
+- Confirm the server, database, username, and password.
+- Check Azure SQL firewall rules.
+- Use local fallback storage when database behavior is not under test.
 
-Both modes will work in Docker:
-- **Local Mode:** Lightweight testing container
-- **Production Mode:** Full Azure integration
+### Validation fails before reaching Gazelle
 
-See `DOCKER_READINESS_ANALYSIS.md` for details.
+- Confirm the API key is configured in the current user session.
+- Confirm the key has not expired.
+- Check `GAZELLE_BASE_URL` and `VERIFY_SSL`.
+- Review Flask CLI output for the validation subprocess result.
+
+## Related documentation
+
+- [Project README](README.md)
+- [Docker quick start](DOCKER_QUICK_START.md)
+- [Production configuration](DOCKER_CONFIGURATION.md)
+- [AI-use disclosure](docs/AI_USE.md)

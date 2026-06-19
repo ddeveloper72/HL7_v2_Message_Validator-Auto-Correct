@@ -1,11 +1,11 @@
-# ⚠️ IMPORTANT: Azure Configuration Required for Production Mode
+# IMPORTANT: Azure Configuration Required for Production Mode
 
 ## Understanding the Two Modes
 
 Your Docker deployment now supports **two distinct modes**:
 
-### 🟢 LOCAL MODE (Default - No Azure Required)
-**Status:** ✅ **WORKS OUT OF THE BOX**
+### LOCAL MODE (Default - No Azure Required)
+**Status:**  **WORKS OUT OF THE BOX**
 
 **What you get:**
 - Full HL7 validation with Gazelle EVS API
@@ -38,8 +38,8 @@ http://localhost:5000
 
 ---
 
-### 🔵 PRODUCTION MODE (Azure Integration Required)
-**Status:** ⚠️ **REQUIRES USER'S OWN AZURE SETUP**
+### PRODUCTION MODE (Azure Integration Required)
+**Status:**  **REQUIRES USER'S OWN AZURE SETUP**
 
 **Additional features:**
 - **Azure AD authentication** - "Sign in with Microsoft"
@@ -81,22 +81,22 @@ docker-compose restart
 
 ---
 
-## Why Can't You Provide Azure Credentials?
+## Why Can't You Provide Azure Credentials
 
 ### Security & Compliance
 1. **Each organization needs their own Azure AD tenant**
-   - You can't share Azure AD across organizations
-   - Users can only authenticate with their organization's email domain
-   - Example: Only @yourcompany.com users can sign into your tenant
+ - You can't share Azure AD across organizations
+ - Users can only authenticate with their organization's email domain
+ - Example: Only @yourcompany.com users can sign into your tenant
 
 2. **Database isolation**
-   - Each organization's validation data must be separate
-   - Compliance requirements (HIPAA, GDPR) require data isolation
-   - You can't share a database between different healthcare organizations
+ - Each organization's validation data must be separate
+ - Compliance requirements (HIPAA, GDPR) require data isolation
+ - You can't share a database between different healthcare organizations
 
 3. **Cost & Billing**
-   - Azure resources must be billed to the end user's subscription
-   - You can't provide free Azure services (would be your cost)
+ - Azure resources must be billed to the end user's subscription
+ - You can't provide free Azure services (would be your cost)
 
 ### What Users Get From Azure Setup
 
@@ -119,7 +119,7 @@ docker-compose restart
 ## Cost Breakdown for Production Mode
 
 ### Azure AD App Registration
-**Cost:** ✅ **FREE**
+**Cost:**  **FREE**
 - No charge for registering an app
 - Works with Azure AD Free tier
 - Takes 5 minutes to set up
@@ -147,13 +147,13 @@ docker-compose restart
 | Feature | Local Mode | Production Mode |
 |---------|------------|-----------------|
 | **Setup Time** | 5 minutes | 30 minutes |
-| **Azure Required** | ❌ No | ✅ Yes |
+| **Azure Required** | No | Yes |
 | **Monthly Cost** | $0 | ~$5+ |
-| **User Authentication** | ❌ None | ✅ Azure AD SSO |
-| **Multiple Users** | ⚠️ Shared session | ✅ Isolated per user |
-| **Validation History** | ⚠️ Lost on restart | ✅ Persistent |
-| **API Key Storage** | ⚠️ Session only | ✅ Encrypted in DB |
-| **Audit Trail** | ❌ None | ✅ Full tracking |
+| **User Authentication** | None | Azure AD SSO |
+| **Multiple Users** | Shared local session | Isolated per user |
+| **Validation History** | Temporary | Persistent |
+| **API Key Storage** | Session only | Encrypted in database |
+| **Audit Trail** | None | Full tracking |
 | **Best For** | Testing, dev, single user | Teams, enterprise, compliance |
 
 ---
@@ -165,10 +165,10 @@ docker-compose restart
 # Use your current .env with APP_MODE=local
 docker-compose up -d
 ```
-✅ Test all features  
-✅ Validate files  
-✅ Generate reports  
-✅ Evaluate the application  
+ Test all features
+ Validate files
+ Generate reports
+ Evaluate the application
 
 ### 2. Upgrade to Production (When Needed)
 
@@ -189,8 +189,8 @@ docker-compose up -d
 
 ```bash
 # In your .env:
-APP_MODE=local          # ✅ Set to local mode
-GAZELLE_API_KEY=<set>   # ✅ Configured
+APP_MODE=local #  Set to local mode
+GAZELLE_API_KEY=<set> #  Configured
 
 # Container status:
 Status: Up and healthy
@@ -199,10 +199,10 @@ Azure AD: DISABLED
 Database: In-memory only
 
 # Access:
-http://localhost:5000   # ✅ Working
+http://localhost:5000 #  Working
 ```
 
-**Everything is working correctly!** 🎉
+**Everything is working correctly!**
 
 ---
 
@@ -211,57 +211,57 @@ http://localhost:5000   # ✅ Working
 ### If you distribute this Docker image to other users:
 
 1. **For local mode (simple):**
-   - Give them `.env.docker.example`
-   - They add their own `GAZELLE_API_KEY`
-   - Works immediately, no Azure needed
+ - Give them `.env.docker.example`
+ - They add their own `GAZELLE_API_KEY`
+ - Works immediately, no Azure needed
 
 2. **For production mode (enterprise):**
-   - Give them `.env.docker.example`
-   - Give them `DOCKER_CONFIGURATION.md`
-   - They complete their own Azure setup
-   - Takes ~30 minutes per organization
+ - Give them `.env.docker.example`
+ - Give them `DOCKER_CONFIGURATION.md`
+ - They complete their own Azure setup
+ - Takes ~30 minutes per organization
 
 ### What users must provide themselves:
-- ✅ Their own Gazelle API key (always)
-- ✅ Their own Azure AD tenant (production only)
-- ✅ Their own Azure SQL Database (production only)
+- Their own Gazelle API key (always)
+- Their own Azure AD tenant (production only)
+- Their own Azure SQL Database (production only)
 
 ### What you can provide:
-- ✅ Docker image
-- ✅ Configuration templates
-- ✅ Documentation
-- ✅ Setup guides
-- ❌ Cannot provide Azure credentials (security/compliance)
+- Docker image
+- Configuration templates
+- Documentation
+- Setup guides
+- Cannot provide Azure credentials (security/compliance)
 
 ---
 
-## Questions?
+## Questions
 
-### "Can I use your Azure AD?"
-❌ **No** - Each organization needs their own Azure AD tenant. Users can only authenticate with their organization's email domain.
+### "Can I use your Azure AD"
+ **No** - Each organization needs their own Azure AD tenant. Users can only authenticate with their organization's email domain.
 
-### "Can I use your Azure SQL Database?"
-❌ **No** - Healthcare data must be isolated per organization for compliance (HIPAA/GDPR).
+### "Can I use your Azure SQL Database"
+ **No** - Healthcare data must be isolated per organization for compliance (HIPAA/GDPR).
 
-### "Do I have to use production mode?"
-❌ **No** - Local mode is fully functional for single-user validation. Only upgrade if you need authentication and multi-user features.
+### "Do I have to use production mode"
+ **No** - Local mode is fully functional for single-user validation. Only upgrade if you need authentication and multi-user features.
 
-### "Can I test production mode without Azure?"
-❌ **No** - But local mode has all the validation features. Production mode only adds authentication and history tracking.
+### "Can I test production mode without Azure"
+ **No** - But local mode has all the validation features. Production mode only adds authentication and history tracking.
 
-### "Is Azure required for the app to work?"
-❌ **No** - The app works perfectly in local mode with just a Gazelle API key. Azure is only needed for enterprise features (auth, multi-user, history).
+### "Is Azure required for the app to work"
+ **No** - The app works perfectly in local mode with just a Gazelle API key. Azure is only needed for enterprise features (auth, multi-user, history).
 
 ---
 
 ## Summary
 
-✅ **Local mode:** Works out of the box, no Azure required  
-⚠️ **Production mode:** User must provide their own Azure credentials  
-📚 **Full setup guide:** [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md)  
-🎯 **Recommendation:** Start with local mode, upgrade if needed  
+ **Local mode:** Works out of the box, no Azure required
+ **Production mode:** User must provide their own Azure credentials
+ **Full setup guide:** [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md)
+ **Recommendation:** Start with local mode, upgrade if needed
 
 ---
 
-**Last Updated:** May 20, 2026  
-**Current Status:** Docker fully operational in both modes ✅
+**Last Updated:** May 20, 2026
+**Current Status:** Docker fully operational in both modes

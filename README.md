@@ -1,944 +1,378 @@
-# HL7 v2 Message Validator & Auto-Corrector
+# HL7 v2 Message Validator and Auto-Corrector
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Heroku-430098?style=for-the-badge)](https://hl7-v2-message-validator-a1efcbc737cd.herokuapp.com/)
-[![Python](https://img.shields.io/badge/Python-3.12.4-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-3.0.0-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+A Flask application for validating Healthlink HL7 v2 XML messages with the Gazelle EVS service, reviewing validation reports, and applying deterministic corrections to supported message errors.
 
-A comprehensive web application for validating and auto-correcting HL7 v2 Healthlink XML files using the Gazelle EVS API. Supports both local development and enterprise deployment with Azure AD authentication.
+The application supports a lightweight local mode for development and a production mode with Microsoft Entra ID authentication and Azure SQL persistence. Its interface is built with Tailwind CSS and Lucide icons.
 
-## ✨ Features
+## Contents
 
-### Core Validation
-- 🔍 **HL7 v2 File Validation** - Upload and validate against Gazelle EVS API
-- 🤖 **Intelligent Auto-Correction** - Automatically fixes common HL7 message errors
-- 📊 **Detailed Validation Reports** - Comprehensive error analysis with line numbers
-- 📄 **PDF Export** - Generate professional validation reports (ReportLab)
-- 🔄 **Batch Processing** - Validate multiple files simultaneously
+- [Capabilities](#capabilities)
+- [How it works](#how-it-works)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [Application modes](#application-modes)
+- [Supported message profiles](#supported-message-profiles)
+- [Architecture](#architecture)
+- [Security and data handling](#security-and-data-handling)
+- [AI-assisted development](#ai-assisted-development)
+- [Development and verification](#development-and-verification)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 
-### Enterprise Features (Production Mode)
-- 🔐 **Azure AD Authentication** - Single Sign-On with Microsoft 365
-- 👥 **Multi-User Support** - Isolated user spaces with personal dashboards
-- 📝 **Validation History** - Persistent storage of all validations in Azure SQL
-- 🔑 **Encrypted API Key Storage** - Secure per-user API key management
-- 📈 **User Statistics** - Track validation success rates and usage
+## Capabilities
 
-### Developer Features (Local Mode)
-- ⚡ **Quick Start** - No Azure setup required for testing
-- 🛠️ **API Key Management** - Session-based API key storage
-- 🎨 **Modern UI** - Clean Bootstrap 5 interface
-- 🔒 **Security** - CSRF protection, rate limiting, secure headers
+- Upload one or more `.xml` or `.txt` HL7 v2 messages.
+- Validate messages against configured Gazelle EVS profiles.
+- Display validation status, message type, errors, warnings, and the Gazelle report link.
+- Apply rule-based encoding, structural, code-table, and required-field corrections.
+- Revalidate corrected messages iteratively, up to a configurable limit.
+- Download corrected messages and export validation reports as PDF.
+- Track batch upload and validation progress in the browser.
+- Store results for the current local session or persist per-user history in Azure SQL.
+- Manage Gazelle API credentials through the local session or encrypted production storage.
 
-## 🚀 Quick Start
+Auto-correction is intentionally conservative. A corrected message should still be reviewed before it is used in a clinical or production workflow.
 
-### Option 1: Docker (Recommended)
+## How it works
 
-**Local Mode** - No Azure required (5 minutes):
-```bash
-# 1. Copy environment template
-cp .env.docker.example .env
+1. The browser uploads each selected message to Flask.
+2. Flask stores the upload in a session-specific directory.
+3. `validate_with_verification.py` submits the message to Gazelle EVS and parses its response.
+4. If auto-correction is enabled and mandatory errors remain, the correction engine applies supported deterministic rules.
+5. The corrected message is revalidated until it passes, no additional correction can be made, or the iteration limit is reached.
+6. The dashboard presents the final status and makes the report and corrected file available.
 
-# 2. Edit .env and set:
-APP_MODE=local
-GAZELLE_API_KEY=your_api_key_from_gazelle
+The browser processes batch uploads sequentially. This avoids overwhelming the external validation service and provides clear per-file progress.
 
-# 3. Generate session key
-python -c "import secrets; print(secrets.token_hex(32))"
-# Copy output to SESSION_SECRET_KEY in .env
+## Quick start
 
-# 4. Start Docker
-docker-compose up -d
+### Prerequisites
 
-# 5. Open browser
-http://localhost:5000
-```
+- Python 3.12
+- A Gazelle EVS API key
+- Git
+- Docker Desktop, if using the container workflow
 
-**Production Mode** - With Azure AD (30 minutes):
-See [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) for complete Azure setup guide.
+Production mode additionally requires a Microsoft Entra ID app registration and Azure SQL Database.
 
-### Option 2: Local Python Development
+### Local Python on Windows
 
-```bash
-# 1. Create virtual environment
+```powershell
+git clone https://github.com/ddeveloper72/HL7_v2_Message_Validator-Auto-Correct.git
+cd HL7_v2_Message_Validator-Auto-Correct
+
 python -m venv .venv
-.venv\Scripts\activate  # Windows
-source .venv/bin/activate  # Linux/Mac
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Configure environment
-cp .env.docker.example .env
-# Edit .env and set APP_MODE=local and GAZELLE_API_KEY
-
-# 4. Run application
-python dashboard_app.py
-
-# 5. Open browser
-http://localhost:5000
+Copy-Item .env.docker.example .env
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-## 📖 Documentation
+Edit `.env` and set at least:
 
-| Document | Description |
-|----------|-------------|
-| [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) | Complete Docker setup guide with Azure integration |
-| [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) | Production deployment to Azure Container Apps/App Service |
-| [DOCKER_QUICK_START.md](DOCKER_QUICK_START.md) | Quick reference for common Docker commands |
-| [AZURE_REQUIREMENTS.md](AZURE_REQUIREMENTS.md) | Why Azure credentials are user-provided |
-| [LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md) | Local Python development without Docker |
-
-## 🎯 Application Modes
-
-
-### 🟢 Local Mode (Default)
-**Best for:** Development, testing, single-user validation
-
-**Features:**
-- ✅ Full HL7 validation and auto-correction
-- ✅ PDF report generation
-- ✅ Batch processing
-- ✅ No login required - direct dashboard access
-- ❌ No user authentication
-- ❌ No persistent validation history
-
-**Requirements:**
-- Gazelle API key only
-- No Azure setup needed
-
-**Configuration:**
 ```env
 APP_MODE=local
-GAZELLE_API_KEY=your_key_here
-SESSION_SECRET_KEY=generated_secret
+SESSION_SECRET_KEY=replace_with_the_generated_value
+GAZELLE_BASE_URL=https://testing.ehealthireland.ie
+VERIFY_SSL=true
 ```
 
-### 🔵 Production Mode
-**Best for:** Enterprise deployment, multi-user teams, audit compliance
+Start the application:
 
-**Additional Features:**
-- ✅ Azure AD authentication (Single Sign-On)
-- ✅ Multi-user support with isolated user spaces
-- ✅ Persistent validation history in Azure SQL Database
-- ✅ Encrypted per-user API key storage
-- ✅ User statistics and audit trails
-- ✅ Session persistence across restarts
-
-**Requirements:**
-- Azure AD app registration (free)
-- Azure SQL Database (~$5/month)
-- Gazelle API key
-
-**Configuration:**
-```env
-APP_MODE=production
-# Azure AD credentials
-AZURE_AD_CLIENT_ID=...
-AZURE_AD_CLIENT_SECRET=...
-AZURE_AD_TENANT_ID=...
-# Azure SQL Database
-AZURE_SQL_SERVER=...
-AZURE_SQL_DATABASE=...
-AZURE_SQL_USERNAME=...
-AZURE_SQL_PASSWORD=...
+```powershell
+python dashboard_app.py
 ```
 
-See [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) for detailed setup.
+Open <http://127.0.0.1:5000>, navigate to the profile, and enter the Gazelle API key and its validity dates.
 
-## 🏗️ Target Architecture
+### Docker
 
-### System Overview
-
-The HL7 v2 Message Validator operates in two distinct architectural modes, supporting both standalone development and enterprise multi-user deployments.
-
-#### Local Mode Architecture
-
-```mermaid
-flowchart TB
-    User[👤 User Browser]
-    
-    subgraph Flask["Flask Application (Local Mode)"]
-        UI[Dashboard & Upload UI]
-        Engine[Auto-Correction Engine]
-        PDF[PDF Report Generator]
-        Session[(Session Storage<br/>File-based)]
-        Storage[(Temporary Storage<br/>uploads/ processed/)]
-        
-        UI --> Engine
-        Engine --> PDF
-        UI --> Session
-        Engine --> Storage
-    end
-    
-    Gazelle[☁️ Gazelle EVS API<br/>HL7 v2 Validation]
-    
-    User -->|HTTP| UI
-    Engine -->|REST API| Gazelle
-    
-    style Flask fill:#e1f5ff
-    style Gazelle fill:#fff4e6
-    style User fill:#f3e5f5
-```
-
-#### Production Mode Architecture
-
-```mermaid
-flowchart TB
-    User[👤 User Browser]
-    
-    subgraph Flask["Flask Application (Production Mode)"]
-        Auth[🔐 Azure AD Authentication]
-        Session[Multi-User Session Manager]
-        
-        UI[Dashboard & Upload UI]
-        Engine[Auto-Correction Engine]
-        PDF[PDF Report Generator]
-        
-        APIStore[Encrypted API Key Store]
-        Profile[User Profile Manager]
-        History[Validation History]
-        Stats[User Statistics]
-        
-        Auth --> Session
-        Session --> UI
-        UI --> Engine
-        Engine --> PDF
-        Engine --> APIStore
-        Engine --> History
-        UI --> Profile
-        Profile --> Stats
-    end
-    
-    AzureAD[☁️ Azure AD<br/>Enterprise SSO]
-    Gazelle[☁️ Gazelle EVS API<br/>HL7 v2 Validation]
-    AzureSQL[(🗄️ Azure SQL Database<br/>Encrypted)]
-    
-    User -->|HTTPS| Auth
-    Auth <-->|OAuth2| AzureAD
-    Engine -->|REST API| Gazelle
-    APIStore <-->|TDS Protocol| AzureSQL
-    History <-->|TDS Protocol| AzureSQL
-    Profile <-->|TDS Protocol| AzureSQL
-    Stats <-->|TDS Protocol| AzureSQL
-    
-    style Flask fill:#e1f5ff
-    style AzureAD fill:#fff4e6
-    style Gazelle fill:#fff4e6
-    style AzureSQL fill:#e8f5e9
-    style User fill:#f3e5f5
-```
-
-### Operational Flows
-
-#### 1. File Upload & Validation Flow
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant UI as Web Interface
-    participant Flask as Flask App
-    participant Storage as File Storage
-    participant Gazelle as Gazelle EVS API
-    
-    User->>UI: Upload HL7 XML file
-    UI->>Flask: POST /upload
-    Flask->>Storage: Save to uploads/
-    Flask->>Flask: Detect message type (ORU^R01, ADT^A01, etc.)
-    Flask->>Flask: Base64 encode content
-    Flask->>Gazelle: POST /validations (validator OID + content)
-    Gazelle-->>Flask: 201 Created (validation OID + privacy key)
-    
-    loop Poll for results (max 30s)
-        Flask->>Gazelle: GET /validations/{oid}/report
-        Gazelle-->>Flask: Validation status
-    end
-    
-    Gazelle-->>Flask: DONE_PASSED / DONE_FAILED_WITH_ERRORS
-    Flask->>Flask: Parse report (errors, warnings, counts)
-    Flask-->>UI: Display results with error details
-    UI-->>User: Show validation report
-```
-
-#### 2. Auto-Correction Workflow
-
-```mermaid
-flowchart TB
-    Start([Validation Failed]) --> Analyze[Analyze Error Types]
-    
-    Analyze --> BOM{BOM Issues?}
-    BOM -->|Yes| RemoveBOM[Remove UTF-8 BOM]
-    BOM -->|No| XML
-    RemoveBOM --> XML
-    
-    XML{XML Declaration<br/>Issues?}
-    XML -->|Yes| FixXML[Add/Fix XML Header]
-    XML -->|No| Code
-    FixXML --> Code
-    
-    Code{Code Table<br/>Errors?}
-    Code -->|Yes| FixCodes[Validate & Fix HL7 Codes]
-    Code -->|No| Fields
-    FixCodes --> Fields
-    
-    Fields{Required Fields<br/>Empty?}
-    Fields -->|Yes| PopulateFields[Populate Mandatory Fields]
-    Fields -->|No| Segments
-    PopulateFields --> Segments
-    
-    Segments{Segment Order<br/>Issues?}
-    Segments -->|Yes| ReorderSegs[Reorder per HL7 Spec]
-    Segments -->|No| Length
-    ReorderSegs --> Length
-    
-    Length{Field Length<br/>Violations?}
-    Length -->|Yes| TruncateFields[Truncate Oversized Fields]
-    Length -->|No| Save
-    TruncateFields --> Save
-    
-    Save[Save Corrected File to processed/]
-    Save --> Revalidate[Submit for Re-validation]
-    Revalidate --> Result{Validation<br/>Result?}
-    
-    Result -->|PASSED| Success([✅ Display Success])
-    Result -->|FAILED| Partial([⚠️ Partial Correction<br/>Show Remaining Errors])
-    
-    style Start fill:#ffebee
-    style Success fill:#e8f5e9
-    style Partial fill:#fff3e0
-```
-
-#### 3. PDF Report Generation Flow
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant UI as Dashboard
-    participant Flask as Flask App
-    participant ReportLab as ReportLab Engine
-    participant Browser as User Browser
-    
-    User->>UI: Click "Export PDF"
-    UI->>Flask: GET /export-pdf/{validation_id}
-    Flask->>Flask: Retrieve validation data
-    Flask->>Flask: Extract errors, warnings, metadata
-    
-    Flask->>ReportLab: Create PDF document
-    ReportLab->>ReportLab: Add header (title, logo, date)
-    ReportLab->>ReportLab: Add summary table (status, counts)
-    ReportLab->>ReportLab: Add error details section
-    ReportLab->>ReportLab: Add corrections applied section
-    ReportLab->>ReportLab: Add Gazelle report link
-    ReportLab-->>Flask: PDF BytesIO buffer
-    
-    Flask-->>Browser: Download PDF (application/pdf)
-    Browser-->>User: Save/Open PDF report
-```
-
-#### 4. User Authentication Flow (Production Mode)
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant Browser
-    participant Flask as Flask App
-    participant AzureAD as Azure AD
-    participant DB as Azure SQL Database
-    
-    User->>Browser: Access https://app.com
-    Browser->>Flask: GET /
-    Flask->>Flask: Check session
-    Flask-->>Browser: Redirect to /landing
-    
-    Browser->>Flask: GET /landing
-    Flask-->>Browser: Show landing page
-    
-    User->>Browser: Click "Login with Microsoft"
-    Browser->>Flask: GET /login
-    Flask->>AzureAD: Redirect to OAuth2 authorization URL
-    
-    AzureAD->>User: Show Microsoft login
-    User->>AzureAD: Enter credentials
-    AzureAD-->>Flask: Redirect with authorization code
-    
-    Flask->>AzureAD: Exchange code for access token
-    AzureAD-->>Flask: Access token + user info (email, name, OID)
-    
-    Flask->>DB: Check if user exists (by email)
-    
-    alt User exists
-        Flask->>DB: UPDATE Users SET LastLoginDate = NOW()
-    else New user
-        Flask->>DB: INSERT INTO Users (email, name, AzureAD OID)
-    end
-    
-    DB-->>Flask: UserID
-    Flask->>Flask: Create encrypted session
-    Flask-->>Browser: Redirect to /dashboard
-    Browser-->>User: Show dashboard
-```
-
-#### 5. API Key Management Flow
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant Profile as Profile Page
-    participant Flask as Flask App
-    participant Crypto as Fernet Encryption
-    participant DB as Azure SQL Database
-    participant Dashboard as Dashboard
-    
-    User->>Profile: Navigate to Profile
-    Profile->>Flask: GET /profile
-    Flask->>DB: SELECT APIKeyValidFrom, APIKeyValidTo FROM Users
-    DB-->>Flask: Existing dates (if any)
-    Flask-->>Profile: Display form with existing dates
-    
-    User->>Profile: Enter API key + validity dates
-    Note over User,Profile: Creation: 2026-05-20<br/>Expiration: 2026-06-18
-    
-    Profile->>Flask: POST /set-api-key-db
-    Flask->>Flask: Validate date format (YYYY-MM-DD)
-    Flask->>Flask: Check expiration not in past
-    Flask->>Flask: Check creation before expiration
-    
-    Flask->>Crypto: Encrypt API key (AES-256)
-    Crypto-->>Flask: Encrypted key
-    
-    Flask->>DB: UPDATE Users SET<br/>EncryptedAPIKey, APIKeyValidFrom, APIKeyValidTo
-    DB-->>Flask: Success
-    
-    Flask->>DB: INSERT INTO APIKeyAuditLog (action, timestamp, IP)
-    Flask-->>Profile: Success message
-    
-    User->>Dashboard: View dashboard
-    Dashboard->>Flask: GET /dashboard
-    Flask->>DB: SELECT APIKeyValidTo FROM Users
-    DB-->>Flask: 2026-06-18
-    Flask->>Flask: Calculate days remaining (29 days)
-    Flask->>Flask: Determine badge color (green)
-    Flask-->>Dashboard: Display "Valid until 2026-06-18" badge
-    Dashboard-->>User: Show API key status
-```
-
-### Component Details
-
-#### Flask Application Layer
-- **Dashboard** - Validation history, statistics, and file management
-- **Upload Interface** - Drag-drop file upload with batch processing
-- **Auto-Correction Engine** - Intelligent HL7 error detection and fixing
-- **PDF Generator** - ReportLab-based professional report creation
-- **Authentication** - Azure AD integration (production mode)
-
-#### Data Persistence Layer
-**Local Mode:**
-- File-based session storage (`flask_session/`)
-- Temporary file storage (`uploads/`, `processed/`)
-
-**Production Mode:**
-- Azure SQL Database (persistent validation history)
-- Encrypted API key storage with per-user validity dates
-- User profiles and statistics
-- Audit logs
-
-#### External Services
-- **Gazelle EVS API** - HL7 v2.4 validation service
-  - Supports 13+ Healthlink message types
-  - REST API with persistent report URLs
-  - OID-based validator selection
-- **Azure AD** (Production) - Enterprise SSO authentication
-- **Azure SQL** (Production) - Managed database service
-
-### Security Architecture
-
-```mermaid
-flowchart LR
-    subgraph Security["🔒 Security Layers"]
-        direction TB
-        CSRF[CSRF Protection<br/>Flask-WTF]
-        Rate[Rate Limiting<br/>Flask-Limiter]
-        Sanitize[Input Sanitization<br/>Bleach]
-        SQL[SQL Injection Prevention<br/>Parameterized Queries]
-        Session[Encrypted Sessions<br/>Fernet]
-        APIKey[API Key Encryption<br/>AES-256]
-        TLS[HTTPS/TLS<br/>Production]
-        Headers[Secure Headers<br/>CSP, HSTS, X-Frame-Options]
-        
-        CSRF --> Rate
-        Rate --> Sanitize
-        Sanitize --> SQL
-        SQL --> Session
-        Session --> APIKey
-        APIKey --> TLS
-        TLS --> Headers
-    end
-    
-    Request[🌐 HTTP Request] --> Security
-    Security --> Application[✅ Secured Application]
-    
-    style Security fill:#e8f5e9
-    style Request fill:#ffebee
-    style Application fill:#e1f5ff
-```
-
-### Deployment Architectures
-
-#### Docker Deployment
-
-```mermaid
-flowchart TB
-    subgraph DockerHost["🐳 Docker Host"]
-        subgraph Container["hl7-validator Container"]
-            Gunicorn[Gunicorn WSGI Server<br/>2 Workers]
-            Flask[Flask Application<br/>Python 3.12.4]
-            FreeTDS[FreeTDS Driver<br/>Azure SQL Connectivity]
-            Health["Health Endpoint<br/>/health monitoring"]
-            
-            Gunicorn --> Flask
-            Flask --> FreeTDS
-            Flask --> Health
-        end
-        
-        subgraph Volumes["📁 Volume Mounts"]
-            Uploads[./uploads]
-            Processed[./processed]
-            Sessions[./flask_session]
-        end
-        
-        Container -.->|Mount| Uploads
-        Container -.->|Mount| Processed
-        Container -.->|Mount| Sessions
-    end
-    
-    Browser[👤 Browser] -->|Port 5000:5000| Gunicorn
-    FreeTDS -->|TLS/TDS| AzureSQL[(☁️ Azure SQL<br/>External)]
-    
-    style DockerHost fill:#e3f2fd
-    style Container fill:#fff3e0
-    style Volumes fill:#f3e5f5
-    style AzureSQL fill:#e8f5e9
-```
-
-#### Heroku Deployment
-
-```mermaid
-flowchart TB
-    subgraph Heroku["☁️ Heroku Platform"]
-        subgraph Dyno["Web Dyno"]
-            Process[Gunicorn Process<br/>--timeout 120]
-            Python[Python 3.12.4 Runtime]
-            FreeTDS_H[FreeTDS<br/>via Aptfile]
-            App[Flask Application]
-            
-            Process --> Python
-            Python --> App
-            App --> FreeTDS_H
-        end
-        
-        subgraph Buildpacks["📦 Buildpacks"]
-            PythonBP[heroku/python]
-            FreeTDS_BP[FreeTDS Buildpack]
-        end
-        
-        Buildpacks -.->|Build| Dyno
-    end
-    
-    ConfigVars[⚙️ Config Vars<br/>Environment Variables]
-    
-    Internet[🌐 Internet] -->|HTTPS| Heroku
-    FreeTDS_H -->|TLS/TDS| AzureSQL[(☁️ Azure SQL)]
-    FreeTDS_H -->|HTTPS| Gazelle[(☁️ Gazelle EVS API)]
-    ConfigVars -.->|Inject| Dyno
-    
-    style Heroku fill:#e1f5ff
-    style Dyno fill:#fff3e0
-    style Buildpacks fill:#f3e5f5
-    style AzureSQL fill:#e8f5e9
-    style Gazelle fill:#fff4e6
-```
-
-### Technology Stack
-- **Backend:** Flask 3.0.0, Python 3.12.4
-- **Frontend:** Bootstrap 5.3, Vanilla JavaScript
-- **PDF Generation:** ReportLab 4.0.9
-- **Authentication:** MSAL 1.36.0, Azure AD (production mode)
-- **Database:** Azure SQL Database with pyodbc 5.0.1 (production mode)
-- **Security:** Flask-WTF (CSRF), Flask-Limiter (rate limiting), bleach
-- **Validation:** Gazelle EVS REST API
-- **Container:** Docker with Gunicorn WSGI server
-
-### Project Structure
-```
-HL7_v2_Message_Validator-Auto-Correct/
-├── dashboard_app.py              # Main Flask application
-├── db_utils.py                   # Database operations (production mode)
-├── hl7_corrector.py              # Auto-correction logic
-├── validate_with_verification.py # Gazelle EVS validation subprocess
-├── templates/                    # Jinja2 HTML templates
-│   ├── dashboard.html           # Main dashboard
-│   ├── upload.html              # File upload interface
-│   ├── profile.html             # User profile (production)
-│   └── landing.html             # Login page (production)
-├── static/                       # Static assets
-│   ├── styles.css               # Custom styles
-│   └── scripts.js               # Client-side JavaScript
-├── uploads/                      # Temporary upload storage
-├── processed/                    # Auto-corrected files
-├── flask_session/                # Session storage
-├── Dockerfile                    # Docker container definition
-├── docker-compose.yml            # Docker orchestration
-├── requirements.txt              # Python dependencies
-├── .env                          # Environment configuration (not committed)
-├── .env.docker.example           # Environment template for users
-└── docs/                         # Documentation
-    ├── DOCKER_CONFIGURATION.md
-    ├── DOCKER_DEPLOYMENT.md
-    └── ...
-```
-
-## 🚢 Deployment Options
-
-### 1. Docker (Recommended)
-
-**Local Development:**
-```bash
-docker-compose up -d
-```
-
-**Production Deployment:**
-- Azure Container Apps (serverless, auto-scaling)
-- Azure App Service for Containers
-- Any Docker-compatible platform
-
-See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
-
-### 2. Heroku (Legacy)
-
-The application is deployed on Heroku with:
-- FreeTDS for Azure SQL connectivity
-- Gunicorn WSGI server
-- Azure AD authentication
-- Automatic HTTPS
-
-**Deploy to Heroku:**
-```bash
-# Login to Heroku
-heroku login
-
-# Create app
-heroku create your-app-name
-
-# Set environment variables
-heroku config:set APP_MODE=production
-heroku config:set AZURE_AD_CLIENT_ID=...
-# ... (set all required vars)
-
-# Deploy
-git push heroku main
-```
-
-### 3. Azure App Service (Native)
-
-Direct deployment without Docker:
-```bash
-# Using Azure CLI
-az webapp up --name your-app-name --runtime "PYTHON:3.12"
-```
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-#### Required for All Modes
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `APP_MODE` | Deployment mode | `local` or `production` |
-| `GAZELLE_API_KEY` | Gazelle EVS API key | Get from https://testing.ehealthireland.ie |
-| `GAZELLE_BASE_URL` | Gazelle instance URL | `https://testing.ehealthireland.ie` |
-| `SESSION_SECRET_KEY` | Flask session encryption | Generate with `secrets.token_hex(32)` |
-
-#### Required for Production Mode Only
-| Variable | Description |
-|----------|-------------|
-| `AZURE_AD_CLIENT_ID` | Azure AD application ID |
-| `AZURE_AD_CLIENT_SECRET` | Azure AD client secret |
-| `AZURE_AD_TENANT_ID` | Azure AD tenant ID |
-| `AZURE_AD_REDIRECT_URI` | OAuth callback URL |
-| `AZURE_SQL_SERVER` | Azure SQL server FQDN |
-| `AZURE_SQL_DATABASE` | Database name |
-| `AZURE_SQL_USERNAME` | SQL admin username |
-| `AZURE_SQL_PASSWORD` | SQL admin password |
-| `ENCRYPTION_KEY` | Database field encryption key |
-
-### Generating Security Keys
-
-```bash
-# Session secret key (required for all modes)
+```powershell
+Copy-Item .env.docker.example .env
 python -c "import secrets; print(secrets.token_hex(32))"
+# Add the generated session secret to .env
 
-# Encryption key (required for production mode)
+docker compose up --build -d
+docker compose logs -f web
+```
+
+Open <http://127.0.0.1:5000>, configure the Gazelle API key in the profile, and check service health at <http://127.0.0.1:5000/health>.
+
+## Configuration
+
+Configuration is loaded from environment variables and `.env` through `python-dotenv`.
+
+### Core settings
+
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `APP_MODE` | No | `local` | Use `local`, `development`, `production`, or `heroku`. |
+| `SESSION_SECRET_KEY` | Production/Docker | Generated locally when absent | Signs Flask sessions. Set an explicit secret outside local development. |
+| `GAZELLE_API_KEY` | Command-line fallback | None | Environment fallback used by the validation script. The web application uses the API key configured in the user session or production database. |
+| `GAZELLE_BASE_URL` | No | Gazelle test service | Base URL for validation requests. |
+| `VERIFY_SSL` | No | `true` | Controls TLS certificate verification for external requests. |
+| `MAX_AUTO_CORRECT_ITERATIONS` | No | `10` | Maximum correction and revalidation cycles. |
+| `OPEN_REPORT_BROWSER` | No | `false` | Controls automatic report opening in applicable command-line flows. |
+
+### Production identity and database settings
+
+| Variable | Purpose |
+| --- | --- |
+| `AZURE_AD_CLIENT_ID` | Microsoft Entra application client ID. |
+| `AZURE_AD_CLIENT_SECRET` | Microsoft Entra application secret. |
+| `AZURE_AD_TENANT_ID` | Microsoft Entra tenant ID. |
+| `AZURE_AD_REDIRECT_URI` | Registered OAuth callback URI. |
+| `AZURE_SQL_SERVER` | Azure SQL server hostname. |
+| `AZURE_SQL_DATABASE` | Database name. |
+| `AZURE_SQL_USERNAME` | Database username. |
+| `AZURE_SQL_PASSWORD` | Database password. |
+| `DB_DRIVER` | ODBC driver; the container uses `FreeTDS`. |
+| `ENCRYPTION_KEY` | Fernet key used to protect stored API keys. |
+
+Generate a Fernet key with:
+
+```powershell
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 
-## 🔐 Security Features
+Never commit `.env`, session secrets, API keys, client secrets, or database credentials.
 
-- ✅ **CSRF Protection** - Flask-WTF with token validation
-- ✅ **Rate Limiting** - Flask-Limiter prevents abuse
-- ✅ **Secure Headers** - X-Frame-Options, CSP, X-Content-Type-Options
-- ✅ **Input Sanitization** - Bleach for HTML/text cleaning
-- ✅ **SQL Injection Prevention** - Parameterized queries
-- ✅ **Session Security** - Encrypted sessions with secure keys
-- ✅ **API Key Encryption** - Fernet encryption for database storage (production)
-- ✅ **SSL/TLS** - HTTPS enforced in production
-- ✅ **Non-root Container** - Docker runs as unprivileged user
+## Application modes
 
-## 🛠️ Auto-Correction Features
+### Local mode
 
-The application automatically fixes common HL7 v2 validation errors:
+Local mode is intended for development, demonstrations, and single-user validation.
 
-1. **BOM Removal** - Strips UTF-8 byte order marks
-2. **XML Declaration** - Adds/fixes XML headers
-3. **Code Table Corrections** - Validates and fixes HL7 table codes
-4. **Required Field Population** - Fills mandatory empty fields
-5. **Message Type Validation** - Ensures correct message type codes
-6. **Segment Order** - Reorders segments per HL7 specifications
-7. **Field Length Validation** - Truncates oversized fields
-8. **Date Format Standardization** - Converts to HL7 date format
+- Authentication is bypassed and a local developer session is created automatically.
+- Azure SQL is used when available; otherwise results use temporary/session storage.
+- The web interface stores the Gazelle API key in the browser-backed server session.
+- Temporary processing metadata is stored in the operating system's temporary directory.
 
-### Supported HL7 v2 Message Types
+Set:
 
-The auto-corrector and validator support the following **Healthlink message profiles** (configured from [Gazelle EVS](https://testing.ehealthireland.ie)):
-
-#### Patient Administration Messages
-- **ADT^A01** - Patient Admission (HL-1)
-- **ADT^A03** - Patient Discharge (HL-5)
-- **ADT^A04** - Patient Registration
-- **ADT^A08** - Patient Information Update
-
-#### Laboratory Messages
-- **ORU^R01** - Laboratory Results (HL-12)
-- **ORU^R03** - Unsolicited Laboratory Observation
-- **OML^O21** - Laboratory Order (HL-13)
-- **ORL^O22** - Laboratory Order Response (HL-11)
-
-#### Clinical & Referral Messages
-- **REF^I12** - Discharge Summary / Patient Referral (HL-3)
-- **RRI^R12** - Radiology Results (HL-9)
-- **VXU^V04** - Vaccination Update (HL-16)
-- **SIU^S12** - Appointment Notification (HL-8)
-
-#### System Messages
-- **ACK^GENERIC** - General Acknowledgement (HL-2)
-
-**Note:** Each message type is validated against specific Healthlink message profiles registered in the Gazelle EVS system. The OID (Object Identifier) for each validator is automatically selected based on the detected message type. New message types can be added by registering additional validators in your Gazelle EVS account.
-
-## 📊 Usage
-
-### Web Interface
-
-1. **Access the application:**
-   - Local/Docker: `http://localhost:5000`
-   - Production: Your deployed URL
-
-2. **Authentication:**
-   - **Local Mode:** Direct access to dashboard
-   - **Production Mode:** Click "Sign in with Microsoft"
-
-3. **Upload Files:**
-   - Drag and drop HL7 v2 XML files
-   - Or use file browser to select files
-   - Supports batch uploads
-
-4. **View Results:**
-   - See validation status (passed/failed)
-   - Review detailed error reports
-   - Check auto-correction suggestions
-
-5. **Auto-Correct:**
-   - Click "Auto-Correct" on failed validations
-   - System attempts automatic fixes
-   - Re-validates corrected file
-
-6. **Export:**
-   - Generate PDF reports
-   - Download corrected files
-   - View validation history (production mode)
-
-### API Key Management
-
-**Local Mode:**
-- Enter API key on first use
-- Stored in session (browser memory only)
-- Lost on logout/session expiry
-
-**Production Mode:**
-- Set API key once in profile
-- Encrypted and stored in Azure SQL Database
-- Persists across sessions
-- Can be updated anytime
-
-## 🧪 Development
-
-### Running Tests
-
-```bash
-# Activate virtual environment
-.venv\Scripts\activate
-
-# Run specific tests
-python test_local.py                    # Local mode tests
-python test_integration_autocorrect.py  # Auto-correction tests
-python test_api_validity.py             # API key validation tests
-
-# Check database connection (production mode)
-python test_db_connection.py
+```env
+APP_MODE=local
 ```
 
-### Local Development Workflow
+### Production mode
 
-```bash
-# 1. Set local mode
-# Edit .env: APP_MODE=local
+Production mode enables:
 
-# 2. Run Flask in debug mode
-python dashboard_app.py
-# App runs on http://localhost:5000 with auto-reload
+- Microsoft Entra ID sign-in
+- Per-user validation history
+- Azure SQL persistence
+- Encrypted per-user Gazelle API key storage
+- User profile and validation statistics
 
-# 3. Make changes to code
-# Flask automatically reloads
+Set:
 
-# 4. Test changes in browser
-
-# 5. Run tests
-python test_local.py
+```env
+APP_MODE=production
 ```
 
-### Docker Development Workflow
+Production startup requires the identity, database, session, and encryption settings described above.
 
-```bash
-# 1. Make code changes
+## Supported message profiles
 
-# 2. Rebuild and restart
-docker-compose build
-docker-compose up -d
+The interface exposes the following configured profiles:
 
-# 3. View logs
-docker-compose logs -f web
+| Area | Message | Description |
+| --- | --- | --- |
+| Patient administration | `ADT^A01` | Patient admission |
+| Patient administration | `ADT^A03` | Patient discharge |
+| Patient administration | `ADT^A04` | Patient registration |
+| Patient administration | `ADT^A08` | Patient update |
+| Laboratory | `ORU^R01` | Laboratory result |
+| Laboratory | `ORU^R03` | Unsolicited observation |
+| Laboratory | `OML^O21` | Laboratory order |
+| Laboratory | `ORL^O22` | Laboratory order response |
+| Clinical | `REF^I12` | Discharge summary or referral |
+| Clinical | `RRI^R12` | Radiology result |
+| Clinical | `VXU^V04` | Vaccination update |
+| Clinical | `SIU^S12` | Appointment notification |
+| System | `ACK^GENERIC` | General acknowledgement |
 
-# 4. Check health
-curl http://localhost:5000/health
+Profile availability ultimately depends on the connected Gazelle EVS instance and its configuration.
 
-# 5. Test changes
-# Open browser to http://localhost:5000
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser[Browser] --> Flask[Flask dashboard]
+    Flask --> Session[(Flask session storage)]
+    Flask --> Uploads[(Upload and processed files)]
+    Flask --> Validator[Validation subprocess]
+    Validator --> Gazelle[Gazelle EVS]
+    Flask --> Corrector[Rule-based correction engine]
+    Corrector --> Validator
+    Flask --> PDF[ReportLab PDF export]
+    Flask -. production .-> Entra[Microsoft Entra ID]
+    Flask -. production .-> SQL[(Azure SQL)]
 ```
 
-### Code Quality
+### Important components
 
-```bash
-# Install development dependencies
-pip install flake8 black pylint
+| Path | Responsibility |
+| --- | --- |
+| `dashboard_app.py` | Main Flask application, routes, sessions, authentication, reports, and orchestration. |
+| `validate_with_verification.py` | Gazelle submission and validation-response parsing. |
+| `hl7_corrector.py` | Deterministic HL7 correction rules. |
+| `hl7_code_tables.py` | Loads and queries configured HL7 code tables. |
+| `hl7_code_tables.json` | Data-driven code corrections and valid values. |
+| `db_utils.py` | Azure SQL access, user records, validation history, and encrypted API keys. |
+| `templates/` | Jinja templates for the Tailwind user interface. |
+| `static/` | Shared CSS, JavaScript, and favicon assets. |
+| `database_schema.sql` | Production database schema. |
 
-# Format code
-black dashboard_app.py db_utils.py hl7_corrector.py
+The older `app.py` provides a separate, simpler validation interface. `dashboard_app.py` is the primary application entry point documented here.
 
-# Lint code
-flake8 *.py --max-line-length=120
+## Security and data handling
 
-# Static analysis
-pylint dashboard_app.py
+The application includes:
+
+- CSRF protection through Flask-WTF
+- Server-side filesystem sessions
+- HTTP-only and same-site session cookies
+- Secure cookies in production
+- Content Security Policy and other response security headers
+- Request rate limiting, with targeted limits on sensitive write operations
+- Filename sanitisation and upload type restrictions
+- HTML sanitisation for rendered report content
+- Parameterised database access
+- Fernet encryption for API keys stored in production
+
+Uploaded messages may contain personal or clinical data. Operators are responsible for confirming that use of the application and submission to Gazelle EVS comply with their organisation's security, privacy, retention, and data-processing requirements.
+
+Local temporary files and session data are not a substitute for an approved clinical record system.
+
+## AI-assisted development
+
+Generative AI tools assisted with parts of this project's development, including code drafting, refactoring, user-interface work, debugging, and documentation. AI-generated suggestions were reviewed and integrated by the project maintainer; they should not be assumed to be independently verified or error-free.
+
+The runtime auto-correction engine is deterministic and rule-based. It does not send message content to a generative AI model to decide corrections. Validation content is sent to the configured Gazelle EVS service as part of the application's core workflow.
+
+See [docs/AI_USE.md](docs/AI_USE.md) for the project's disclosure, review expectations, and limitations.
+
+## Development and verification
+
+Compile the Python sources:
+
+```powershell
+.\.venv\Scripts\python.exe -m compileall dashboard_app.py validate_with_verification.py hl7_corrector.py
 ```
 
-## 🐛 Troubleshooting
+Check Jinja syntax:
 
-### Docker Issues
-
-**Container won't start:**
-```bash
-# Check logs
-docker-compose logs -f web
-
-# Common fixes:
-# 1. Verify SESSION_SECRET_KEY is set in .env
-# 2. Check all Azure credentials (production mode)
-# 3. Ensure GAZELLE_API_KEY is valid
+```powershell
+@'
+from pathlib import Path
+from jinja2 import Environment
+for path in Path("templates").glob("*.html"):
+    Environment().parse(path.read_text(encoding="utf-8"))
+    print(f"OK {path}")
+'@ | .\.venv\Scripts\python.exe -
 ```
 
-**Database connection failed (production mode):**
-```bash
-# Check Azure SQL firewall rules
-# Add your IP address in Azure Portal
-# Or enable "Allow Azure services and resources to access this server"
+Check the health endpoint after startup:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/health
 ```
 
-**Azure AD login fails:**
-```bash
-# Verify redirect URI matches exactly:
-# .env: AZURE_AD_REDIRECT_URI=http://localhost:5000/auth/callback
-# Azure Portal: Same URI must be registered in app registration
+The repository does not currently contain a comprehensive automated test suite. Changes to validation or correction rules should be checked with representative, non-production test messages and their Gazelle reports.
+
+### Branch workflow
+
+```powershell
+git switch -c feature/short-description
+# Make and verify changes
+git add <files>
+git commit -m "feat: describe the change"
 ```
 
-### Common Issues
+## Deployment
 
-**"Invalid API key" error:**
-- Verify API key is correct
-- Check if key has expired (GAZELLE_API_KEY_VALID_TO)
-- Generate new key at https://testing.ehealthireland.ie
+The supplied Docker image runs Gunicorn with two synchronous workers and mounts directories for uploads, corrected files, and Flask sessions.
 
-**"Session expired" error:**
-- Session timeout after 7 days of inactivity
-- Re-enter API key (local mode)
-- Sign in again (production mode)
+Detailed guides:
 
-**PDF export fails:**
-- Check ReportLab is installed: `pip show reportlab`
-- Verify /tmp directory is writable (Docker)
-- Check logs for specific error
+- [Docker deployment](DOCKER_DEPLOYMENT.md)
+- [Docker configuration](DOCKER_CONFIGURATION.md)
+- [Docker quick start](DOCKER_QUICK_START.md)
+- [Azure requirements](AZURE_REQUIREMENTS.md)
+- [Local development](LOCAL_DEVELOPMENT_GUIDE.md)
 
-**File upload fails:**
-- Maximum file size: 16MB (configurable)
-- Only XML files accepted
-- Check uploads/ directory is writable
+Before production deployment:
 
-See [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) for detailed troubleshooting.
+1. Use production mode and HTTPS.
+2. Set stable, unique session and encryption keys.
+3. Register the exact production redirect URI in Microsoft Entra ID.
+4. Restrict Azure SQL firewall and credentials.
+5. Confirm persistent volume behavior for the selected hosting platform.
+6. Define message retention and deletion procedures.
+7. Review external service and clinical-data governance requirements.
 
-## 📜 License
+## Troubleshooting
 
-Internal development tool for HL7 v2 validation and auto-correction.
+### Tailwind or icons do not load
 
-## 🤝 Contributing
+The Content Security Policy permits scripts from `cdn.jsdelivr.net`. The shared design system loads Tailwind Browser and Lucide from that origin. Check the browser console for CSP errors and perform a hard refresh after changing frontend assets.
 
-This is an internal tool. For improvements or bug fixes:
-1. Create a feature branch
-2. Make your changes
-3. Test locally and with Docker
-4. Submit a pull request
+### Dashboard returns HTTP 429
 
-## 📞 Support
+The read-only dashboard route is exempt from request limiting and does not poll itself. Restart Flask after updating from an older version so the current limiter configuration is loaded.
 
-- **Documentation:** See docs/ folder for detailed guides
-- **Issues:** Check troubleshooting sections in documentation
-- **Gazelle API:** https://testing.ehealthireland.ie
+### Gazelle validation fails
 
-## 🎯 Roadmap
+- Confirm the API key and its expiry date.
+- Confirm `GAZELLE_BASE_URL` points to the intended service.
+- Keep `VERIFY_SSL=true` unless diagnosing a controlled local certificate issue.
+- Review the Flask CLI output and the Gazelle report URL.
 
-- [ ] Azure Container Apps deployment automation
-- [ ] CI/CD pipeline with GitHub Actions
-- [ ] Additional HL7 message type support
-- [ ] Batch validation API endpoint
-- [ ] Validation rules customization UI
-- [ ] Email notifications for validation results
-- [ ] Integration with Azure Application Insights
+### PDF export is unavailable
 
-## 📚 Additional Resources
+Confirm ReportLab is installed in the active environment:
 
-- [HL7 v2 Specification](http://www.hl7.org/)
-- [Gazelle EVS Documentation](https://testing.ehealthireland.ie/docs)
-- [Azure AD App Registration Guide](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app)
-- [Docker Documentation](https://docs.docker.com/)
-- [Flask Documentation](https://flask.palletsprojects.com/)
+```powershell
+python -m pip show reportlab
+```
 
----
+### Results disappear or differ between workers
 
-**Version:** 2.0.0  
-**Last Updated:** May 20, 2026  
-**Status:** Production Ready ✅
+Local mode uses temporary storage when SQL is unavailable. Production deployments should use Azure SQL for durable, multi-user history. Temporary files are not durable across host replacement or cleanup.
+
+### Docker does not become healthy
+
+```powershell
+docker compose ps
+docker compose logs web
+docker compose exec web python -c "import requests; print(requests.get('http://localhost:5000/health').json())"
+```
+
+## Documentation
+
+Start with the [documentation index](docs/README.md).
+
+| Document | Purpose |
+| --- | --- |
+| [docs/AI_USE.md](docs/AI_USE.md) | AI-use disclosure and review expectations |
+| [docs/architecture/README.md](docs/architecture/README.md) | Architecture diagram guidance |
+| [LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md) | Local development workflow |
+| [DOCKER_QUICK_START.md](DOCKER_QUICK_START.md) | Short Docker workflow |
+| [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) | Local and production container configuration |
+| [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) | Detailed container deployment and operations |
+| [AZURE_REQUIREMENTS.md](AZURE_REQUIREMENTS.md) | Azure dependencies for production mode |
+
+Historical implementation reports are retained under `docs/archive/`. They describe earlier states of the application and should not be treated as the current operating guide.
+
+## Contributing
+
+Keep changes focused, avoid committing secrets or real patient messages, and document material changes to configuration or runtime behavior. Pull requests should include the verification performed and any known limitations.
+
+## Licence and status
+
+No standalone open-source licence file is currently included. Treat the repository as an internal project unless the owner provides separate licensing terms.
+
+This software supports testing and message-quality workflows. It is not a medical device, a clinical decision-support system, or a substitute for professional review.

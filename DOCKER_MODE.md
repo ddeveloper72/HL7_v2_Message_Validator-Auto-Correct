@@ -8,7 +8,7 @@ When running the application in Docker, attempting to use Azure AD authenticatio
 
 The `AZURE_AD_REDIRECT_URI` was **hardcoded** in `docker-compose.yml`:
 ```yaml
-- AZURE_AD_REDIRECT_URI=http://localhost:5000/auth/callback  # Hardcoded!
+- AZURE_AD_REDIRECT_URI=http://localhost:5000/auth/callback # Hardcoded!
 ```
 
 This prevented users from customizing the redirect URI and caused authentication issues. Additionally, there was no clear documentation about mode switching.
@@ -69,16 +69,16 @@ Changed `.env` default from `APP_MODE=production` to `APP_MODE=local` so:
 5. Run `docker-compose up -d`
 
 **What works:**
-- ✅ Full HL7 validation
-- ✅ Auto-correction
-- ✅ PDF reports
-- ✅ All features except user auth and history
+- Full HL7 validation
+- Auto-correction
+- PDF reports
+- All features except user auth and history
 
 **Container logs show:**
 ```
-🔧 Application Mode: LOCAL
-   - Azure AD Auth: DISABLED (Local Dev)
-   - Database: In-Memory Only
+ Application Mode: LOCAL
+ - Azure AD Auth: DISABLED (Local Dev)
+ - Database: In-Memory Only
 ```
 
 ### For Users With Azure (Production Mode)
@@ -98,18 +98,18 @@ Changed `.env` default from `APP_MODE=production` to `APP_MODE=local` so:
 7. Run `docker-compose up -d`
 
 **What works:**
-- ✅ Everything from local mode, plus:
-- ✅ Azure AD authentication (SSO)
-- ✅ Multi-user support
-- ✅ Validation history per user
-- ✅ Encrypted API key storage
-- ✅ Audit trails
+- Everything from local mode, plus:
+- Azure AD authentication (SSO)
+- Multi-user support
+- Validation history per user
+- Encrypted API key storage
+- Audit trails
 
 **Container logs show:**
 ```
-🔧 Application Mode: PRODUCTION
-   - Azure AD Auth: ENABLED
-   - Database: Azure SQL
+ Application Mode: PRODUCTION
+ - Azure AD Auth: ENABLED
+ - Database: Azure SQL
 ```
 
 ## Testing Results
@@ -118,77 +118,77 @@ Changed `.env` default from `APP_MODE=production` to `APP_MODE=local` so:
 ```bash
 $ curl http://localhost:5000/health
 {
-  "app_mode": "local",
-  "azure_ad_enabled": false,
-  "database_enabled": false,
-  "status": "healthy",
-  "timestamp": "2026-05-20T18:29:20Z"
+ "app_mode": "local",
+ "azure_ad_enabled": false,
+ "database_enabled": false,
+ "status": "healthy",
+ "timestamp": "2026-05-20T18:29:20Z"
 }
 ```
-✅ Status: 200 OK
+ Status: 200 OK
 
 ### Production Mode Test
 ```bash
 $ curl http://localhost:5000/health
 {
-  "app_mode": "production",
-  "azure_ad_enabled": true,
-  "database": "connected",
-  "database_enabled": true,
-  "status": "healthy",
-  "timestamp": "2026-05-20T18:15:50Z"
+ "app_mode": "production",
+ "azure_ad_enabled": true,
+ "database": "connected",
+ "database_enabled": true,
+ "status": "healthy",
+ "timestamp": "2026-05-20T18:15:50Z"
 }
 ```
-✅ Status: 200 OK
+ Status: 200 OK
 
 ## Files Modified/Created
 
 ### Modified
 1. **docker-compose.yml**
-   - Made all Azure variables dynamic (pull from .env)
-   - Added comprehensive inline documentation
-   - Made APP_MODE easily switchable
-   - Added default values for optional variables
+ - Made all Azure variables dynamic (pull from .env)
+ - Added comprehensive inline documentation
+ - Made APP_MODE easily switchable
+ - Added default values for optional variables
 
 2. **.env**
-   - Changed default to `APP_MODE=local`
-   - Added clarifying comments
+ - Changed default to `APP_MODE=local`
+ - Added clarifying comments
 
 ### Created
 1. **.env.docker.example**
-   - Complete example configuration
-   - Step-by-step Azure setup instructions
-   - Command-line helpers for key generation
+ - Complete example configuration
+ - Step-by-step Azure setup instructions
+ - Command-line helpers for key generation
 
 2. **DOCKER_CONFIGURATION.md**
-   - User-friendly configuration guide
-   - Two clear deployment paths
-   - Troubleshooting section
-   - Environment variables reference table
+ - User-friendly configuration guide
+ - Two clear deployment paths
+ - Troubleshooting section
+ - Environment variables reference table
 
 3. **DOCKER_MODE.md** (this file)
-   - Technical explanation of the issue
-   - Solution details
-   - Testing results
+ - Technical explanation of the issue
+ - Solution details
+ - Testing results
 
 ## How Users Should Configure
 
 ### New Users (Recommended Path)
 
 1. **Start with local mode:**
-   ```bash
-   cp .env.docker.example .env
-   # Edit .env, set APP_MODE=local, add GAZELLE_API_KEY
-   docker-compose up -d
-   ```
+ ```bash
+ cp .env.docker.example .env
+ # Edit .env, set APP_MODE=local, add GAZELLE_API_KEY
+ docker-compose up -d
+ ```
 
 2. **Test the application** - validate some files, try features
 
 3. **Upgrade to production when needed:**
-   - Follow [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) production setup
-   - Change `APP_MODE=production` in .env
-   - Add Azure credentials
-   - Restart: `docker-compose restart`
+ - Follow [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) production setup
+ - Change `APP_MODE=production` in .env
+ - Add Azure credentials
+ - Restart: `docker-compose restart`
 
 ### Enterprise Users (Direct to Production)
 
@@ -238,16 +238,16 @@ DOCKER_CONFIGURATION.md (choose mode)
         └─→ Full enterprise deployment
 ```
 
-## Success Criteria - All Met ✅
+## Success Criteria - All Met
 
-- ✅ Users can run Docker without any Azure setup
-- ✅ Users can upgrade to production mode when ready
-- ✅ All configuration is in .env file (not hardcoded)
-- ✅ Clear documentation for both modes
-- ✅ Troubleshooting guide for common issues
-- ✅ Container works in both modes
-- ✅ Health endpoint reports correct mode
-- ✅ Easy mode switching
+- Users can run Docker without any Azure setup
+- Users can upgrade to production mode when ready
+- All configuration is in .env file (not hardcoded)
+- Clear documentation for both modes
+- Troubleshooting guide for common issues
+- Container works in both modes
+- Health endpoint reports correct mode
+- Easy mode switching
 
 ## Next Steps for End Users
 
@@ -259,7 +259,7 @@ DOCKER_CONFIGURATION.md (choose mode)
 
 ---
 
-**Issue:** Resolved ✅  
-**Tested:** Both local and production modes working  
-**Documentation:** Complete  
+**Issue:** Resolved
+**Tested:** Both local and production modes working
+**Documentation:** Complete
 **Date:** May 20, 2026

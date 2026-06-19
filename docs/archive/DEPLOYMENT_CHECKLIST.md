@@ -139,7 +139,7 @@ heroku ps:restart
 - [ ] New report created
 - [ ] File saved to database
 
-### Test 6: Auto-Correct (DATABASE REPORT) 🎯
+### Test 6: Auto-Correct (DATABASE REPORT)
 **THIS IS THE KEY TEST - THE BUG FIX**
 - [ ] Close browser / wait for dyno to restart
 - [ ] Login again
@@ -204,7 +204,7 @@ heroku run python -c "from db_utils import DatabaseManager; db = DatabaseManager
 
 ### Issue 1: Database Connection Timeout
 **Symptom**: 500 errors, database connection timeouts
-**Solution**: 
+**Solution**:
 ```bash
 # Verify connection string
 heroku config:get AZURE_SQL_SERVER
@@ -245,17 +245,17 @@ heroku config:set SESSION_SECRET_KEY="$(openssl rand -hex 32)"
 ## Success Criteria
 
 Deployment is successful when:
-- ✅ Application starts without errors
-- ✅ Users can login via Azure AD
-- ✅ API keys can be saved and retrieved
-- ✅ Files can be uploaded and validated
-- ✅ Auto-correct works for new uploads
-- ✅ **Auto-correct works for database reports (db_XXX)** ← KEY FIX
-- ✅ Corrected files can be downloaded
-- ✅ Reports persist across sessions
-- ✅ No 500 errors in logs
-- ✅ Security headers present
-- ✅ Rate limiting active
+-  Application starts without errors
+-  Users can login via Azure AD
+-  API keys can be saved and retrieved
+-  Files can be uploaded and validated
+-  Auto-correct works for new uploads
+-  **Auto-correct works for database reports (db_XXX)** ← KEY FIX
+-  Corrected files can be downloaded
+-  Reports persist across sessions
+-  No 500 errors in logs
+-  Security headers present
+-  Rate limiting active
 
 ## Performance Monitoring
 
@@ -277,7 +277,7 @@ If issues persist:
 
 ## Notes
 
-- Database reports (db_XXX) now fully supported for auto-correct ✅
-- File content retrieved from database when temp files unavailable ✅
-- Security measures maintained through deployment ✅
-- All tests passing locally ✅
+- Database reports (db_XXX) now fully supported for auto-correct
+- File content retrieved from database when temp files unavailable
+- Security measures maintained through deployment
+- All tests passing locally

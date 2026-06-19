@@ -2,7 +2,7 @@
 
 ## Quick Start - Choose Your Mode
 
-### Option 1: Local Mode (No Azure Required) ⚡
+### Option 1: Local Mode (No Azure Required)
 **Best for:** Quick testing, development, single-user validation
 
 **What you need:**
@@ -29,16 +29,16 @@ http://localhost:5000
 ```
 
 **Features available:**
-- ✅ HL7 file validation
-- ✅ Auto-correction
-- ✅ PDF report generation
-- ✅ Batch processing
-- ❌ User authentication
-- ❌ Validation history
+- HL7 file validation
+- Auto-correction
+- PDF report generation
+- Batch processing
+- User authentication
+- Validation history
 
 ---
 
-### Option 2: Production Mode (Azure Integration) 🚀
+### Option 2: Production Mode (Azure Integration)
 **Best for:** Multi-user deployment, enterprise use, audit trails
 
 **What you need:**
@@ -52,37 +52,37 @@ http://localhost:5000
 1. Go to https://portal.azure.com
 2. Navigate to **Azure Active Directory** → **App registrations**
 3. Click **New registration**
-   - Name: `HL7 Message Validator`
-   - Supported account types: `Accounts in this organizational directory only`
-   - Redirect URI: `Web` → `http://localhost:5000/auth/callback`
+ - Name: `HL7 Message Validator`
+ - Supported account types: `Accounts in this organizational directory only`
+ - Redirect URI: `Web` → `http://localhost:5000/auth/callback`
 4. Click **Register**
 5. From the **Overview** page, copy:
-   - **Application (client) ID** → `AZURE_AD_CLIENT_ID`
-   - **Directory (tenant) ID** → `AZURE_AD_TENANT_ID`
+ - **Application (client) ID** → `AZURE_AD_CLIENT_ID`
+ - **Directory (tenant) ID** → `AZURE_AD_TENANT_ID`
 6. Go to **Certificates & secrets** → **New client secret**
-   - Description: `Docker deployment`
-   - Expires: 24 months
-   - Copy the **Value** (not ID) → `AZURE_AD_CLIENT_SECRET`
+ - Description: `Docker deployment`
+ - Expires: 24 months
+ - Copy the **Value** (not ID) → `AZURE_AD_CLIENT_SECRET`
 
 #### Step 2: Azure SQL Database
 1. In Azure Portal, create a **SQL Database**
-   - Resource group: Create new or use existing
-   - Database name: `hl7-validator`
-   - Server: Create new
-   - Pricing tier: **Basic** (5 DTUs, $5/month) is sufficient
+ - Resource group: Create new or use existing
+ - Database name: `hl7-validator`
+ - Server: Create new
+ - Pricing tier: **Basic** (5 DTUs, $5/month) is sufficient
 2. Configure **Firewall** (in SQL Server settings):
-   - Add your IP address
-   - Enable "Allow Azure services and resources to access this server"
+ - Add your IP address
+ - Enable "Allow Azure services and resources to access this server"
 3. Copy connection details:
-   - **Server name** → `AZURE_SQL_SERVER`
-   - **Database name** → `AZURE_SQL_DATABASE`
-   - **Admin username** → `AZURE_SQL_USERNAME`
-   - **Admin password** → `AZURE_SQL_PASSWORD`
+ - **Server name** → `AZURE_SQL_SERVER`
+ - **Database name** → `AZURE_SQL_DATABASE`
+ - **Admin username** → `AZURE_SQL_USERNAME`
+ - **Admin password** → `AZURE_SQL_PASSWORD`
 4. Initialize database schema:
-   ```bash
-   # From your local machine (not Docker yet)
-   python init_database.py
-   ```
+ ```bash
+ # From your local machine (not Docker yet)
+ python init_database.py
+ ```
 
 #### Step 3: Configure Environment
 ```bash
@@ -124,15 +124,15 @@ http://localhost:5000
 ```
 
 **Features available:**
-- ✅ HL7 file validation
-- ✅ Auto-correction
-- ✅ PDF report generation
-- ✅ Batch processing
-- ✅ Azure AD authentication (Single Sign-On)
-- ✅ Validation history per user
-- ✅ Encrypted API key storage
-- ✅ Multi-user support
-- ✅ Audit trails
+- HL7 file validation
+- Auto-correction
+- PDF report generation
+- Batch processing
+- Azure AD authentication (Single Sign-On)
+- Validation history per user
+- Encrypted API key storage
+- Multi-user support
+- Audit trails
 
 ---
 
@@ -144,17 +144,17 @@ http://localhost:5000
 
 **Solution:**
 1. Check your `.env` file has:
-   ```bash
-   AZURE_AD_REDIRECT_URI=http://localhost:5000/auth/callback
-   ```
+ ```bash
+ AZURE_AD_REDIRECT_URI=http://localhost:5000/auth/callback
+ ```
 2. Verify it matches **exactly** in Azure AD app registration:
-   - Go to Azure Portal → Azure Active Directory → App registrations
-   - Select your app → Authentication
-   - Under "Web" platform, ensure redirect URI is: `http://localhost:5000/auth/callback`
+ - Go to Azure Portal → Azure Active Directory → App registrations
+ - Select your app → Authentication
+ - Under "Web" platform, ensure redirect URI is: `http://localhost:5000/auth/callback`
 3. Restart Docker:
-   ```bash
-   docker-compose restart
-   ```
+ ```bash
+ docker-compose restart
+ ```
 
 ### Container won't start / health check failing
 
@@ -165,17 +165,17 @@ docker-compose logs -f web
 
 **Common issues:**
 1. **Database connection failed**
-   - Verify firewall rules in Azure SQL allow your IP
-   - Check connection string in .env
-   - Test connectivity: `telnet yourserver.database.windows.net 1433`
+ - Verify firewall rules in Azure SQL allow your IP
+ - Check connection string in .env
+ - Test connectivity: `telnet yourserver.database.windows.net 1433`
 
 2. **Missing environment variables**
-   - Ensure SESSION_SECRET_KEY is set in .env
-   - For production mode, verify all AZURE_* variables are set
+ - Ensure SESSION_SECRET_KEY is set in .env
+ - For production mode, verify all AZURE_* variables are set
 
 3. **Invalid API key**
-   - Verify GAZELLE_API_KEY is correct
-   - Check key hasn't expired
+ - Verify GAZELLE_API_KEY is correct
+ - Check key hasn't expired
 
 ### Azure AD login fails with "AADSTS50011"
 
@@ -205,7 +205,7 @@ docker-compose logs -f web
 2. Add all AZURE_* variables to .env (see "Production Mode" setup above)
 3. Restart: `docker-compose restart`
 
-### From Production → Local  
+### From Production → Local
 1. Edit `.env`: Change `APP_MODE=production` to `APP_MODE=local`
 2. Restart: `docker-compose restart`
 3. Azure variables will be ignored but can stay in .env

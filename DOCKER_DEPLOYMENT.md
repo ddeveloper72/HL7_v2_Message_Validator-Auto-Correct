@@ -5,26 +5,26 @@ This guide walks through building, running, and deploying the HL7 Validator appl
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### Required Software
 - **Docker Desktop** (Windows/Mac) or **Docker Engine** (Linux)
-  - Download: https://www.docker.com/products/docker-desktop
-  - Minimum version: 20.10+
+ - Download: https://www.docker.com/products/docker-desktop
+ - Minimum version: 20.10+
 - **Docker Compose** (included with Docker Desktop)
-  - Minimum version: 2.0+
+ - Minimum version: 2.0+
 
 ### Required Credentials
 1. **Azure SQL Database** (already configured)
-   - Server, database name, username, password
+ - Server, database name, username, password
 2. **Azure AD Application** (already configured)
-   - Client ID, Client Secret, Tenant ID
+ - Client ID, Client Secret, Tenant ID
 3. **Gazelle API Key** (already configured)
-   - Valid API key with expiration dates
+ - Valid API key with expiration dates
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Verify Environment Variables
 
@@ -117,18 +117,18 @@ curl http://localhost:5000/health
 Expected response:
 ```json
 {
-  "status": "healthy",
-  "app_mode": "production",
-  "azure_ad_enabled": true,
-  "database_enabled": true,
-  "database": "connected",
-  "timestamp": "2026-05-20T10:30:00"
+ "status": "healthy",
+ "app_mode": "production",
+ "azure_ad_enabled": true,
+ "database_enabled": true,
+ "database": "connected",
+ "timestamp": "2026-05-20T10:30:00"
 }
 ```
 
 ---
 
-## 🛠️ Common Commands
+## Common Commands
 
 ### Container Management
 
@@ -192,7 +192,7 @@ docker-compose exec web env | grep AZURE
 
 ---
 
-## 📊 Architecture
+## Architecture
 
 ### Container Structure
 ```
@@ -220,7 +220,7 @@ hl7-validator (container)
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables Priority
 1. Docker Compose `environment:` section (highest)
@@ -234,9 +234,9 @@ Data is stored in mounted volumes:
 
 ```yaml
 volumes:
-  - ./uploads:/app/uploads          # Uploaded HL7 files
-  - ./processed:/app/processed      # Processed files
-  - ./flask_session:/app/flask_session  # User sessions
+ - ./uploads:/app/uploads # Uploaded HL7 files
+ - ./processed:/app/processed # Processed files
+ - ./flask_session:/app/flask_session # User sessions
 ```
 
 **Important:** These directories must be backed up separately!
@@ -251,7 +251,7 @@ The application connects to Azure SQL Database using:
 
 ---
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Issue: Container Fails to Start
 
@@ -274,17 +274,17 @@ pyodbc.OperationalError: ('08001', 'TCP Provider: Timeout error [258]')
 
 **Solutions:**
 1. Add Docker host IP to Azure SQL firewall:
-   - Get your public IP: `curl https://api.ipify.org`
-   - Add to Azure Portal → SQL Database → Networking → Firewall rules
+ - Get your public IP: `curl https://api.ipify.org`
+ - Add to Azure Portal → SQL Database → Networking → Firewall rules
 
 2. Enable "Allow Azure services":
-   - Azure Portal → SQL Database → Networking
-   - Toggle "Allow Azure services and resources to access this server"
+ - Azure Portal → SQL Database → Networking
+ - Toggle "Allow Azure services and resources to access this server"
 
 3. Verify connection from container:
-   ```powershell
-   docker-compose exec web python diagnose_azure_sql.py
-   ```
+ ```powershell
+ docker-compose exec web python diagnose_azure_sql.py
+ ```
 
 ### Issue: Health Check Failing
 
@@ -326,12 +326,12 @@ If error, rebuild image to ensure `requirements.txt` was installed correctly.
 
 ---
 
-## 🔒 Security Best Practices
+## Security Best Practices
 
 ### 1. Never Commit Secrets
-- ✅ `.env` is in `.gitignore`
-- ✅ `.dockerignore` excludes `.env`
-- ❌ Never commit `.env` to version control
+- `.env` is in `.gitignore`
+- `.dockerignore` excludes `.env`
+- Never commit `.env` to version control
 
 ### 2. Use Docker Secrets (Production)
 
@@ -340,20 +340,20 @@ For production deployment to Docker Swarm or Kubernetes:
 ```yaml
 # docker-compose.prod.yml
 services:
-  web:
+ web:
     secrets:
       - session_secret
       - db_password
 secrets:
-  session_secret:
+ session_secret:
     external: true
-  db_password:
+ db_password:
     external: true
 ```
 
 ### 3. Run as Non-Root User
-- ✅ Dockerfile already creates `appuser` (UID 1000)
-- ✅ Container runs as `appuser`, not `root`
+- Dockerfile already creates `appuser` (UID 1000)
+- Container runs as `appuser`, not `root`
 
 ### 4. Regular Updates
 ```powershell
@@ -366,7 +366,7 @@ docker-compose build --no-cache --pull
 
 ---
 
-## 🌐 Production Deployment
+## Production Deployment
 
 ### Option 1: Azure Container Apps (Recommended)
 
@@ -379,7 +379,7 @@ az group create --name hl7-validator-rg --location eastus
 
 # Create container registry
 az acr create --resource-group hl7-validator-rg \
-  --name hl7validatoracr --sku Basic
+ --name hl7validatoracr --sku Basic
 
 # Build and push image
 docker tag hl7_v2_message_validator-auto-correct-web hl7validatoracr.azurecr.io/hl7-validator:latest
@@ -388,12 +388,12 @@ docker push hl7validatoracr.azurecr.io/hl7-validator:latest
 
 # Deploy to Container Apps
 az containerapp create \
-  --name hl7-validator \
-  --resource-group hl7-validator-rg \
-  --image hl7validatoracr.azurecr.io/hl7-validator:latest \
-  --target-port 5000 \
-  --ingress external \
-  --env-vars \
+ --name hl7-validator \
+ --resource-group hl7-validator-rg \
+ --image hl7validatoracr.azurecr.io/hl7-validator:latest \
+ --target-port 5000 \
+ --ingress external \
+ --env-vars \
     APP_MODE=production \
     AZURE_SQL_SERVER=... \
     SESSION_SECRET_KEY=...
@@ -402,10 +402,10 @@ az containerapp create \
 ### Option 2: Azure Web App for Containers
 
 1. **Azure Portal:**
-   - Create new Web App
-   - Select "Container" for publish
-   - Choose "Docker Compose"
-   - Upload `docker-compose.yml`
+ - Create new Web App
+ - Select "Container" for publish
+ - Choose "Docker Compose"
+ - Upload `docker-compose.yml`
 
 2. **Configure environment variables in App Settings**
 
@@ -417,7 +417,7 @@ See separate deployment guides for orchestration platforms.
 
 ---
 
-## 📈 Monitoring
+## Monitoring
 
 ### Container Stats
 
@@ -454,7 +454,7 @@ Set up automated health checks:
 
 ---
 
-## 🔄 Updates and Maintenance
+## Updates and Maintenance
 
 ### Updating Application Code
 
@@ -493,7 +493,7 @@ tar -czf backup-$(date +%Y%m%d).tar.gz uploads/ processed/ flask_session/
 
 ---
 
-## 📝 Additional Resources
+## Additional Resources
 
 - **Docker Documentation:** https://docs.docker.com/
 - **Azure Container Apps:** https://learn.microsoft.com/en-us/azure/container-apps/
@@ -502,7 +502,7 @@ tar -czf backup-$(date +%Y%m%d).tar.gz uploads/ processed/ flask_session/
 
 ---
 
-## 🆘 Support
+## Support
 
 If you encounter issues not covered in this guide:
 

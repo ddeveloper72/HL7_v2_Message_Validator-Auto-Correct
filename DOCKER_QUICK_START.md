@@ -1,288 +1,131 @@
-# Docker Implementation - Quick Reference
+# Docker quick start
 
-## ✅ What Was Implemented
+This guide starts the HL7 v2 Message Validator in local mode with Docker Compose. See [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) before enabling production identity and database integrations.
 
-### 1. Docker Configuration Files
+## Prerequisites
 
-| File | Purpose | Status |
-|------|---------|--------|
-| `Dockerfile` | Container image definition with Python 3.12, FreeTDS, and ODBC drivers | ✅ Created |
-| `docker-compose.yml` | Multi-service orchestration with volumes and networks | ✅ Created |
-| `.dockerignore` | Excludes unnecessary files from Docker build context | ✅ Created |
-| `DOCKER_DEPLOYMENT.md` | Comprehensive deployment and troubleshooting guide | ✅ Created |
+- Docker Desktop or Docker Engine with Compose
+- A Gazelle EVS API key
+- An available local port 5000
 
-### 2. Code Updates
+## Configure
 
-| File | Changes | Status |
-|------|---------|--------|
-| `db_utils.py` | Added Docker environment detection for FreeTDS driver path | ✅ Updated |
-| `dashboard_app.py` | Added `/health` endpoint and stricter session key validation | ✅ Updated |
-| `dashboard_app.py` | Improved session handling for Docker/production environments | ✅ Updated |
-
-### 3. Directory Structure
-
-```
-├── Dockerfile                 # ✅ Multi-stage build with security best practices
-├── docker-compose.yml         # ✅ Complete local development setup
-├── .dockerignore             # ✅ Optimized build context
-├── uploads/.gitkeep          # ✅ Persistent storage directory
-├── processed/.gitkeep        # ✅ Persistent storage directory
-└── flask_session/            # ✅ Session storage (created automatically)
-```
-
----
-
-## 🚀 Quick Start Commands
-
-### First Time Setup
+Create the environment file:
 
 ```powershell
-# 1. Verify .env file has all required variables
-cat .env
-
-# 2. Generate security keys if missing
-python -c "import secrets; print('SESSION_SECRET_KEY=' + secrets.token_hex(32))"
-
-# 3. Build Docker image
-docker-compose build
-
-# 4. Start application
-docker-compose up -d
-
-# 5. Check health
-curl http://localhost:5000/health
+Copy-Item .env.docker.example .env
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### Daily Usage
+Edit `.env`:
+
+```env
+APP_MODE=local
+SESSION_SECRET_KEY=replace_with_the_generated_value
+GAZELLE_BASE_URL=https://testing.ehealthireland.ie
+VERIFY_SSL=true
+MAX_AUTO_CORRECT_ITERATIONS=10
+```
+
+The web application stores the Gazelle API key in the user session. Enter the key and its validity dates through the profile after startup. `GAZELLE_API_KEY` remains available as an environment fallback for direct validation-script use.
+
+## Build and start
 
 ```powershell
-# Start
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
-
-# Restart after code changes
-docker-compose restart
+docker compose up --build -d
+docker compose ps
+docker compose logs -f web
 ```
 
----
+Open:
 
-## 🔍 Key Features
+- Application: <http://127.0.0.1:5000>
+- Health check: <http://127.0.0.1:5000/health>
 
-### 1. Multi-Environment Support
-- ✅ **Local:** Uses ODBC Driver 18 for SQL Server
-- ✅ **Docker:** Uses FreeTDS driver at `/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so`
-- ✅ **Heroku:** Uses FreeTDS driver at `/app/.apt/usr/lib/x86_64-linux-gnu/odbc/libtdsodbc.so`
+The health check should return HTTP 200 and a JSON response.
 
-Auto-detected via `ENVIRONMENT` variable or `DYNO` (Heroku) environment.
-
-### 2. Health Check Endpoint
-
-```http
-GET /health HTTP/1.1
-Host: localhost:5000
-```
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "app_mode": "production",
-  "azure_ad_enabled": true,
-  "database_enabled": true,
-  "database": "connected",
-  "timestamp": "2026-05-20T18:45:00"
-}
-```
-
-**Container Health:**
-- ✅ Checks every 30 seconds
-- ✅ 3 retries before marking unhealthy
-- ✅ 40-second startup grace period
-
-### 3. Security Improvements
-
-**Session Handling:**
-- ✅ Requires `SESSION_SECRET_KEY` in production/Docker
-- ✅ Fails fast if missing (prevents weak default keys)
-- ✅ Auto-generates only for local development
-
-**Container Security:**
-- ✅ Runs as non-root user (`appuser`, UID 1000)
-- ✅ Minimal base image (python:3.12-slim ~150MB)
-- ✅ No unnecessary packages installed
-
-### 4. Persistent Storage
-
-**Volumes mounted:**
-```yaml
-./uploads:/app/uploads           # User-uploaded HL7 files
-./processed:/app/processed       # Processed/corrected files
-./flask_session:/app/flask_session  # User session data
-```
-
-**Data persists across:**
-- ✅ Container restarts
-- ✅ Image rebuilds
-- ✅ Application updates
-
----
-
-## 📊 Container Specifications
-
-| Metric | Value |
-|--------|-------|
-| Base Image | `python:3.12-slim` |
-| Estimated Size | ~270 MB |
-| Port | 5000 |
-| Workers | 2 (Gunicorn) |
-| Timeout | 120 seconds |
-| Memory (idle) | ~150-200 MB |
-| Memory (active) | ~250-400 MB |
-
----
-
-## 🧪 Testing Checklist
-
-Before deploying to production:
-
-- [ ] Build succeeds: `docker-compose build`
-- [ ] Container starts: `docker-compose up -d`
-- [ ] Health check passes: `curl http://localhost:5000/health`
-- [ ] Can access landing page: http://localhost:5000
-- [ ] Azure AD login works
-- [ ] Database connection successful (check logs for connection messages)
-- [ ] File upload works
-- [ ] Validation with Gazelle API works
-- [ ] Auto-correction works
-- [ ] PDF export works
-- [ ] Session persists after container restart
-- [ ] API key saved to database correctly
-
----
-
-## 🔧 Troubleshooting Quick Reference
-
-### Container Won't Start
+## Common operations
 
 ```powershell
-# Check logs for error
-docker-compose logs web
+# Follow logs
+docker compose logs -f web
 
-# Common issues:
-# - Missing SESSION_SECRET_KEY in .env
-# - Port 5000 already in use
-# - Invalid .env syntax
+# Restart the application
+docker compose restart web
+
+# Rebuild after dependency or Dockerfile changes
+docker compose up --build -d
+
+# Stop the stack
+docker compose down
 ```
 
-### Database Connection Fails
+The Compose configuration mounts:
+
+| Host path | Container path | Purpose |
+| --- | --- | --- |
+| `./uploads` | `/app/uploads` | Uploaded source messages |
+| `./processed` | `/app/processed` | Corrected output messages |
+| `./flask_session` | `/app/flask_session` | Server-side sessions |
+
+These mounts persist across ordinary container recreation. Their retention and backup remain the operator's responsibility.
+
+## Verify the workflow
+
+1. Open the profile and configure the Gazelle API key.
+2. Upload one or more approved test messages.
+3. Confirm the batch panel reports selected, uploaded, and processed counts.
+4. Review the dashboard and individual Gazelle reports.
+5. Download and inspect corrected files where applicable.
+
+## Troubleshooting
+
+### Container does not start
 
 ```powershell
-# Test from container
-docker-compose exec web python diagnose_azure_sql.py
-
-# Add Docker host IP to Azure SQL firewall
-# Get your IP: curl https://api.ipify.org
+docker compose ps
+docker compose logs web
 ```
 
-### Health Check Failing
+Check that `SESSION_SECRET_KEY` is set, `.env` syntax is valid, and port 5000 is not already in use.
+
+### Health check fails
 
 ```powershell
-# Check container status
-docker ps
-
-# View health logs
-docker inspect hl7-validator | grep -A 10 Health
-
-# Test manually
-docker-compose exec web curl http://localhost:5000/health
+docker compose exec web python -c "import requests; print(requests.get('http://localhost:5000/health', timeout=5).json())"
 ```
 
----
+The image health check allows a startup period before marking the service unhealthy. Review the logs for missing packages or configuration errors.
 
-## 📁 Environment Variables Reference
+### Files cannot be written
 
-### Required (Must Set)
+Confirm Docker can write to the mounted host directories. On Linux, also check directory ownership and permissions for the container's non-root user.
 
-```bash
-# Security
-SESSION_SECRET_KEY=<64-char-hex-string>
-ENCRYPTION_KEY=<fernet-key>
+### Azure SQL cannot connect
 
-# Database
-AZURE_SQL_SERVER=myfreesqldbserver72.database.windows.net
-AZURE_SQL_DATABASE=gazelle-healthlink
-AZURE_SQL_USERNAME=developer
-AZURE_SQL_PASSWORD=<password>
+The image uses FreeTDS by default. Confirm Azure SQL firewall rules, credentials, hostname, and `DB_DRIVER=FreeTDS`. See [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md).
 
-# Azure AD
-AZURE_AD_CLIENT_ID=<client-id>
-AZURE_AD_CLIENT_SECRET=<client-secret>
-AZURE_AD_TENANT_ID=<tenant-id>
+### Browser styling is missing
 
-# API
-GAZELLE_API_KEY=<your-key>
-```
+The Content Security Policy permits Tailwind Browser and Lucide from `cdn.jsdelivr.net`. Check browser developer tools for blocked requests and perform a hard refresh.
 
-### Auto-Detected
+## Production mode
 
-```bash
-ENVIRONMENT=docker    # Auto-set by docker-compose
-APP_MODE=production   # Controls features
-DB_DRIVER=FreeTDS     # Driver for Azure SQL
-```
+Do not switch only `APP_MODE`. Production also requires:
 
----
+- Microsoft Entra ID application settings;
+- Azure SQL connection settings;
+- a stable session secret;
+- a Fernet encryption key;
+- an exact production callback URI;
+- HTTPS and appropriate network controls.
 
-## 🎯 Next Steps
+Follow [DOCKER_CONFIGURATION.md](DOCKER_CONFIGURATION.md) and [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
 
-### Immediate
-1. ✅ Docker files created
-2. ⏳ Test Docker build: `docker-compose build`
-3. ⏳ Test Docker run: `docker-compose up`
-4. ⏳ Verify health check: `/health` endpoint
-5. ⏳ Test full authentication and validation flow
+## Related documentation
 
-### Short Term
-- Deploy to Azure Container Apps
-- Set up CI/CD pipeline (GitHub Actions)
-- Configure monitoring (Azure Application Insights)
-- Load testing with multiple concurrent users
-
-### Long Term
-- Consider Redis for session storage (if scaling beyond 1 instance)
-- Implement log aggregation (ELK stack or Azure Monitor)
-- Add Prometheus metrics endpoint
-- Container security scanning (Trivy, Snyk)
-
----
-
-## 📚 Documentation
-
-- **Full Deployment Guide:** [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
-- **Architecture Analysis:** [DOCKER_READINESS_ANALYSIS.md](DOCKER_READINESS_ANALYSIS.md)
-- **Main README:** [README.md](README.md)
-- **Azure Setup:** [AZURE_SETUP_GUIDE.md](AZURE_SETUP_GUIDE.md)
-
----
-
-## ✨ Key Improvements Over Heroku
-
-| Feature | Heroku | Docker | Benefit |
-|---------|--------|--------|---------|
-| **Startup** | Cold start delays | Instant (running container) | Better UX |
-| **Cost** | $7-25/month | Azure free tier or pay-per-use | Lower cost |
-| **Control** | Limited | Full container control | More flexibility |
-| **Local Testing** | Different environment | Same as production | Fewer surprises |
-| **Scaling** | Manual | Auto-scaling (Container Apps) | Better performance |
-| **Monitoring** | Add-ons required | Built-in (Azure Monitor) | Easier debugging |
-
----
-
-**Status:** ✅ Docker implementation complete and ready for testing!
-
-**Last Updated:** May 20, 2026
+- [Project README](README.md)
+- [Docker configuration](DOCKER_CONFIGURATION.md)
+- [Docker deployment](DOCKER_DEPLOYMENT.md)
+- [Local development](LOCAL_DEVELOPMENT_GUIDE.md)
+- [AI-use disclosure](docs/AI_USE.md)

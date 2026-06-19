@@ -8,7 +8,7 @@ Added bulk deletion functionality to quickly remove all validation history recor
 ### 1. Clear All History Button
 **Location**: Dashboard, next to "Show All Sessions" button
 
-**What it does**: 
+**What it does**:
 - Deletes ALL your validation records from the database
 - Clears temp file storage
 - Resets statistics to zero
@@ -31,11 +31,11 @@ Added bulk deletion functionality to quickly remove all validation history recor
 
 ## Security Features
 
-✅ **User Isolation**: You can only delete YOUR records, not others  
-✅ **Ownership Check**: Database verifies you own the record before deletion  
-✅ **Rate Limiting**: Max 5 clear-all requests per minute  
-✅ **Confirmation Dialog**: Double-check before deleting  
-✅ **Login Required**: Must be authenticated
+ **User Isolation**: You can only delete YOUR records, not others
+ **Ownership Check**: Database verifies you own the record before deletion
+ **Rate Limiting**: Max 5 clear-all requests per minute
+ **Confirmation Dialog**: Double-check before deleting
+ **Login Required**: Must be authenticated
 
 ## Technical Details
 
@@ -75,10 +75,10 @@ python test_clear_history.py
 ```
 
 Tests verify:
-- Single record deletion ✅
-- Bulk deletion ✅
-- Ownership protection ✅
-- Statistics update ✅
+- Single record deletion
+- Bulk deletion
+- Ownership protection
+- Statistics update
 
 ## Files Modified
 
@@ -108,13 +108,13 @@ Total time: 2 seconds
 
 ## Important Notes
 
-⚠️ **Warning**: Clearing history is PERMANENT and cannot be undone!
+ **Warning**: Clearing history is PERMANENT and cannot be undone!
 
-💡 **Tip**: If you only want to remove a few records, use single deletion instead
+ **Tip**: If you only want to remove a few records, use single deletion instead
 
-🔒 **Privacy**: Only YOU can see and delete YOUR records
+ **Privacy**: Only YOU can see and delete YOUR records
 
-📊 **Statistics**: After clearing, your stats reset to zero
+ **Statistics**: After clearing, your stats reset to zero
 
 ## Deployment
 

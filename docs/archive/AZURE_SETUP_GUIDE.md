@@ -1,14 +1,14 @@
 # Azure AD + SQL Database Setup Guide
 
-## 🎯 Overview
+##  Overview
 This guide will help you set up Azure AD authentication and SQL database integration for the Gazelle HL7 Validator.
 
-## ✅ What You Already Have
+##  What You Already Have
 - Azure AD App Registration (Client ID, Secret, Tenant ID configured in .env)
 - Azure SQL Database (Server, Database, Username, Password configured)
 - Encryption key for API key storage
 
-## 📋 Step-by-Step Setup
+##  Step-by-Step Setup
 
 ### 1. Install Python Dependencies
 
@@ -67,7 +67,7 @@ Your app registration needs the correct redirect URI:
 Run this test script:
 
 ```python
-python -c "from db_utils import DatabaseManager; db = DatabaseManager(); conn = db.get_connection(); print('✅ Database connected successfully!'); conn.close()"
+python -c "from db_utils import DatabaseManager; db = DatabaseManager(); conn = db.get_connection(); print(' Database connected successfully!'); conn.close()"
 ```
 
 ### 6. Start the Application
@@ -91,7 +91,7 @@ gunicorn dashboard_app:app --bind 0.0.0.0:5000 --timeout 120
 6. Add your Gazelle API key
 7. Go to Dashboard
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Database Connection Errors
 
@@ -129,14 +129,14 @@ AZURE_SQL_PASSWORD=<your-sql-password>
 - Don't change `ENCRYPTION_KEY` after storing API keys
 - If you must change it, all users must re-enter API keys
 
-## 📊 Database Tables Created
+##  Database Tables Created
 
 1. **Users** - User profiles with Azure AD integration
 2. **ValidationHistory** - Validation metadata (filename, status, Gazelle URL)
 3. **APIKeyAuditLog** - Track when API keys are updated
 4. **UserValidationSummary** (View) - User statistics
 
-## 🔒 Security Notes
+##  Security Notes
 
 - API keys are encrypted with Fernet (symmetric encryption)
 - Never commit `.env` file to git
@@ -144,7 +144,7 @@ AZURE_SQL_PASSWORD=<your-sql-password>
 - Enable Azure AD MFA for users
 - Regularly rotate client secrets
 
-## 🚀 Deployment to Azure
+##  Deployment to Azure
 
 ### Update Environment Variables
 
@@ -169,7 +169,7 @@ GAZELLE_API_KEY=... (optional default)
 Add production redirect URI to Azure AD app registration:
 - `https://your-app.azurewebsites.net/auth/callback`
 
-## ✅ Success Checklist
+##  Success Checklist
 
 - [ ] Python dependencies installed
 - [ ] ODBC Driver installed
@@ -182,7 +182,7 @@ Add production redirect URI to Azure AD app registration:
 - [ ] Can validate messages
 - [ ] Validation history shows in database
 
-## 📧 Support
+##  Support
 
 If you encounter issues:
 1. Check application logs
@@ -193,11 +193,11 @@ If you encounter issues:
 
 ---
 
-**Ready to go!** 🎉
+**Ready to go!**
 
 Your Gazelle HL7 Validator now has:
-- ✅ Azure AD single sign-on
-- ✅ Encrypted API key storage
-- ✅ Validation history tracking
-- ✅ User statistics
-- ✅ Multi-user support
+-  Azure AD single sign-on
+-  Encrypted API key storage
+-  Validation history tracking
+-  User statistics
+-  Multi-user support
