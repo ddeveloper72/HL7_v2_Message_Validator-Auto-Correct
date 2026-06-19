@@ -62,6 +62,7 @@ generate_*.py
 find_*.py
 auto_validate*.py
 validate_with_*.py
+!validate_with_verification.py
 add_*.py
 remove_*.py
 ERROR_ANALYSIS.py
