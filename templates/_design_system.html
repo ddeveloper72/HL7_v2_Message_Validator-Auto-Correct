@@ -1,0 +1,19 @@
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+    @theme {
+        --color-brand-50: #ecfeff;
+        --color-brand-100: #cffafe;
+        --color-brand-500: #0891b2;
+        --color-brand-600: #0e7490;
+        --color-brand-700: #0f6476;
+        --color-brand-900: #164e63;
+        --shadow-panel: 0 8px 20px rgb(15 23 42 / 0.07);
+    }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.lucide) window.lucide.createIcons();
+    });
+</script>

@@ -50,7 +50,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Change button text temporarily
         const btn = this;
         const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        btn.innerHTML = '<i data-lucide="check"></i> Copied';
+        if (window.lucide) window.lucide.createIcons();
         setTimeout(() => {
             btn.innerHTML = originalHTML;
         }, 2000);
@@ -166,23 +167,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (isPassed) {
             statusHTML = `
-                <div class="alert alert-success">
-                    <h5><i class="bi bi-check-circle"></i> Validation PASSED</h5>
-                    <p class="mb-0">Message Type: <strong>${data.message_type || 'Unknown'}</strong></p>
+                <div class="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-emerald-900">
+                    <h5 class="flex items-center gap-2 font-semibold"><i data-lucide="circle-check"></i> Validation passed</h5>
+                    <p class="mt-1 text-sm">Message type: <strong>${data.message_type || 'Unknown'}</strong></p>
                 </div>
             `;
         } else {
             statusHTML = `
-                <div class="alert alert-danger">
-                    <h5><i class="bi bi-x-circle"></i> Validation FAILED</h5>
-                    <p class="mb-0">Message Type: <strong>${data.message_type || 'Unknown'}</strong></p>
-                    <p class="mb-0">Status: <strong>${status}</strong></p>
+                <div class="rounded-lg border border-rose-300 bg-rose-50 p-4 text-rose-900">
+                    <h5 class="flex items-center gap-2 font-semibold"><i data-lucide="circle-x"></i> Validation failed</h5>
+                    <p class="mt-1 text-sm">Message type: <strong>${data.message_type || 'Unknown'}</strong></p>
+                    <p class="text-sm">Status: <strong>${status}</strong></p>
                 </div>
             `;
 
             // Show errors if any
             if (data.errors && data.errors.length > 0) {
-                statusHTML += '<div class="alert alert-warning mt-2"><h6>Errors Found:</h6><ul class="mb-0">';
+                statusHTML += '<div class="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950"><h6 class="font-semibold">Errors found</h6><ul class="mt-2 list-disc space-y-1 pl-5 text-sm">';
                 data.errors.forEach(error => {
                     statusHTML += `<li>${error}</li>`;
                 });
@@ -197,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const correctionsHTML = buildCorrectionsDisplay(data.corrections_applied, data.correction_report);
             statusElement.innerHTML += correctionsHTML;
         }
+        if (window.lucide) window.lucide.createIcons();
 
         // Set report URL if available
         if (data.report_url) {
@@ -241,9 +243,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const fieldInsertions = corrections.field_insertions || 0;
 
         let html = `
-            <div class="alert alert-info mt-3">
-                <h6><i class="bi bi-tools"></i> Auto-Corrections Applied: ${total}</h6>
-                <ul class="mb-0">
+            <div class="mt-3 rounded-lg border border-cyan-300 bg-cyan-50 p-4 text-cyan-950">
+                <h6 class="flex items-center gap-2 font-semibold"><i data-lucide="wand-sparkles"></i> Auto-corrections applied: ${total}</h6>
+                <ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
         `;
 
         if (critical > 0) {
@@ -258,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         html += `
                 </ul>
-                <small class="text-muted mt-2 d-block">See detailed report below for specifics.</small>
+                <small class="mt-2 block text-cyan-800">See the detailed report below for specifics.</small>
             </div>
         `;
 
@@ -273,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const correctionsHTML = buildCorrectionsDisplay(data.corrections_applied, data.correction_report);
 
             const tempDiv = document.createElement('div');
-            tempDiv.className = 'alert alert-warning mt-3';
+            tempDiv.className = 'mt-3 rounded-lg border border-amber-300 bg-amber-50 p-4';
             tempDiv.innerHTML = correctionsHTML;
 
             errorContainer.appendChild(tempDiv);
