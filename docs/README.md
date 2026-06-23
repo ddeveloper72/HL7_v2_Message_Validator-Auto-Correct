@@ -7,6 +7,7 @@ This directory contains the maintained technical documentation for the HL7 v2 Me
 - [Project README](../README.md): overview, setup, configuration, architecture, and troubleshooting.
 - [AI use](AI_USE.md): disclosure of AI-assisted development and runtime boundaries.
 - [Gazelle validation flow](GAZELLE_VALIDATION_FLOW.md): Gazelle API calls, validator selection, status parsing, and report-driven correction.
+- [Third-party notices](THIRD_PARTY_NOTICES.md): standards, service, library, and attribution notices.
 - [Architecture diagrams](architecture/README.md): diagram scope and editing guidance.
 
 ## Setup and operations

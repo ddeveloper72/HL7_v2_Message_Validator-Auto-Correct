@@ -361,6 +361,7 @@ Start with the [documentation index](docs/README.md).
 | --- | --- |
 | [docs/AI_USE.md](docs/AI_USE.md) | AI-use disclosure and review expectations |
 | [docs/GAZELLE_VALIDATION_FLOW.md](docs/GAZELLE_VALIDATION_FLOW.md) | Gazelle API flow, validator selection, status parsing, and report-driven correction |
+| [docs/THIRD_PARTY_NOTICES.md](docs/THIRD_PARTY_NOTICES.md) | Third-party standards, service, library, and attribution notices |
 | [docs/architecture/README.md](docs/architecture/README.md) | Architecture diagram guidance |
 | [LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md) | Local development workflow |
 | [DOCKER_QUICK_START.md](DOCKER_QUICK_START.md) | Short Docker workflow |
@@ -377,5 +378,7 @@ Keep changes focused, avoid committing secrets or real patient messages, and doc
 ## Licence and status
 
 No standalone open-source licence file is currently included. Treat the repository as an internal project unless the owner provides separate licensing terms.
+
+This repository includes third-party standards and reference materials, including HL7 v2.4 PDFs and XML schemas. See [docs/THIRD_PARTY_NOTICES.md](docs/THIRD_PARTY_NOTICES.md) for attribution and redistribution notes.
 
 This software supports testing and message-quality workflows. It is not a medical device, a clinical decision-support system, or a substitute for professional review.
