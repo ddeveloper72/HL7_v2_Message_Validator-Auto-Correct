@@ -45,6 +45,8 @@ Auto-correction is intentionally conservative. A corrected message should still 
 
 The browser processes batch uploads sequentially. This avoids overwhelming the external validation service and provides clear per-file progress.
 
+For a more detailed sequence of the Gazelle API calls, validator selection, report parsing, and correction loop, see [Gazelle validation and correction flow](docs/GAZELLE_VALIDATION_FLOW.md).
+
 ## Quick start
 
 ### Prerequisites
@@ -358,6 +360,7 @@ Start with the [documentation index](docs/README.md).
 | Document | Purpose |
 | --- | --- |
 | [docs/AI_USE.md](docs/AI_USE.md) | AI-use disclosure and review expectations |
+| [docs/GAZELLE_VALIDATION_FLOW.md](docs/GAZELLE_VALIDATION_FLOW.md) | Gazelle API flow, validator selection, status parsing, and report-driven correction |
 | [docs/architecture/README.md](docs/architecture/README.md) | Architecture diagram guidance |
 | [LOCAL_DEVELOPMENT_GUIDE.md](LOCAL_DEVELOPMENT_GUIDE.md) | Local development workflow |
 | [DOCKER_QUICK_START.md](DOCKER_QUICK_START.md) | Short Docker workflow |
