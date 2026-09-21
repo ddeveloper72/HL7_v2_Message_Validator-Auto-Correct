@@ -80,7 +80,7 @@ class DatabaseManager:
                 f'DATABASE={self.database};'
                 f'UID={self.username};'
                 f'PWD={self.password};'
-                f'TDS_Version=8.0;'
+                f'TDS_Version=7.4;'
                 f'Encrypt=yes;'
                 f'TrustServerCertificate=no;'
                 f'Connection Timeout={timeout};'
