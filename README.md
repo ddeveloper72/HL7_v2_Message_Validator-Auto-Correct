@@ -1,4 +1,7 @@
-# HL7 v2 Message Validator and Auto-Corrector
+# HL7 v2 Message Validator and Auto-Corrector - [Live deployment](https://hl7-v2-message-validator.ddeveloper72.dev/)
+
+[![Live deployment status](https://img.shields.io/website?url=https%3A%2F%2Fhl7-v2-message-validator.ddeveloper72.dev%2F&label=live%20deployment)](https://hl7-v2-message-validator.ddeveloper72.dev/)
+[![Heroku deployment](https://img.shields.io/badge/Heroku-deployed-430098?logo=heroku&logoColor=white)](https://hl7-v2-message-validator.ddeveloper72.dev/)
 
 A Flask application for validating Healthlink HL7 v2 XML messages with the Gazelle EVS service, reviewing validation reports, and applying deterministic corrections to supported message errors.
 
@@ -295,6 +298,8 @@ git commit -m "feat: describe the change"
 ```
 
 ## Deployment
+
+The live deployment is available at [hl7-v2-message-validator.ddeveloper72.dev](https://hl7-v2-message-validator.ddeveloper72.dev/).
 
 The supplied Docker image runs Gunicorn with two synchronous workers and mounts directories for uploads, corrected files, and Flask sessions.
 
